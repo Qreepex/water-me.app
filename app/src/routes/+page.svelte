@@ -3,6 +3,7 @@
 	import { onMount } from 'svelte';
 	import { authStore } from '$lib/stores/auth';
 	import type { User } from '$lib/auth/auth';
+	import { API_BASE_URL } from '$lib/constants';
 
 	let mode: 'login' | 'signup' = 'login';
 	let email = '';
@@ -30,7 +31,7 @@
 
 		try {
 			const endpoint = mode === 'login' ? '/api/login' : '/api/signup';
-			const response = await fetch(`https://water.benschiemann.com${endpoint}`, {
+			const response = await fetch(API_BASE_URL + `${endpoint}`, {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({ email, password })

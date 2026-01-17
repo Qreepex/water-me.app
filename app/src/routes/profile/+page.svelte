@@ -2,6 +2,7 @@
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
 	import { authStore } from '$lib/stores/auth';
+	import { API_BASE_URL } from '$lib/constants';
 
 	let user = $state($authStore.user);
 	let token = $state($authStore.token);
@@ -51,7 +52,7 @@
 		message = '';
 
 		try {
-			const response = await fetch('https://water.benschiemann.com/api/user', {
+			const response = await fetch(API_BASE_URL + '/api/user', {
 				method: 'PUT',
 				headers: {
 					'Content-Type': 'application/json',
@@ -113,7 +114,7 @@
 		message = '';
 
 		try {
-			const response = await fetch('https://water.benschiemann.com/api/user/password', {
+			const response = await fetch(API_BASE_URL + '/api/user/password', {
 				method: 'PUT',
 				headers: {
 					'Content-Type': 'application/json',

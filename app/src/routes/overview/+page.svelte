@@ -3,6 +3,7 @@
 	import type { Plant } from '$lib/types/types';
 	import { goto } from '$app/navigation';
 	import { authStore } from '$lib/stores/auth';
+	import { API_BASE_URL } from '$lib/constants';
 
 	type SortOption =
 		| 'name'
@@ -43,7 +44,7 @@
 		if (!token) return;
 
 		try {
-			const response = await fetch('https://water.benschiemann.com/api/plants', {
+			const response = await fetch(API_BASE_URL + '/api/plants', {
 				headers: { Authorization: `Bearer ${token}` }
 			});
 
@@ -117,15 +118,6 @@
 				<div>
 					<h1 class="mb-2 flex items-center gap-3 text-5xl font-bold text-green-800">🌱 My Plants</h1>
 					<p class="text-lg text-green-700">Take care of your green friends</p>
-				</div>
-				<div class="text-right">
-					<p class="text-sm text-green-700 mb-2">Logged in as <span class="font-semibold">{userEmail}</span></p>
-					<button
-						on:click={handleLogout}
-						class="rounded-lg bg-red-600 px-4 py-2 text-white text-sm transition hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500"
-					>
-						Logout
-					</button>
 				</div>
 			</div>
 			<div class="flex gap-3">

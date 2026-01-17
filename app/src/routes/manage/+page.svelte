@@ -2,9 +2,9 @@
 	import { onMount } from 'svelte';
 	import type { Plant } from '$lib/types/types';
 	import { PlantFlag, SunlightRequirement } from '$lib/types/types';
-	import { API_BASE_URL } from '$lib';
 	import { authStore } from '$lib/stores/auth';
 	import { goto } from '$app/navigation';
+	import { API_BASE_URL } from '$lib/constants';
 
 	interface FormData {
 		id?: string;
@@ -75,7 +75,7 @@
 
 	async function loadPlants(): Promise<void> {
 		try {
-			const response = await fetch('https://water.benschiemann.com/api/plants', {
+			const response = await fetch(API_BASE_URL + '/api/plants', {
 				headers: { Authorization: `Bearer ${token}` }
 			});
 
@@ -195,7 +195,7 @@
 				photoIds: photoPreview
 			};
 
-			const response = await fetch('https://water.benschiemann.com' + url, {
+			const response = await fetch(API_BASE_URL + url, {
 				method,
 				headers: { 
 					'Content-Type': 'application/json',
@@ -224,7 +224,7 @@
 		if (!token || !confirm('Are you sure you want to delete this plant?')) return;
 
 		try {
-			const response = await fetch(`https://water.benschiemann.com/api/plants/${id}`, {
+			const response = await fetch(API_BASE_URL + `/api/plants/${id}`, {
 				method: 'DELETE',
 				headers: { Authorization: `Bearer ${token}` }
 			});
