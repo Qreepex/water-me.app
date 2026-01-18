@@ -1,7 +1,6 @@
 {
 	"name": "water-me-webapp",
-	"assets": {
-		"binding": "ASSETS",
-		"directory": "www"
-	}
+  "assets": {
+    "directory": "www"
+  }
 }
