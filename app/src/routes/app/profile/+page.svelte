@@ -1,7 +1,6 @@
-<script lang="ts">
+<!-- <script lang="ts">
 	import { onMount, onDestroy } from 'svelte';
 	import { goto } from '$app/navigation';
-	import { authStore } from '$lib/stores/auth';
 	import { setLanguage } from '$lib/stores/language';
 	import { tSync } from '$lib/i18n';
 	import { API_BASE_URL } from '$lib/constants';
@@ -302,4 +301,4 @@
 			</div>
 		</div>
 	</div>
-{/if}
+{/if} -->

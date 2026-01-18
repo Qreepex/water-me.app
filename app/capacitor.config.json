@@ -4,7 +4,11 @@
 	"webDir": "www",
 	"plugins": {
 		"SplashScreen": {
-			"launchAutoHide": false
+			"launchAutoHide": true
+		},
+		"FirebaseAuthentication": {
+			"skipNativeAuth": false,
+			"providers": ["google.com"]
 		}
 	}
 }

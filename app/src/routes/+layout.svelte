@@ -6,25 +6,31 @@
 	import { initializeI18n } from '$lib/i18n';
 	import { initializeLanguage } from '$lib/stores/language';
 	import { browser } from '$app/environment';
+	import Auth from '$lib/auth/Auth.svelte';
+	import { Capacitor } from '@capacitor/core';
+	import { SplashScreen } from '@capacitor/splash-screen';
 
 	let { children } = $props();
 	let fcmToken = $state<string | null>(null);
 
 	onMount(async () => {
-		if (browser) {
-			// Initialize language from user profile or preferences
-			await initializeLanguage();
+		// hide splash screen once the app is ready
+		if (Capacitor.isNativePlatform()) {
+			await SplashScreen.hide();
+		}
 
-			// Initialize i18n translations for the selected language
-			await initializeI18n();
+		// Initialize language from user profile or preferences
+		await initializeLanguage();
 
-			// Initialize push notifications
-			const result = await initializePushNotifications();
-			fcmToken = result.token;
+		// Initialize i18n translations for the selected language
+		await initializeI18n();
 
-			if (fcmToken) {
-				console.log('✅ FCM Token registered:', fcmToken);
-			}
+		// Initialize push notifications
+		const result = await initializePushNotifications();
+		fcmToken = result.token;
+
+		if (fcmToken) {
+			console.log('✅ FCM Token registered:', fcmToken);
 		}
 	});
 
@@ -39,7 +45,9 @@
 
 <div class="relative min-h-screen bg-gradient-to-br from-emerald-50 to-green-50">
 	<main class="pt-safe pb-safe px-4">
-		{@render children()}
+		<Auth>
+			{@render children()}
+		</Auth>
 	</main>
 </div>
 
@@ -47,9 +55,6 @@
 	/* Safe area insets for mobile notches and status bars */
 	.pt-safe {
 		padding-top: env(safe-area-inset-top);
-	}
-	.pr-safe {
-		padding-right: env(safe-area-inset-right);
 	}
 	.pb-safe {
 		padding-bottom: env(safe-area-inset-bottom);

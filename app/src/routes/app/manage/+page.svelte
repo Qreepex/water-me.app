@@ -2,7 +2,6 @@
 	import { onMount } from 'svelte';
 	import type { Plant } from '$lib/types/types';
 	import { PlantFlag, SunlightRequirement } from '$lib/types/types';
-	import { authStore } from '$lib/stores/auth';
 	import { goto } from '$app/navigation';
 	import { API_BASE_URL } from '$lib/constants';
 	import { resolve } from '$app/paths';
@@ -30,10 +29,10 @@
 	let token: string | null = null;
 	let isInitialized = false;
 
-	authStore.subscribe((state) => {
-		token = state.token;
-		isInitialized = state.initialized;
-	});
+	// authStore.subscribe((state) => {
+	// 	token = state.token;
+	// 	isInitialized = state.initialized;
+	// });
 
 	let showForm = false;
 	let editingId: string | null = null;
@@ -57,7 +56,7 @@
 	let photoUploadProgress: Record<number, number> = {};
 
 	function handleLogout() {
-		authStore.logout();
+		// authStore.logout();
 		goto(resolve('/'));
 	}
 
@@ -111,7 +110,9 @@
 	}
 
 	// Request presigned URLs from backend
-	async function getPresignedUrls(files: File[]): Promise<{ key: string; url: string; headers: Record<string, string> }[]> {
+	async function getPresignedUrls(
+		files: File[]
+	): Promise<{ key: string; url: string; headers: Record<string, string> }[]> {
 		if (!token) throw new Error('Unauthorized');
 
 		const body = {
@@ -192,7 +193,7 @@
 			});
 
 			if (response.status === 401) {
-				authStore.logout();
+				// authStore.logout();
 				goto(resolve('/'));
 				return;
 			}
@@ -235,7 +236,10 @@
 			...plant,
 			photoIds: plant.photoIds // S3 keys from DB
 		};
-		photoPreview = plant.photoIds.map((key) => ({ data: '', key })) as { data: string; key?: string }[];
+		photoPreview = plant.photoIds.map((key) => ({ data: '', key })) as {
+			data: string;
+			key?: string;
+		}[];
 		showForm = true;
 		editingId = plant.id;
 	}
@@ -293,10 +297,7 @@
 				}
 
 				// Add to preview and formData
-				photoPreview = [
-					...photoPreview,
-					...uploadedKeys.map((key) => ({ data: '', key }))
-				];
+				photoPreview = [...photoPreview, ...uploadedKeys.map((key) => ({ data: '', key }))];
 				formData.photoIds = [...formData.photoIds, ...uploadedKeys];
 				success = `Uploaded ${uploadedKeys.length} photo(s) successfully!`;
 
@@ -316,7 +317,7 @@
 
 	async function submitForm(): Promise<void> {
 		if (!token) {
-			authStore.logout();
+			// authStore.logout();
 			goto(resolve('/'));
 			return;
 		}
@@ -606,25 +607,25 @@
 			<!-- Form Extended Content -->
 			{#if showForm}
 				<div class="space-y-6 lg:col-span-2">
-				<!-- Photos Section -->
-				<div
-					class="rounded-2xl border border-emerald-100 bg-white/90 p-6 shadow-md backdrop-blur"
-				>
-					<h3 class="mb-4 text-xl font-bold text-green-800">📸 Photos</h3>
+					<!-- Photos Section -->
+					<div
+						class="rounded-2xl border border-emerald-100 bg-white/90 p-6 shadow-md backdrop-blur"
+					>
+						<h3 class="mb-4 text-xl font-bold text-green-800">📸 Photos</h3>
 
-					<div class="mb-4">
-						<span class="mb-2 block text-sm font-semibold text-gray-700">
-							Upload Photos (auto-compressed to ≤2MB, first will show on overview)
-						</span>
-						<input
-							type="file"
-							bind:this={fileInput}
-							on:change={handlePhotoUpload}
-							multiple
-							accept="image/*"
-							class="w-full rounded-lg border-2 border-dashed border-emerald-300 bg-white/70 px-3 py-2"
-						/>
-					</div>
+						<div class="mb-4">
+							<span class="mb-2 block text-sm font-semibold text-gray-700">
+								Upload Photos (auto-compressed to ≤2MB, first will show on overview)
+							</span>
+							<input
+								type="file"
+								bind:this={fileInput}
+								on:change={handlePhotoUpload}
+								multiple
+								accept="image/*"
+								class="w-full rounded-lg border-2 border-dashed border-emerald-300 bg-white/70 px-3 py-2"
+							/>
+						</div>
 
 						{#if photoPreview.length > 0}
 							<div class="grid grid-cols-2 gap-4">
@@ -659,7 +660,9 @@
 											</span>
 										{/if}
 										{#if i in photoUploadProgress}
-											<div class="absolute inset-0 flex items-center justify-center rounded-lg bg-black/50">
+											<div
+												class="absolute inset-0 flex items-center justify-center rounded-lg bg-black/50"
+											>
 												<span class="text-sm text-white">{photoUploadProgress[i]}%</span>
 											</div>
 										{/if}

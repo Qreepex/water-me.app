@@ -2,7 +2,6 @@
 	import { goto } from '$app/navigation';
 	import { IMPRINT_URL, PRIVACY_POLICY_URL, WEBSITE_URL, API_BASE_URL } from '$lib/constants';
 	import { openExternalLink } from '$lib/os/browser';
-	import { authStore } from '$lib/stores/auth';
 	import { languageStore, setLanguage } from '$lib/stores/language';
 	import { tStore } from '$lib/i18n';
 	import NotificationDebug from './NotificationDebug.svelte';
@@ -21,34 +20,34 @@
 	}
 
 	async function handleLogout() {
-		await authStore.logout();
+		// await authStore.logout();
 		closeMenu();
 	}
 
 	async function handleLanguageChange(lang: 'en' | 'de' | 'es') {
 		await setLanguage(lang);
 		// Update user language in profile if logged in
-		if ($authStore.user && $authStore.token) {
-			try {
-				const response = await fetch(API_BASE_URL + '/api/user', {
-					method: 'PUT',
-					headers: {
-						'Content-Type': 'application/json',
-						Authorization: `Bearer ${$authStore.token}`
-					},
-					body: JSON.stringify({
-						language: lang
-					})
-				});
+		// if ($authStore.user && $authStore.token) {
+		// 	try {
+		// 		const response = await fetch(API_BASE_URL + '/api/user', {
+		// 			method: 'PUT',
+		// 			headers: {
+		// 				'Content-Type': 'application/json',
+		// 				Authorization: `Bearer ${$authStore.token}`
+		// 			},
+		// 			body: JSON.stringify({
+		// 				language: lang
+		// 			})
+		// 		});
 
-				if (response.ok) {
-					const updatedUser = await response.json();
-					await authStore.setUser(updatedUser);
-				}
-			} catch (err) {
-				console.error('Failed to update language preference:', err);
-			}
-		}
+		// 		if (response.ok) {
+		// 			const updatedUser = await response.json();
+		// 			await authStore.setUser(updatedUser);
+		// 		}
+		// 	} catch (err) {
+		// 		console.error('Failed to update language preference:', err);
+		// 	}
+		// }
 	}
 
 	function navigateTo(path: '/app' | '/app/profile' | '/app/manage') {
@@ -106,7 +105,7 @@
 			</div>
 
 			<!-- User Info -->
-			{#if $authStore.user}
+			<!-- {#if $authStore.user}
 				<div class="border-b border-emerald-200 bg-emerald-50 p-6">
 					<div class="flex items-center gap-3">
 						<div class="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-600">
@@ -127,7 +126,7 @@
 						</div>
 					</div>
 				</div>
-			{/if}
+			{/if} -->
 
 			<!-- Menu Items -->
 			<div class="space-y-2 p-6">

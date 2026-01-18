@@ -42,7 +42,9 @@ function translate(key: string, locale: Locale): string {
 }
 
 // Create writable store for reactive translations
-const tStoreInternal = writable<(key: string) => string>((key: string) => translate(key, activeLocale));
+const tStoreInternal = writable<(key: string) => string>((key: string) =>
+	translate(key, activeLocale)
+);
 export const tStore = { subscribe: tStoreInternal.subscribe };
 
 async function loadLocale(locale: Locale) {
@@ -76,7 +78,7 @@ async function loadLocale(locale: Locale) {
 languageStore.subscribe((nextLocale) => {
 	const normalized = normalizeLocale(nextLocale);
 	activeLocale = normalized;
-	
+
 	// Load locales and update store
 	Promise.all([
 		loadLocale(normalized),

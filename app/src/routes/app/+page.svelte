@@ -1,11 +1,9 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
 	import type { Plant } from '$lib/types/types';
 	import { goto } from '$app/navigation';
-	import { authStore } from '$lib/stores/auth';
-	import { API_BASE_URL } from '$lib/constants';
 	import { resolve } from '$app/paths';
 	import { tStore } from '$lib/i18n';
+	import { fetchWithAuth } from '$lib/auth/api';
 
 	type SortOption =
 		| 'name'
@@ -18,42 +16,15 @@
 	let loading = true;
 	let error: string | null = null;
 	let sortBy: SortOption = 'name';
-	let token: string | null = null;
-	let isInitialized = false;
-
-	authStore.subscribe((state) => {
-		token = state.token;
-		isInitialized = state.initialized;
-	});
-
-	onMount(() => {
-		// Wait for auth to initialize
-		const checkAuth = setInterval(() => {
-			if (isInitialized) {
-				clearInterval(checkAuth);
-				if (!token) {
-					goto(resolve('/'));
-					return;
-				}
-				loadPlants();
-			}
-		}, 50);
-	});
 
 	async function loadPlants() {
-		if (!token) return;
-
 		try {
-			const response = await fetch(API_BASE_URL + '/api/plants', {
-				headers: { Authorization: `Bearer ${token}` }
-			});
-
+			const response = await fetchWithAuth('/api/plants');
 			if (response.status === 401) {
-				authStore.logout();
-				goto(resolve('/'));
+				// TODO: logout
+
 				return;
 			}
-
 			if (!response.ok) throw new Error('Failed to fetch plants');
 			plants = await response.json();
 		} catch (err) {

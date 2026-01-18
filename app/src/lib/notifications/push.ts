@@ -24,7 +24,6 @@ let listenersAdded = false;
 export async function initializePushNotifications(): Promise<NotificationState> {
 	// Check if push notifications are supported on this platform
 	if (!Capacitor.isNativePlatform()) {
-		console.log('Push notifications are only supported on native platforms');
 		return notificationState;
 	}
 
