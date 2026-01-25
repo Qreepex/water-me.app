@@ -376,6 +376,16 @@
 			// Clear uploaded photos since they were successfully applied
 			uploadedPhotoKeys = [];
 			uploadTimestamps = {};
+
+			// Invalidate cache for this plant and the plants list
+			const plantId = plant?.id ?? '';
+			if (navigator.serviceWorker?.controller && plantId) {
+				navigator.serviceWorker.controller.postMessage({
+					type: 'INVALIDATE_CACHE',
+					urls: [`/api/plants/${plantId}`, '/api/plants']
+				});
+			}
+
 			setTimeout(() => goto(resolve('/manage')), 1500);
 		} catch (err) {
 			error = err instanceof Error ? err.message : 'Unknown error';

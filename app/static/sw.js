@@ -1,5 +1,6 @@
 const CACHE_NAME = 'plants-images-v1';
 const API_CACHE_NAME = 'plants-api-v1';
+const CACHE_TTL = 15 * 60 * 1000; // 15 minutes in milliseconds
 const MAX_ENTRIES = 200;
 
 self.addEventListener('install', (event) => {
@@ -9,6 +10,53 @@ self.addEventListener('install', (event) => {
 self.addEventListener('activate', (event) => {
   event.waitUntil(self.clients.claim());
 });
+
+// Listen for cache invalidation messages from the client
+self.addEventListener('message', (event) => {
+  if (event.data.type === 'INVALIDATE_CACHE') {
+    const urlsToInvalidate = event.data.urls || [];
+    (async () => {
+      const cache = await caches.open(API_CACHE_NAME);
+      
+      // Get all cached requests and delete matching ones
+      const keys = await cache.keys();
+      for (const key of keys) {
+        const keyUrl = new URL(key.url);
+        // Check if this cached request matches any of the URLs to invalidate
+        for (const invalidateUrl of urlsToInvalidate) {
+          if (keyUrl.pathname === invalidateUrl || keyUrl.pathname.includes(invalidateUrl)) {
+            await cache.delete(key);
+            console.log('Cache invalidated for:', key.url);
+          }
+        }
+      }
+    })();
+  }
+});
+
+// Helper to check if cached response is expired
+async function isCacheExpired(cache, req) {
+  const cached = await cache.match(req, { ignoreSearch: true });
+  if (!cached) return true;
+  
+  const cacheTime = cached.headers.get('X-Cache-Time');
+  if (!cacheTime) return false; // No timestamp, assume valid
+  
+  const age = Date.now() - parseInt(cacheTime, 10);
+  return age > CACHE_TTL;
+}
+
+// Helper to add timestamp to response headers
+function addCacheTimestamp(response) {
+  const cloned = response.clone();
+  const headers = new Headers(cloned.headers);
+  headers.set('X-Cache-Time', Date.now().toString());
+  return new Response(cloned.body, {
+    status: cloned.status,
+    statusText: cloned.statusText,
+    headers: headers
+  });
+}
 
 self.addEventListener('fetch', (event) => {
   const req = event.request;
@@ -34,47 +82,44 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Cache API GET requests with network-first, fall back to cache on offline
+  // Cache API GET requests with cache-first strategy (with 15min TTL)
   const isAPI = url.pathname.startsWith('/api/');
   if (isAPI && req.method === 'GET') {
     event.respondWith(
-      caches.open(API_CACHE_NAME).then(async (cache) => {
+      (async () => {
+        const cache = await caches.open(API_CACHE_NAME);
+        
+        // Check cache first - if found and not expired, return immediately
+        const cached = await cache.match(req, { ignoreSearch: true });
+        if (cached && !await isCacheExpired(cache, req)) {
+          return cached;
+        }
+        
+        // Cache expired or not found - fetch from network
         try {
           const res = await fetch(req);
           if (res && res.ok) {
-            cache.put(req, res.clone()).catch(() => {});
+            // Add timestamp to response before caching
+            const withTimestamp = addCacheTimestamp(res);
+            cache.put(req, withTimestamp.clone());
           }
           return res;
         } catch (err) {
-          const cached = await cache.match(req);
+          // No network - return cached response even if expired
           if (cached) return cached;
-          throw err;
+          return new Response(JSON.stringify({ error: { message: 'Network unavailable' } }), {
+            status: 503,
+            headers: { 'Content-Type': 'application/json' }
+          });
         }
-      })
+      })()
     );
     return;
   }
 
-  // Cache successful POST/PATCH responses (e.g., plant updates) to serve on offline
+  // Don't cache POST/PATCH requests - just pass through to network
   if (isAPI && (req.method === 'POST' || req.method === 'PATCH')) {
-    const reqClone = req.clone();
-    event.respondWith(
-      fetch(req).then((res) => {
-        if (res && res.ok && res.status < 300) {
-          // Cache the response for potential offline viewing
-          caches.open(API_CACHE_NAME).then((cache) => {
-            cache.put(reqClone, res.clone()).catch(() => {});
-          });
-        }
-        return res.clone();
-      }).catch(() => {
-        // On offline, return a basic error response
-        return new Response(JSON.stringify({ error: { message: 'Network unavailable' } }), {
-          status: 503,
-          headers: { 'Content-Type': 'application/json' }
-        });
-      })
-    );
     return;
   }
 });
+
