@@ -5,11 +5,10 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"time"
-
 	"plants-backend/middlewares"
 	"plants-backend/routes"
 	"plants-backend/services"
+	"time"
 
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
@@ -38,13 +37,26 @@ func main() {
 		log.Fatalf("failed to init s3: %v", err)
 	}
 
+	// Configure S3 bucket CORS for browser uploads
+	// This allows the frontend to make direct PUT requests to S3
+	s3AllowedOrigins := []string{
+		"https://localhost",
+		"http://localhost",
+		"*", // Allows all origins; restrict in production
+	}
+	if err := s3svc.SetupCORS(ctx, s3AllowedOrigins); err != nil {
+		log.Printf("warning: failed to setup S3 CORS: %v", err)
+	} else {
+		log.Println("S3 bucket CORS configured successfully")
+	}
+
 	allowedOrigins := []string{
 		"*",
 	}
 	cors := handlers.CORS(
 		handlers.AllowedOrigins(allowedOrigins),
-		handlers.AllowedHeaders([]string{"Authorization", "Content-Type"}),
-		handlers.ExposedHeaders([]string{"Authorization", "Content-Type"}),
+		handlers.AllowedHeaders([]string{"Authorization", "Content-Type", "*"}),
+		handlers.ExposedHeaders([]string{"Authorization", "Content-Type", "ETag"}),
 		handlers.AllowedMethods(
 			[]string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
 		),

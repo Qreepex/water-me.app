@@ -54,9 +54,9 @@ func NewS3Service(ctx context.Context) (*S3Service, error) {
 
 	return &S3Service{
 		Client:    client,
-		Presigner: s3.NewPresignClient(client, s3.WithPresignExpires(15*time.Minute)),
+		Presigner: s3.NewPresignClient(client, s3.WithPresignExpires(1*time.Hour)),
 		Bucket:    bucket,
-		URLExpire: 15 * time.Minute,
+		URLExpire: 1 * time.Hour,
 		PublicURL: os.Getenv("S3_PUBLIC_URL"),
 	}, nil
 }
@@ -131,15 +131,6 @@ func (s *S3Service) PresignPutURL(
 	return req.URL, headers, nil
 }
 
-// ObjectURL returns a public or s3 URL for viewing (if PublicURL is configured).
-func (s *S3Service) ObjectURL(key string) string {
-	if s.PublicURL != "" {
-		u, _ := url.JoinPath(s.PublicURL, key)
-		return u
-	}
-	return fmt.Sprintf("https://%s.s3.amazonaws.com/%s", s.Bucket, key)
-}
-
 // PresignGetURL generates a short-lived URL to view a private object.
 func (s *S3Service) PresignGetURL(ctx context.Context, key string) (string, error) {
 	params := &s3.GetObjectInput{Bucket: &s.Bucket, Key: &key}
@@ -159,12 +150,6 @@ func (s *S3Service) HeadObjectInfo(ctx context.Context, key string) (int64, stri
 	size := aws.ToInt64(out.ContentLength)
 	ctype := aws.ToString(out.ContentType)
 	return size, ctype, nil
-}
-
-// HeadObjectSize returns object size and verifies its existence. Deprecated: use HeadObjectInfo.
-func (s *S3Service) HeadObjectSize(ctx context.Context, key string) (int64, error) {
-	size, _, err := s.HeadObjectInfo(ctx, key)
-	return size, err
 }
 
 // DeleteObject removes an object from S3. Returns error if object doesn't exist or deletion fails.

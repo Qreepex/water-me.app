@@ -2,7 +2,6 @@ package routes
 
 import (
 	"net/http"
-
 	"plants-backend/constants"
 	"plants-backend/services"
 	"plants-backend/util"
