@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { tStore } from '$lib/i18n';
+
 	type SortOption =
 		| 'name'
 		| 'lastWatered'
@@ -21,7 +23,9 @@
 </script>
 
 <div class="flex items-center gap-3">
-	<label for="sort" class="font-semibold text-[var(--text-light-main)]">Sort by:</label>
+	<label for="sort" class="font-semibold text-[var(--text-light-main)]"
+		>{$tStore('plants.sortBy')}:</label
+	>
 	<select
 		id="sort"
 		value={sortBy}

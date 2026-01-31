@@ -1,5 +1,5 @@
 {
-	"app": "🌱 Water Me!",
+	"app": "Water Me!",
 	"appDescription": "Take care of your green friends",
 	"language": "Language",
 	"logout": "Logout",
@@ -16,5 +16,7 @@
 	"selectOverdue": "Select Overdue",
 	"edit": "Edit",
 	"delete": "Delete",
-	"reset": "Reset"
+	"reset": "Reset",
+	"plant": "Plant",
+	"plants": "Plants"
 }

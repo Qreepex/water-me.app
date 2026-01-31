@@ -1,5 +1,5 @@
 {
-	"app": "🌱 Water Me!",
+	"app": "Water Me!",
 	"appDescription": "Kümmere dich um deine grünen Freunde",
 	"language": "Sprache",
 	"logout": "Abmelden",
@@ -8,5 +8,7 @@
 	"success": "Erfolg",
 	"cancel": "Abbrechen",
 	"save": "Speichern",
-	"close": "Schließen"
+	"close": "Schließen",
+	"plant": "Pflanze",
+	"plants": "Pflanzen"
 }

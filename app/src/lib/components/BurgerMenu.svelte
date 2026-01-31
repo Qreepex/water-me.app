@@ -57,19 +57,19 @@
 		class="block rounded-lg px-4 py-3 text-base text-emerald-700 transition-colors hover:bg-emerald-50"
 		onclick={() => openExternalLink(WEBSITE_URL)}
 	>
-		Website
+		{$tStore('menu.website')}
 	</button>
 	<button
 		class="block rounded-lg px-4 py-3 text-base text-emerald-700 transition-colors hover:bg-emerald-50"
 		onclick={() => openExternalLink(PRIVACY_POLICY_URL)}
 	>
-		Privacy Policy
+		{$tStore('menu.privacyPolicy')}
 	</button>
 	<button
 		class="block rounded-lg px-4 py-3 text-base text-emerald-700 transition-colors hover:bg-emerald-50"
 		onclick={() => openExternalLink(IMPRINT_URL)}
 	>
-		Impressum
+		{$tStore('menu.imprint')}
 	</button>
 </div>
 

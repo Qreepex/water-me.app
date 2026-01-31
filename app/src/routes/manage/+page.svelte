@@ -87,7 +87,7 @@
 <PageContainer>
 	<!-- Header -->
 	<PageHeader icon="🌿" title="My Plants" description="Manage your plant collection">
-		<Button variant="primary" onclick={createNewPlant} text="newPlant" />
+		<Button variant="primary" onclick={createNewPlant} text="plants.newPlant" />
 	</PageHeader>
 
 	<!-- Messages -->

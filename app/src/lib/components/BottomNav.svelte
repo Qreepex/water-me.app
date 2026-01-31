@@ -3,9 +3,11 @@
 	import { resolve } from '$app/paths';
 	import { page } from '$app/stores';
 	import Burger from '$lib/assets/Burger.svg.svelte';
+	import Can from '$lib/assets/Can.svg.svelte';
 	import Home from '$lib/assets/Home.svg.svelte';
-	import Info from '$lib/assets/Info.svg.svelte';
 	import PenPaper from '$lib/assets/PenPaper.svg.svelte';
+	import SunFlower from '$lib/assets/SunFlower.svg.svelte';
+	import { tStore } from '$lib/i18n';
 	import BurgerMenu from './BurgerMenu.svelte';
 
 	let showMenu = $state(false);
@@ -39,7 +41,7 @@
 			aria-label="Home"
 		>
 			<Home isActive={isActive('/')} />
-			<span class="text-xs font-medium">Home</span>
+			<span class="text-xs font-medium">{$tStore('menu.home')}</span>
 		</button>
 
 		<!-- Water -->
@@ -52,8 +54,8 @@
 				: 'text-gray-600'}"
 			aria-label="Water"
 		>
-			<Info isActive={isActive('/water')} />
-			<span class="text-xs font-medium">Water</span>
+			<Can />
+			<span class="text-xs font-medium">{$tStore('menu.water')}</span>
 		</button>
 
 		<!-- Manage -->
@@ -66,8 +68,8 @@
 				: 'text-gray-600'}"
 			aria-label="Manage"
 		>
-			<PenPaper isActive={isActive('/manage')} />
-			<span class="text-xs font-medium">Manage</span>
+			<SunFlower isActive={isActive('/manage')} />
+			<span class="text-xs font-medium">{$tStore('menu.garden')}</span>
 		</button>
 
 		<!-- Menu -->
@@ -86,7 +88,7 @@
 
 <!-- Menu Overlay -->
 {#if showMenu}
-	<div class="fixed inset-0 z-50 overflow-y-auto bg-white">
+	<div class="fixed inset-0 bottom-20 z-50 overflow-y-auto bg-white">
 		<div class="pt-safe pb-safe flex items-center justify-between border-b border-emerald-200 p-6">
 			<h2 class="text-2xl font-bold text-emerald-700">Settings</h2>
 			<button

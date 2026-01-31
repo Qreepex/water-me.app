@@ -9,7 +9,7 @@
 	import PageHeader from '$lib/components/layout/PageHeader.svelte';
 	import LoadingSpinner from '$lib/components/ui/LoadingSpinner.svelte';
 	import EmptyState from '$lib/components/ui/EmptyState.svelte';
-	import Alert from '$lib/components/ui/Alert.svelte';
+	import Alert from '$lib/components/ui/Message.svelte';
 	import { getPlantsStore } from '$lib/stores/plants.svelte';
 	import type { SortOption } from '$lib/utils/plant';
 	import type { Plant } from '$lib/types/api';
@@ -65,17 +65,15 @@
 
 <PageContainer>
 	<!-- Header -->
-	<PageHeader
-		icon="🌱"
-		title={$tStore('common.app')}
-		description={$tStore('common.appDescription')}
-	/>
+	<PageHeader icon="🌱" title="common.app" description="common.appDescription" />
 
 	<!-- Controls -->
 	<div class="mb-8 flex items-center justify-between">
 		<SortControls {sortBy} onSortChange={(value: SortOption) => (sortBy = value)} />
 		<div class="font-medium text-[var(--text-light-main)]">
-			{store.plants.length}{store.plants.length === 1 ? ' plant' : ' plants'}
+			{store.plants.length}{store.plants.length === 1
+				? ' ' + $tStore('common.plant')
+				: ' ' + $tStore('common.plants')}
 		</div>
 	</div>
 

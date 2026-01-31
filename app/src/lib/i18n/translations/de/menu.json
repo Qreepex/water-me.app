@@ -8,5 +8,8 @@
 	"impressum": "Impressum",
 	"build": "Build",
 	"version": "Version",
-	"pushNotifications": "Push-Benachrichtigungen (Debug)"
+	"pushNotifications": "Push-Benachrichtigungen (Debug)",
+	"garden": "Mein Garten",
+	"water": "Gießen",
+	"home": "Startseite"
 }

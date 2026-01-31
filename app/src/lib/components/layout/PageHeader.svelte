@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { tStore } from '$lib/i18n';
 	import type { Snippet } from 'svelte';
 
 	interface Props {
@@ -18,9 +19,9 @@
 				<span class="text-5xl">{icon}</span>
 			{/if}
 			<div>
-				<h1 class="text-4xl font-bold text-[var(--text-light-main)]">{title}</h1>
+				<h1 class="text-4xl font-bold text-[var(--text-light-main)]">{$tStore(title)}</h1>
 				{#if description}
-					<p class="mt-1 text-[var(--text-light-main)]/60">{description}</p>
+					<p class="mt-1 text-[var(--text-light-main)]/60">{$tStore(description)}</p>
 				{/if}
 			</div>
 		</div>

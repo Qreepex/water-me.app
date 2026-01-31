@@ -2,12 +2,7 @@
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import { fetchData } from '$lib/auth/fetch.svelte';
-	import {
-		getDaysUntilWater,
-		getPlantWaterStatus,
-		getPlantStatusText,
-		getStatusIcon
-	} from '$lib/utils/plant';
+	import { getPlantWaterStatus, getPlantStatusText, getStatusIcon } from '$lib/utils/plant';
 	import { sortByWateringPriority } from '$lib/utils/watering';
 	import WaterPlantCard from '$lib/components/WaterPlantCard.svelte';
 	import PageContainer from '$lib/components/layout/PageContainer.svelte';
@@ -18,10 +13,12 @@
 	import Alert from '$lib/components/ui/Message.svelte';
 	import { getPlantsStore } from '$lib/stores/plants.svelte';
 	import { onMount } from 'svelte';
+	import { Haptics, NotificationType } from '@capacitor/haptics';
 
 	const store = getPlantsStore();
-	let watering = $state(false);
-	let selectedIds = $state<string[]>([]);
+	let selectedForWateringId = $state<string | null>(null);
+	let wateringIds = $state<string[]>([]);
+	let dismissedIds = $state<string[]>([]);
 
 	async function loadPlants(): Promise<void> {
 		store.setLoading(true);
@@ -41,51 +38,61 @@
 		}
 	}
 
-	function togglePlant(id: string): void {
-		if (selectedIds.includes(id)) {
-			selectedIds = selectedIds.filter((sid) => sid !== id);
-		} else {
-			selectedIds = [...selectedIds, id];
+	function invalidateCache(): void {
+		if (typeof navigator !== 'undefined' && 'serviceWorker' in navigator) {
+			navigator.serviceWorker.controller?.postMessage({
+				type: 'INVALIDATE_CACHE',
+				urls: ['/api/plants']
+			});
 		}
 	}
 
-	function selectAll(): void {
-		selectedIds = store.plants.map((p) => p.id);
+	function dismissPlant(id: string): void {
+		if (!dismissedIds.includes(id)) {
+			dismissedIds = [...dismissedIds, id];
+		}
+		selectedForWateringId = null;
 	}
 
-	function selectDueToday(): void {
-		const due = store.plants.filter((p) => getDaysUntilWater(p) <= 0);
-		selectedIds = due.map((p) => p.id);
+	function isWatering(id: string): boolean {
+		return wateringIds.includes(id);
 	}
 
-	function clearSelection(): void {
-		selectedIds = [];
+	function toggleWateringSelection(id: string): void {
+		if (selectedForWateringId === id) {
+			selectedForWateringId = null;
+		} else {
+			selectedForWateringId = id;
+		}
 	}
 
-	async function waterSelectedPlants(): Promise<void> {
-		if (selectedIds.length === 0) return;
-
-		watering = true;
+	async function waterPlant(id: string): Promise<void> {
+		if (wateringIds.includes(id)) return;
+		wateringIds = [...wateringIds, id];
 		store.setError(null);
 
 		try {
 			const response = await fetchData('/api/plants/water', {
 				method: 'post',
 				body: {
-					plantIds: selectedIds
+					plantIds: [id]
 				}
 			});
 
 			if (!response.ok) {
-				const errorMsg = response.error?.message || 'Failed to water plants';
+				const errorMsg = response.error?.message || 'Failed to water plant';
 				store.setError(errorMsg);
+				try {
+					await Haptics.notification({ type: NotificationType.Error });
+				} catch {
+					console.error('Haptics notification error');
+				}
 				return;
 			}
 
-			// Update the plants locally
 			const now = new Date().toISOString();
 			const updated = store.plants.map((p) => {
-				if (selectedIds.includes(p.id) && p.watering) {
+				if (p.id === id && p.watering) {
 					return {
 						...p,
 						watering: {
@@ -98,14 +105,39 @@
 			});
 			store.setPlants(updated);
 
-			// Clear selection
-			selectedIds = [];
+			// Clear selection and invalidate cache
+			selectedForWateringId = null;
+			invalidateCache();
+
+			try {
+				await Haptics.notification({ type: NotificationType.Success });
+			} catch {
+				console.error('Haptics notification error');
+			}
 		} catch (err) {
-			const errorMsg = err instanceof Error ? err.message : 'Failed to water plants';
+			const errorMsg = err instanceof Error ? err.message : 'Failed to water plant';
 			store.setError(errorMsg);
+			try {
+				await Haptics.notification({ type: NotificationType.Error });
+			} catch {
+				console.error('Haptics notification error');
+			}
 		} finally {
-			watering = false;
+			wateringIds = wateringIds.filter((pid) => pid !== id);
 		}
+	}
+
+	function getVisiblePlants() {
+		const visible = sortByWateringPriority(store.plants).filter(
+			(p) => !dismissedIds.includes(p.id)
+		);
+		// Sort by due status - due plants first, then others
+		return visible.sort((a, b) => {
+			const statusA = getPlantWaterStatus(a);
+			const statusB = getPlantWaterStatus(b);
+			const priorityMap = { overdue: 0, 'due-soon': 1, ok: 2 };
+			return priorityMap[statusA] - priorityMap[statusB];
+		});
 	}
 
 	onMount(() => {
@@ -134,54 +166,28 @@
 		>
 			<Button variant="primary" onclick={() => goto(resolve('/manage/create'))} text="addPlant" />
 		</EmptyState>
+	{:else if getVisiblePlants().length === 0}
+		<EmptyState
+			icon="✓"
+			title="All watered!"
+			description="Your plants are all up to date. Great job!"
+		/>
 	{:else}
-		<!-- Quick Actions Bar -->
-		<div
-			class="mb-6 flex flex-wrap gap-2 rounded-lg border border-[var(--p-emerald)]/30 bg-[var(--card-light)] p-4 shadow-md backdrop-blur"
-		>
-			<Button
-				variant="secondary"
-				size="sm"
-				onclick={selectDueToday}
-				class="flex-1"
-				text="selectOverdue"
-			/>
-			<Button variant="primary" size="sm" onclick={selectAll} class="flex-1" text="selectAll" />
-			<Button variant="ghost" size="sm" onclick={clearSelection} class="flex-1" text="clear" />
-		</div>
-
 		<!-- Plant List -->
 		<div class="space-y-4">
-			{#each sortByWateringPriority(store.plants) as plant (plant.id)}
+			{#each getVisiblePlants() as plant (plant.id)}
 				<WaterPlantCard
 					{plant}
-					isSelected={selectedIds.includes(plant.id)}
 					status={getPlantWaterStatus(plant)}
 					statusText={getPlantStatusText(plant)}
 					statusIcon={getStatusIcon(getPlantWaterStatus(plant))}
-					onToggle={togglePlant}
+					isWatering={isWatering(plant.id)}
+					isSelected={selectedForWateringId === plant.id}
+					onWater={waterPlant}
+					onSelect={toggleWateringSelection}
+					onSkip={dismissPlant}
 				/>
 			{/each}
 		</div>
 	{/if}
 </PageContainer>
-
-<!-- Bottom Action Bar (Fixed) -->
-{#if selectedIds.length > 0}
-	<div
-		class="fixed right-0 bottom-0 left-0 border-t border-[var(--p-emerald)] bg-[var(--card-light)]/95 px-4 py-4 shadow-xl backdrop-blur"
-	>
-		<div class="mx-auto flex max-w-6xl items-center justify-between gap-4">
-			<div class="text-sm font-medium text-[var(--text-light-main)]">
-				{selectedIds.length}
-				{selectedIds.length === 1 ? 'plant' : 'plants'} selected
-			</div>
-			<Button
-				variant="primary"
-				onclick={waterSelectedPlants}
-				disabled={watering}
-				text={watering ? '💧 Watering...' : '💧 Water Selected'}
-			/>
-		</div>
-	</div>
-{/if}
