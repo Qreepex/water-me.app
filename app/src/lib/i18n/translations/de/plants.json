@@ -21,5 +21,14 @@
 	"readyToWater": "Wasser bekommen?",
 	"cancel": "Abbrechen",
 	"confirm": "Bestätigen",
-	"watering": "Wird gegossen…"
+	"watering": "Wird gegossen…",
+	"searchPlants": "Nach Name, Art oder Standort suchen...",
+	"sortOptions": {
+		"nameAsc": "Name (A-Z)",
+		"nameDesc": "Name (Z-A)",
+		"lastWateredAsc": "Zuletzt bewässert (älteste)",
+		"lastWateredDesc": "Zuletzt bewässert (neueste)",
+		"speciesAsc": "Art (A-Z)",
+		"speciesDesc": "Art (Z-A)"
+	}
 }

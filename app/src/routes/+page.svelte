@@ -10,7 +10,7 @@
 	import PageContent from '$lib/components/layout/PageContent.svelte';
 
 	const store = getPlantsStore();
-	let sortBy = $state<SortOption>('name');
+	let sortBy = $state<SortOption>('nameAsc');
 </script>
 
 <div class="flex h-full flex-col overflow-hidden">

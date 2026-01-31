@@ -5,7 +5,13 @@ export type SortOption =
 	| 'lastWatered'
 	| 'lastFertilized'
 	| 'wateringIntervalDays'
-	| 'mistingIntervalDays';
+	| 'mistingIntervalDays'
+	| 'nameAsc'
+	| 'nameDesc'
+	| 'lastWateredAsc'
+	| 'lastWateredDesc'
+	| 'speciesAsc'
+	| 'speciesDesc';
 
 /**
  * Format days ago as human-readable text
@@ -40,13 +46,27 @@ export function sortPlants(plants: Plant[], sortBy: SortOption): Plant[] {
 	const sorted = [...plants];
 	switch (sortBy) {
 		case 'name':
-			return sorted.sort((a, b) => a.name.localeCompare(b.name));
+		case 'nameAsc':
+			return sorted.sort((a, b) => (a.name ?? '').localeCompare(b.name ?? ''));
+		case 'nameDesc':
+			return sorted.sort((a, b) => (b.name ?? '').localeCompare(a.name ?? ''));
 		case 'lastWatered':
+		case 'lastWateredDesc':
 			return sorted.sort((a, b) => {
 				const aw = a.watering?.lastWatered ? new Date(a.watering.lastWatered).getTime() : 0;
 				const bw = b.watering?.lastWatered ? new Date(b.watering.lastWatered).getTime() : 0;
 				return bw - aw;
 			});
+		case 'lastWateredAsc':
+			return sorted.sort((a, b) => {
+				const aw = a.watering?.lastWatered ? new Date(a.watering.lastWatered).getTime() : 0;
+				const bw = b.watering?.lastWatered ? new Date(b.watering.lastWatered).getTime() : 0;
+				return aw - bw;
+			});
+		case 'speciesAsc':
+			return sorted.sort((a, b) => (a.species ?? '').localeCompare(b.species ?? ''));
+		case 'speciesDesc':
+			return sorted.sort((a, b) => (b.species ?? '').localeCompare(a.species ?? ''));
 		case 'lastFertilized':
 			return sorted.sort((a, b) => {
 				const af = a.fertilizing?.lastFertilized
