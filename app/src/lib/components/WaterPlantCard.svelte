@@ -5,6 +5,7 @@
 	import Can from '$lib/assets/Can.svg.svelte';
 	import Button from '$lib/components/ui/Button.svelte';
 	import { formatPastTimestamp, formatFutureTimestamp } from '$lib/utils/timestamp.svelte';
+	import { tStore } from '$lib/i18n';
 
 	interface Props {
 		plant: Plant;
@@ -48,12 +49,12 @@
 	function getLastWateredText(): string {
 		const lastWatered = plant.watering?.lastWatered;
 		if (!lastWatered) return 'Never watered';
-		return `Last watered: ${formatPastTimestamp(new Date(lastWatered))}`;
+		return $tStore("plants.lastWatered") + `: ${formatPastTimestamp(new Date(lastWatered))}`;
 	}
 
 	function getNextWaterText(): string {
 		if (!nextWaterDate) return 'No watering schedule';
-		return `Next water: ${formatFutureTimestamp(nextWaterDate)}`;
+		return $tStore("plants.nextWatering") + `: ${formatFutureTimestamp(nextWaterDate)}`;
 	}
 
 	onMount(async () => {
