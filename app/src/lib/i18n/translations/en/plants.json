@@ -13,11 +13,16 @@
 	"errorLoadingPlants": "Error loading plants",
 	"noPlants": "No plants yet!",
 	"startAddingPlants": "Start adding your plants to track their care.",
-	"needsWater": "🌵 Needs water!",
+	"needsWater": "Needs water!",
 	"waterSoon": "⚠️ Water soon",
 	"watered": "Watered",
 	"every": "Every",
 	"days": "days",
 	"addPlant": "Add Plant",
-	"newPlant": "New Plant"
+	"newPlant": "New Plant",
+	"readyToWater": "Ready to water?",
+	"cancel": "Cancel",
+	"confirm": "Confirm",
+	"watering": "Watering…",
+	"allPlantsWatered": "All your plants are watered! Good job!"
 }

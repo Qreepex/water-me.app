@@ -4,7 +4,7 @@ import type { Record as TranslationRecord } from './types.js';
 
 const locales = ['en', 'de', 'es'] as const;
 type Locale = (typeof locales)[number];
-const concerns = ['common', 'menu', 'auth', 'plants', 'profile'];
+const concerns = ['common', 'menu', 'auth', 'plants', 'time'] as const;
 
 const translations: Partial<Record<Locale, TranslationRecord>> = {};
 const loadedLocales = new Set<Locale>();

@@ -14,6 +14,9 @@
 	import { getPlantsStore } from '$lib/stores/plants.svelte';
 	import { onMount } from 'svelte';
 	import { Haptics, NotificationType } from '@capacitor/haptics';
+	import type { Plant } from '$lib/types/api';
+	import { SvelteDate } from 'svelte/reactivity';
+	import { tStore } from '$lib/i18n';
 
 	const store = getPlantsStore();
 	let selectedForWateringId = $state<string | null>(null);
@@ -140,6 +143,30 @@
 		});
 	}
 
+	function getDuePlants() {
+		return getVisiblePlants().filter((p) => {
+			const status = getPlantWaterStatus(p);
+			return status === 'overdue' || status === 'due-soon';
+		});
+	}
+
+	function getNotDuePlants() {
+		return getVisiblePlants().filter((p) => {
+			const status = getPlantWaterStatus(p);
+			return status === 'ok';
+		});
+	}
+
+	function getNextWaterDate(plant: Plant): Date {
+		const lastWatered = plant.watering?.lastWatered
+			? new Date(plant.watering.lastWatered)
+			: new Date();
+		const intervalDays = plant.watering?.intervalDays ?? 0;
+		const nextWaterDate = new SvelteDate(lastWatered);
+		nextWaterDate.setDate(nextWaterDate.getDate() + intervalDays);
+		return nextWaterDate;
+	}
+
 	onMount(() => {
 		loadPlants();
 	});
@@ -147,7 +174,7 @@
 
 <PageContainer gradient>
 	<!-- Header -->
-	<PageHeader icon="💧" title="Water Plants" description="Quick watering view" />
+	<PageHeader icon="💧" title="menu.waterPlants" description="menu.wateringDescription" />
 
 	<!-- Error Message -->
 	{#if store.error}
@@ -159,35 +186,74 @@
 		<LoadingSpinner message="Loading your plants..." icon="🌱" />
 	{:else if store.plants.length === 0}
 		<!-- Empty State -->
-		<EmptyState
-			icon="🪴"
-			title="No plants yet"
-			description="Add plants to start tracking watering schedules"
-		>
+		<EmptyState icon="🪴" title="plants.noPlants" description="plants.startAddingPlants">
 			<Button variant="primary" onclick={() => goto(resolve('/manage/create'))} text="addPlant" />
 		</EmptyState>
 	{:else if getVisiblePlants().length === 0}
-		<EmptyState
-			icon="✓"
-			title="All watered!"
-			description="Your plants are all up to date. Great job!"
-		/>
+		<EmptyState icon="✓" title="plants.allWatered" description="plants.allPlantsWatered" />
 	{:else}
-		<!-- Plant List -->
-		<div class="space-y-4">
-			{#each getVisiblePlants() as plant (plant.id)}
-				<WaterPlantCard
-					{plant}
-					status={getPlantWaterStatus(plant)}
-					statusText={getPlantStatusText(plant)}
-					statusIcon={getStatusIcon(getPlantWaterStatus(plant))}
-					isWatering={isWatering(plant.id)}
-					isSelected={selectedForWateringId === plant.id}
-					onWater={waterPlant}
-					onSelect={toggleWateringSelection}
-					onSkip={dismissPlant}
-				/>
-			{/each}
-		</div>
+		<!-- Due Plants Section -->
+		{#if getDuePlants().length > 0}
+			<div class="mb-8">
+				<div class="mb-4 flex items-center gap-2">
+					<h2 class="text-xl font-bold text-[var(--text-light-main)]">
+						🌵 {$tStore('plants.needsWater')}
+					</h2>
+					<span
+						class="ml-auto rounded-full bg-[var(--status-error)] px-3 py-1 text-sm font-semibold text-white"
+					>
+						{getDuePlants().length}
+					</span>
+				</div>
+				<div class="space-y-3">
+					{#each getDuePlants() as plant (plant.id)}
+						<WaterPlantCard
+							{plant}
+							status={getPlantWaterStatus(plant)}
+							statusText={getPlantStatusText(plant)}
+							statusIcon={getStatusIcon(getPlantWaterStatus(plant))}
+							isWatering={isWatering(plant.id)}
+							isSelected={selectedForWateringId === plant.id}
+							onWater={waterPlant}
+							onSelect={toggleWateringSelection}
+							showNextWater={false}
+						/>
+					{/each}
+				</div>
+			</div>
+		{/if}
+
+		<!-- Not Due Plants Section -->
+		{#if getNotDuePlants().length > 0}
+			<div>
+				<div class="mb-4 flex items-center gap-2">
+					<h2 class="text-xl font-bold text-[var(--text-light-main)]">
+						✅ {$tStore('plants.watered')}
+					</h2>
+					<span
+						class="ml-auto rounded-full bg-[var(--status-success)] px-3 py-1 text-sm font-semibold text-white"
+					>
+						{getNotDuePlants().length}
+					</span>
+				</div>
+				<div class="space-y-3">
+					{#each getNotDuePlants() as plant (plant.id)}
+						<WaterPlantCard
+							{plant}
+							status={getPlantWaterStatus(plant)}
+							statusText={getPlantStatusText(plant)}
+							statusIcon={getStatusIcon(getPlantWaterStatus(plant))}
+							isWatering={isWatering(plant.id)}
+							isSelected={selectedForWateringId === plant.id}
+							onWater={waterPlant}
+							onSelect={toggleWateringSelection}
+							onSkip={dismissPlant}
+							showNextWater={true}
+							nextWaterDate={getNextWaterDate(plant)}
+						/>
+					{/each}
+				</div>
+			</div>
+		{/if}
 	{/if}
 </PageContainer>

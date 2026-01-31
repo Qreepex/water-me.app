@@ -1,0 +1,12 @@
+{
+	"today:time": "Today {time}",
+	"yesterday:time": "Yesterday {time}",
+	"monday:time": "Monday {time}",
+	"tuesday:time": "Tuesday {time}",
+	"wednesday:time": "Wednesday {time}",
+	"thursday:time": "Thursday {time}",
+	"friday:time": "Friday {time}",
+	"saturday:time": "Saturday {time}",
+	"sunday:time": "Sunday {time}",
+	"tomorrow:time": "Tomorrow {time}"
+}

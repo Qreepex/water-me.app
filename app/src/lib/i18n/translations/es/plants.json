@@ -17,5 +17,9 @@
 	"waterSoon": "Regar pronto",
 	"watered": "Regada",
 	"every": "Cada",
-	"days": "días"
+	"days": "días",
+	"readyToWater": "¿Listo para regar?",
+	"cancel": "Cancelar",
+	"confirm": "Confirmar",
+	"watering": "Regando…"
 }

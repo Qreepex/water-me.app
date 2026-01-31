@@ -81,7 +81,7 @@
 			aria-label="Menu"
 		>
 			<Burger isActive={showMenu} />
-			<span class="text-xs font-medium">Menu</span>
+			<span class="text-xs font-medium">{$tStore('menu.menu')}</span>
 		</button>
 	</div>
 </div>

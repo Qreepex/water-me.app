@@ -1,8 +1,9 @@
 <script lang="ts">
 	import ButtonSpinner from '$lib/assets/ButtonSpinner.svelte';
 	import { tStore } from '$lib/i18n';
+	import type { Snippet } from 'svelte';
 
-	type Variant = 'primary' | 'secondary' | 'danger' | 'ghost';
+	type Variant = 'primary' | 'secondary' | 'danger' | 'ghost' | 'water';
 	type Size = 'sm' | 'md' | 'lg';
 
 	interface Props {
@@ -15,6 +16,7 @@
 		text: string;
 		class?: string;
 		icon?: string;
+		iconComponent?: Snippet;
 	}
 
 	const {
@@ -26,8 +28,11 @@
 		loadingText = 'loading',
 		text,
 		class: className = '',
-		icon
+		icon,
+		iconComponent
 	}: Props = $props();
+
+	const Icon = $derived(iconComponent);
 
 	const variantClasses: Record<Variant, string> = {
 		primary:
@@ -35,7 +40,9 @@
 		secondary: 'bg-[var(--status-success)] text-white hover:opacity-90 font-medium',
 		danger: 'bg-[var(--status-error)] text-white hover:opacity-90 font-medium',
 		ghost:
-			'bg-transparent border-2 border-[var(--p-emerald)] text-[var(--text-light-main)] hover:bg-[var(--bg-light)] font-medium'
+			'bg-transparent border-2 border-[var(--p-emerald)] text-[var(--text-light-main)] hover:bg-[var(--bg-light)] font-medium',
+		water:
+			'bg-[var(--status-info)] text-white hover:opacity-90 font-semibold shadow-[0_4px_14px_rgba(33,158,188,0.4)]'
 	};
 
 	const sizeClasses: Record<Size, string> = {
@@ -57,9 +64,13 @@
 			<ButtonSpinner />
 			{$tStore(loadingText)}
 		</span>
-	{:else if icon}
+	{:else if icon || iconComponent}
 		<span class="inline-flex items-center gap-2">
-			<span>{icon}</span>
+			{#if iconComponent}
+				<Icon />
+			{:else if icon}
+				<span>{icon}</span>
+			{/if}
 			<span>{$tStore(text)}</span>
 		</span>
 	{:else}

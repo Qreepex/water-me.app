@@ -13,6 +13,7 @@
 	"imprint": "Imprint",
 	"backToPlants": "Back to Plants",
 	"garden": "My Garden",
-	"water": "Water",
-	"home": "Home"
+	"water": "Watering",
+	"home": "Home",
+	"wateringDescription": "They deserve some water today!"
 }

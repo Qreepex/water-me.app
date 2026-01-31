@@ -2,9 +2,9 @@
 	import type { Plant } from '$lib/types/api';
 	import { getImageObjectURL, revokeObjectURL } from '$lib/utils/imageCache';
 	import { onMount, onDestroy } from 'svelte';
-	import WaterDrop from '$lib/assets/WaterDrop.svg.svelte';
 	import Can from '$lib/assets/Can.svg.svelte';
-	import { daysAgo } from '$lib/utils/plant';
+	import Button from '$lib/components/ui/Button.svelte';
+	import { formatPastTimestamp, formatFutureTimestamp } from '$lib/utils/timestamp.svelte';
 
 	interface Props {
 		plant: Plant;
@@ -13,9 +13,10 @@
 		statusIcon: string;
 		isWatering?: boolean;
 		isSelected?: boolean;
+		showNextWater?: boolean;
+		nextWaterDate?: Date;
 		onWater: (id: string) => void;
 		onSelect: (id: string) => void;
-		onSkip: (id: string) => void;
 	}
 
 	const {
@@ -25,9 +26,10 @@
 		statusIcon,
 		isWatering = false,
 		isSelected = false,
+		showNextWater = false,
+		nextWaterDate,
 		onWater,
-		onSelect,
-		onSkip
+		onSelect
 	}: Props = $props();
 
 	let previewUrl = $state<string | null>(null);
@@ -46,7 +48,12 @@
 	function getLastWateredText(): string {
 		const lastWatered = plant.watering?.lastWatered;
 		if (!lastWatered) return 'Never watered';
-		return `Last watered: ${daysAgo(lastWatered)}`;
+		return `Last watered: ${formatPastTimestamp(new Date(lastWatered))}`;
+	}
+
+	function getNextWaterText(): string {
+		if (!nextWaterDate) return 'No watering schedule';
+		return `Next water: ${formatFutureTimestamp(nextWaterDate)}`;
 	}
 
 	onMount(async () => {
@@ -63,11 +70,11 @@
 </script>
 
 <div
-	class="w-full rounded-2xl border-2 bg-[var(--card-light)] p-4 shadow-md backdrop-blur {`border-[var(--p-emerald)]/30 ${getStatusColor(
+	class="w-full overflow-hidden rounded-2xl border-2 bg-[var(--card-light)] shadow-md backdrop-blur transition hover:shadow-lg {`border-[var(--p-emerald)]/30 ${getStatusColor(
 		status
 	)}`}"
 >
-	<div class="flex items-center gap-4">
+	<div class="flex items-center gap-4 p-4">
 		<!-- Photo -->
 		{#if previewUrl}
 			<img
@@ -86,59 +93,65 @@
 		<!-- Plant Info -->
 		<div class="flex-1 text-left">
 			<div class="mb-1 flex items-center gap-2">
-				<span class="text-xl">{statusIcon}</span>
 				<h3 class="text-lg font-bold text-[var(--text-light-main)]">{plant.name}</h3>
 			</div>
-			<p class="mb-1 text-sm text-[var(--text-light-main)]/60 italic">{plant.species}</p>
-			<p class="mb-2 text-sm font-medium text-[var(--text-light-main)]">{statusText}</p>
+			<p class="mb-2 text-sm text-[var(--text-light-main)]/60 italic">{plant.species}</p>
+
+			<!-- Status and Info -->
+			<div class="flex items-center gap-2">
+				<span class="text-lg">{statusIcon}</span>
+				<span class="text-xs font-medium text-[var(--text-light-main)]">{statusText}</span>
+			</div>
 
 			<!-- Additional Info -->
-			<div class="space-y-1 text-xs text-[var(--text-light-main)]/70">
-				{#if status !== 'overdue' && status !== 'due-soon'}
-					<p>{getLastWateredText()}</p>
+			{#if status !== 'overdue' && status !== 'due-soon'}
+				{#if showNextWater}
+					<p class="mt-1 text-xs text-[var(--text-light-main)]/70">{getNextWaterText()}</p>
+				{:else}
+					<p class="mt-1 text-xs text-[var(--text-light-main)]/70">{getLastWateredText()}</p>
 				{/if}
-				{#if plant.location?.room}
-					<p>📍 {plant.location.room}</p>
-				{/if}
-				{#if plant.notes}
-					<p>📝 {plant.notes}</p>
-				{/if}
-			</div>
+			{/if}
+
+			{#if plant.location?.room}
+				<p class="mt-1 text-xs text-[var(--text-light-main)]/70">📍 {plant.location.room}</p>
+			{/if}
 		</div>
 	</div>
 
 	<!-- Two-Step Action Area -->
 	{#if !isSelected}
 		<!-- First Step: Select to Confirm -->
-		<button
-			class="mt-4 w-full rounded-xl border-2 border-[var(--p-emerald)]/40 bg-[var(--p-emerald)]/5 px-4 py-3 text-center font-semibold text-[var(--text-light-main)] transition hover:bg-[var(--p-emerald)]/10"
-			onclick={() => onSelect(plant.id)}
-			aria-label="Select to confirm watering"
-		>
-			<div class="flex items-center justify-center gap-2">
-				<Can class="h-5 w-5" />
-				<span>Ready to water?</span>
-			</div>
-		</button>
+		<div class="p-3">
+			<Button
+				variant="water"
+				size="md"
+				onclick={() => onSelect(plant.id)}
+				iconComponent={Can}
+				text="plants.readyToWater"
+				class="w-full"
+			/>
+		</div>
 	{:else}
 		<!-- Second Step: Confirm Action Buttons -->
-		<div class="mt-4 grid grid-cols-2 gap-3">
-			<button
-				class="flex items-center justify-center gap-2 rounded-xl border border-[var(--p-emerald)]/40 bg-white px-3 py-3 text-sm font-semibold text-[var(--text-light-main)] transition hover:bg-[var(--bg-light)]"
+		<div class="flex gap-2 p-3">
+			<Button
+				variant="danger"
+				size="md"
 				onclick={() => onSelect(plant.id)}
-				aria-label="Cancel"
-			>
-				<span>Cancel</span>
-			</button>
-			<button
-				class="flex items-center justify-center gap-2 rounded-xl bg-[var(--p-emerald)] px-3 py-3 text-sm font-semibold text-[var(--text-light-main)] transition hover:bg-[var(--p-emerald-dark)] disabled:opacity-60"
+				text="plants.cancel"
+				class="flex-1"
+			/>
+			<Button
+				variant="water"
+				size="md"
 				onclick={() => onWater(plant.id)}
 				disabled={isWatering}
-				aria-label="Confirm watering"
-			>
-				<Can class="h-5 w-5" />
-				<span>{isWatering ? 'Watering…' : 'Confirm'}</span>
-			</button>
+				loading={isWatering}
+				loadingText="plants.watering"
+				iconComponent={Can}
+				text={isWatering ? 'plants.watering' : 'plants.confirm'}
+				class="flex-1"
+			/>
 		</div>
 	{/if}
 </div>

@@ -17,5 +17,9 @@
 	"waterSoon": "Bald bewässern",
 	"watered": "Bewässert",
 	"every": "Alle",
-	"days": "Tage"
+	"days": "Tage",
+	"readyToWater": "Wasser bekommen?",
+	"cancel": "Abbrechen",
+	"confirm": "Bestätigen",
+	"watering": "Wird gegossen…"
 }
