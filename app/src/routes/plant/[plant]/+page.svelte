@@ -25,7 +25,7 @@
 
 	const primaryPhotoId = $derived.by(() => plant?.photoIds?.[0] ?? null);
 	const primaryPhotoUrl = $derived.by(() =>
-		primaryPhotoId ? imageUrls[primaryPhotoId] ?? null : null
+		primaryPhotoId ? (imageUrls[primaryPhotoId] ?? null) : null
 	);
 
 	$effect(() => {
@@ -36,7 +36,8 @@
 		(plant.growthHistory ?? []).forEach((entry) => entry.photoId && ids.add(entry.photoId));
 
 		const idList = Array.from(ids);
-		const remoteUrls = ((plant as unknown as { photoUrls?: string[] })?.photoUrls ?? []) as string[];
+		const remoteUrls = ((plant as unknown as { photoUrls?: string[] })?.photoUrls ??
+			[]) as string[];
 		const idToRemote = new Map<string, string>();
 		(plant.photoIds ?? []).forEach((id, index) => {
 			const url = remoteUrls[index];
@@ -85,17 +86,13 @@
 
 	function formatBool(value?: boolean): string {
 		if (value === undefined || value === null) return '-';
-		return value ? $tStore('common.yes') ?? 'Yes' : $tStore('common.no') ?? 'No';
+		return value ? ($tStore('common.yes') ?? 'Yes') : ($tStore('common.no') ?? 'No');
 	}
 </script>
 
 <div class="flex h-full min-h-0 flex-col overflow-hidden">
 	<div class="flex-shrink-0">
-		<PageHeader
-			icon="🪴"
-			title={plant?.name ?? 'plants.myPlants'}
-			description={plant?.species}
-		>
+		<PageHeader icon="🪴" title={plant?.name ?? 'plants.myPlants'} description={plant?.species}>
 			<div class="flex flex-col gap-2 sm:flex-row sm:items-center">
 				<Button variant="ghost" size="sm" text="common.back" icon="←" onclick={backToPlants} />
 				<Button variant="primary" size="sm" text="common.edit" icon="✏️" onclick={editPlant} />
@@ -107,13 +104,9 @@
 		{#if store.loading}
 			<LoadingSpinner message={$tStore('plants.loadingPlants')} icon="🌿" />
 		{:else if !plant}
-			<Alert
-				type="error"
-				title="common.error"
-				description="plants.notFound"
-			/>
+			<Alert type="error" title="common.error" description="plants.notFound" />
 		{:else}
-			<div class="min-h-0 flex-1 h-full overflow-y-auto pb-24">
+			<div class="h-full min-h-0 flex-1 overflow-y-auto pb-24">
 				<div class="space-y-6">
 					<Card rounded="2xl">
 						<div class="grid gap-6 md:grid-cols-[minmax(0,320px)_1fr]">
@@ -121,11 +114,7 @@
 								class="flex h-64 items-center justify-center overflow-hidden rounded-t-2xl bg-gradient-to-br from-[var(--p-emerald)] to-[var(--p-emerald-dark)] md:h-full md:rounded-l-2xl md:rounded-tr-none"
 							>
 								{#if primaryPhotoUrl}
-									<img
-										src={primaryPhotoUrl}
-										alt={plant.name}
-										class="h-full w-full object-cover"
-									/>
+									<img src={primaryPhotoUrl} alt={plant.name} class="h-full w-full object-cover" />
 								{:else}
 									<div class="text-7xl">🌿</div>
 								{/if}
@@ -173,9 +162,7 @@
 											{$tStore('plants.lastWatered')}
 										</div>
 										<div class="mt-1 text-sm text-[var(--text-light-main)]">
-											{plant.watering?.lastWatered
-												? daysAgo(plant.watering.lastWatered)
-												: '-'}
+											{plant.watering?.lastWatered ? daysAgo(plant.watering.lastWatered) : '-'}
 										</div>
 									</div>
 									<div class="rounded-xl bg-[var(--status-warn)]/10 p-4">
@@ -219,10 +206,10 @@
 								{$tStore('plants.careDetails')}
 							</h2>
 							<div class="mt-4 grid gap-4 md:grid-cols-2">
-									<div class="rounded-xl border border-[var(--p-emerald)]/20 bg-white/60 p-4">
-										<div class="text-sm font-semibold text-[var(--p-emerald-dark)]">
-											{$tStore('plants.wateringTitle')}
-										</div>
+								<div class="rounded-xl border border-[var(--p-emerald)]/20 bg-white/60 p-4">
+									<div class="text-sm font-semibold text-[var(--p-emerald-dark)]">
+										{$tStore('plants.wateringTitle')}
+									</div>
 									<div class="mt-2 space-y-1 text-sm text-[var(--text-light-main)]">
 										<div>
 											{$tStore('plants.wateringMethod')}: {plant.watering?.method ?? '-'}
@@ -249,10 +236,13 @@
 												{$tStore('plants.npkRatio')}: {plant.fertilizing?.npkRatio ?? '-'}
 											</div>
 											<div>
-												{$tStore('plants.concentration')}: {plant.fertilizing?.concentrationPercent ?? '-'}%
+												{$tStore('plants.concentration')}: {plant.fertilizing
+													?.concentrationPercent ?? '-'}%
 											</div>
 											<div>
-												{$tStore('plants.lastFertilized')}: {formatDate(plant.fertilizing?.lastFertilized)}
+												{$tStore('plants.lastFertilized')}: {formatDate(
+													plant.fertilizing?.lastFertilized
+												)}
 											</div>
 										</div>
 									</div>
@@ -265,16 +255,20 @@
 										</div>
 										<div class="mt-2 space-y-1 text-sm text-[var(--text-light-main)]">
 											<div>
-												{$tStore('plants.targetHumidity')}: {plant.humidity?.targetHumidityPct ?? '-'}%
+												{$tStore('plants.targetHumidity')}: {plant.humidity?.targetHumidityPct ??
+													'-'}%
 											</div>
 											<div>
-												{$tStore('plants.mistingInterval')}: {plant.humidity?.mistingIntervalDays ?? '-'}
+												{$tStore('plants.mistingInterval')}: {plant.humidity?.mistingIntervalDays ??
+													'-'}
 											</div>
 											<div>
 												{$tStore('plants.lastMisted')}: {formatDate(plant.humidity?.lastMisted)}
 											</div>
 											<div>
-												{$tStore('plants.humidifier')}: {formatBool(plant.humidity?.requiresHumidifier)}
+												{$tStore('plants.humidifier')}: {formatBool(
+													plant.humidity?.requiresHumidifier
+												)}
 											</div>
 										</div>
 									</div>
@@ -309,10 +303,13 @@
 										</div>
 										<div class="mt-2 space-y-1 text-sm text-[var(--text-light-main)]">
 											<div>
-												{$tStore('plants.winterRest')}: {formatBool(plant.seasonality?.winterRestPeriod)}
+												{$tStore('plants.winterRest')}: {formatBool(
+													plant.seasonality?.winterRestPeriod
+												)}
 											</div>
 											<div>
-												{$tStore('plants.winterWaterFactor')}: {plant.seasonality?.winterWaterFactor ?? '-'}
+												{$tStore('plants.winterWaterFactor')}: {plant.seasonality
+													?.winterWaterFactor ?? '-'}
 											</div>
 											<div>
 												{$tStore('plants.minTemp')}: {plant.seasonality?.minTempCelsius ?? '-'}°C
@@ -344,7 +341,9 @@
 													class="h-full w-full object-cover"
 												/>
 											{:else}
-												<div class="flex h-full w-full items-center justify-center text-2xl">🌿</div>
+												<div class="flex h-full w-full items-center justify-center text-2xl">
+													🌿
+												</div>
 											{/if}
 										</div>
 									{/each}
@@ -435,7 +434,9 @@
 											</div>
 											<div class="mt-3 grid gap-3 md:grid-cols-[96px_1fr]">
 												{#if entry.photoId}
-													<div class="h-24 w-24 overflow-hidden rounded-lg bg-[var(--p-emerald)]/10">
+													<div
+														class="h-24 w-24 overflow-hidden rounded-lg bg-[var(--p-emerald)]/10"
+													>
 														{#if imageUrls[entry.photoId]}
 															<img
 																src={imageUrls[entry.photoId]}

@@ -25,7 +25,6 @@
 	}
 </script>
 
-
 <div class="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center sm:gap-3">
 	<select
 		id="sort"

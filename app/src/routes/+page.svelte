@@ -26,11 +26,7 @@
 		{:else if store.error}
 			<Alert type="error" title="Error loading plants" description={store.error} />
 		{:else if store.plants.length === 0}
-			<EmptyState
-				icon="🪴"
-				title="plants.noPlants"
-				description="plants.startAddingPlants"
-			/>
+			<EmptyState icon="🪴" title="plants.noPlants" description="plants.startAddingPlants" />
 		{:else}
 			<!-- Scrollable Plant List -->
 			<PlantList plants={store.plants} {sortBy} onSortChange={(value) => (sortBy = value)} />

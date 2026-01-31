@@ -125,7 +125,8 @@ func ValidateCreatePlantRequest(req types.CreatePlantRequest) []types.Validation
 		)
 	}
 
-	if req.Sunlight != "" && !isSunlightRequirement(req.Sunlight) {
+	// Sunlight is optional, but if provided must be valid
+	if req.Sunlight != nil && !isSunlightRequirement(*req.Sunlight) {
 		errors = append(
 			errors,
 			types.ValidationError{
@@ -151,8 +152,10 @@ func ValidateCreatePlantRequest(req types.CreatePlantRequest) []types.Validation
 		errors = append(errors, validateLocation(*req.Location)...)
 	}
 
-	// Watering validation
-	errors = append(errors, validateWateringConfig(req.Watering)...)
+	// Watering validation (optional)
+	if req.Watering != nil {
+		errors = append(errors, validateWateringConfig(*req.Watering)...)
+	}
 
 	// Fertilizing validation
 	if req.Fertilizing != nil {

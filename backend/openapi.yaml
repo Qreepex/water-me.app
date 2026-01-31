@@ -586,14 +586,7 @@ components:
         - name
         - species
         - isToxic
-        - sunlight
         - preferedTemperature
-        - location
-        - watering
-        - fertilizing
-        - humidity
-        - soil
-        - seasonality
         - pestHistory
         - flags
         - notes
@@ -622,15 +615,21 @@ components:
           type: boolean
           example: true
         sunlight:
-          $ref: '#/components/schemas/SunlightRequirement'
+          allOf:
+            - $ref: '#/components/schemas/SunlightRequirement'
+          nullable: true
         preferedTemperature:
           type: number
           format: double
           example: 22.0
         location:
-          $ref: '#/components/schemas/Location'
+          allOf:
+            - $ref: '#/components/schemas/Location'
+          nullable: true
         watering:
-          $ref: '#/components/schemas/WateringConfig'
+          allOf:
+            - $ref: '#/components/schemas/WateringConfig'
+          nullable: true
         fertilizing:
           $ref: '#/components/schemas/FertilizerConfig'
         humidity:
@@ -670,16 +669,8 @@ components:
       type: object
       required:
         - name
-        - species
         - isToxic
-        - sunlight
         - preferedTemperature
-        - location
-        - watering
-        - fertilizing
-        - humidity
-        - soil
-        - seasonality
         - pestHistory
         - flags
         - notes
@@ -693,32 +684,45 @@ components:
           example: Monstera Deliciosa
         species:
           type: string
-          minLength: 1
           maxLength: 200
           example: Monstera deliciosa
         isToxic:
           type: boolean
           example: true
         sunlight:
-          $ref: '#/components/schemas/SunlightRequirement'
+          allOf:
+            - $ref: '#/components/schemas/SunlightRequirement'
+          nullable: true
         preferedTemperature:
           type: number
           format: double
           minimum: -50
-          maximum: 60
+          maximum: 100
           example: 22.0
         location:
-          $ref: '#/components/schemas/Location'
+          allOf:
+            - $ref: '#/components/schemas/Location'
+          nullable: true
         watering:
-          $ref: '#/components/schemas/WateringConfig'
+          allOf:
+            - $ref: '#/components/schemas/WateringConfig'
+          nullable: true
         fertilizing:
-          $ref: '#/components/schemas/FertilizerConfig'
+          allOf:
+            - $ref: '#/components/schemas/FertilizerConfig'
+          nullable: true
         humidity:
-          $ref: '#/components/schemas/HumidityConfig'
+          allOf:
+            - $ref: '#/components/schemas/HumidityConfig'
+          nullable: true
         soil:
-          $ref: '#/components/schemas/SoilConfig'
+          allOf:
+            - $ref: '#/components/schemas/SoilConfig'
+          nullable: true
         seasonality:
-          $ref: '#/components/schemas/SeasonalAdjustments'
+          allOf:
+            - $ref: '#/components/schemas/SeasonalAdjustments'
+          nullable: true
         pestHistory:
           type: array
           items:

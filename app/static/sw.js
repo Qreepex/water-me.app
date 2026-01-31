@@ -14,20 +14,56 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('message', (event) => {
   if (event.data.type === 'INVALIDATE_CACHE') {
     const urlsToInvalidate = event.data.urls || [];
+    console.log('📢 Cache invalidation requested for:', urlsToInvalidate);
     (async () => {
       const cache = await caches.open(API_CACHE_NAME);
       
       // Get all cached requests and delete matching ones
       const keys = await cache.keys();
+      console.log('📦 Cached URLs before invalidation:', keys.map(k => k.url));
+      
+      let deletedCount = 0;
       for (const key of keys) {
         const keyUrl = new URL(key.url);
+        const keyPath = keyUrl.pathname;
+        console.log('🔍 Checking:', keyPath);
+        
         // Check if this cached request matches any of the URLs to invalidate
         for (const invalidateUrl of urlsToInvalidate) {
-          if (keyUrl.pathname === invalidateUrl || keyUrl.pathname.includes(invalidateUrl)) {
+          // Exact match or exact match with trailing slash
+          if (keyPath === invalidateUrl || keyPath === invalidateUrl + '/') {
             await cache.delete(key);
-            console.log('Cache invalidated for:', key.url);
+            console.log('✓ Deleted exact match:', keyPath);
+            deletedCount++;
+          }
+          // For /api/plants/ID patterns, check if the invalidateUrl is the base path
+          else if (invalidateUrl.endsWith('/ID')) {
+            // This shouldn't happen - placeholder paths should not be in invalidation URLs
+          }
+          // Check if it's a detail URL that should be deleted when invalidating list URL
+          else if (invalidateUrl === '/api/plants' && keyPath.match(/^\/api\/plants\/[a-f0-9]{24}$/)) {
+            // When invalidating /api/plants, also invalidate all /api/plants/ID endpoints
+            await cache.delete(key);
+            console.log('✓ Deleted detail URL when invalidating list:', keyPath);
+            deletedCount++;
+          }
+          // Check if it's a list URL that should be deleted when invalidating a detail URL
+          else if (invalidateUrl.match(/^\/api\/plants\/[a-f0-9]{24}$/) && keyPath === '/api/plants') {
+            // When invalidating /api/plants/ID, also invalidate /api/plants list
+            await cache.delete(key);
+            console.log('✓ Deleted list URL when invalidating detail:', keyPath);
+            deletedCount++;
           }
         }
+      }
+      
+      console.log(`✓ Cache invalidation complete. Deleted ${deletedCount} entries.`);
+      const keysAfter = await cache.keys();
+      console.log('📦 Cached URLs after invalidation:', keysAfter.map(k => k.url));
+      
+      // Notify the client that cache invalidation is complete (if MessageChannel port provided)
+      if (event.ports && event.ports[0]) {
+        event.ports[0].postMessage({ success: true });
       }
     })();
   }

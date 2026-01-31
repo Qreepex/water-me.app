@@ -266,18 +266,18 @@ export interface components {
 			species: string;
 			/** @example true */
 			isToxic: boolean;
-			sunlight: components['schemas']['SunlightRequirement'];
+			sunlight?: components['schemas']['SunlightRequirement'] | null;
 			/**
 			 * Format: double
 			 * @example 22
 			 */
 			preferedTemperature: number;
-			location: components['schemas']['Location'];
-			watering: components['schemas']['WateringConfig'];
-			fertilizing: components['schemas']['FertilizerConfig'];
-			humidity: components['schemas']['HumidityConfig'];
-			soil: components['schemas']['SoilConfig'];
-			seasonality: components['schemas']['SeasonalAdjustments'];
+			location?: components['schemas']['Location'] | null;
+			watering?: components['schemas']['WateringConfig'] | null;
+			fertilizing?: components['schemas']['FertilizerConfig'];
+			humidity?: components['schemas']['HumidityConfig'];
+			soil?: components['schemas']['SoilConfig'];
+			seasonality?: components['schemas']['SeasonalAdjustments'];
 			pestHistory: components['schemas']['PestInfection'][];
 			flags: components['schemas']['PlantFlag'][];
 			notes: string[];
@@ -295,18 +295,18 @@ export interface components {
 			species?: string;
 			/** @example true */
 			isToxic: boolean;
-			sunlight?: components['schemas']['SunlightRequirement'];
+			sunlight?: components['schemas']['SunlightRequirement'] | null;
 			/**
 			 * Format: double
 			 * @example 22
 			 */
 			preferedTemperature: number;
-			location?: components['schemas']['Location'];
-			watering: components['schemas']['WateringConfig'];
-			fertilizing?: components['schemas']['FertilizerConfig'];
-			humidity?: components['schemas']['HumidityConfig'];
-			soil?: components['schemas']['SoilConfig'];
-			seasonality?: components['schemas']['SeasonalAdjustments'];
+			location?: components['schemas']['Location'] | null;
+			watering?: components['schemas']['WateringConfig'] | null;
+			fertilizing?: components['schemas']['FertilizerConfig'] | null;
+			humidity?: components['schemas']['HumidityConfig'] | null;
+			soil?: components['schemas']['SoilConfig'] | null;
+			seasonality?: components['schemas']['SeasonalAdjustments'] | null;
 			pestHistory: components['schemas']['PestInfection'][];
 			flags: components['schemas']['PlantFlag'][];
 			notes: string[];
@@ -567,6 +567,45 @@ export interface operations {
 			500: components['responses']['InternalError'];
 		};
 	};
+	waterPlants: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody: {
+			content: {
+				'application/json': {
+					/**
+					 * @description Array of plant IDs to mark as watered
+					 * @example [
+					 *       "507f1f77bcf86cd799439011",
+					 *       "507f191e810c19729de860ea"
+					 *     ]
+					 */
+					plantIds: string[];
+				};
+			};
+		};
+		responses: {
+			/** @description Plants watered successfully */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': {
+						/** @example true */
+						success?: boolean;
+					};
+				};
+			};
+			400: components['responses']['ValidationError'];
+			401: components['responses']['Unauthorized'];
+			500: components['responses']['InternalError'];
+		};
+	};
 	deletePlant: {
 		parameters: {
 			query?: never;
@@ -624,45 +663,6 @@ export interface operations {
 			400: components['responses']['ValidationError'];
 			401: components['responses']['Unauthorized'];
 			404: components['responses']['NotFound'];
-			500: components['responses']['InternalError'];
-		};
-	};
-	waterPlants: {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		requestBody: {
-			content: {
-				'application/json': {
-					/**
-					 * @description Array of plant IDs to mark as watered
-					 * @example [
-					 *       "507f1f77bcf86cd799439011",
-					 *       "507f191e810c19729de860ea"
-					 *     ]
-					 */
-					plantIds: string[];
-				};
-			};
-		};
-		responses: {
-			/** @description Plants watered successfully */
-			200: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': {
-						/** @example true */
-						success?: boolean;
-					};
-				};
-			};
-			400: components['responses']['ValidationError'];
-			401: components['responses']['Unauthorized'];
 			500: components['responses']['InternalError'];
 		};
 	};

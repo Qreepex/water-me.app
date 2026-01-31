@@ -29,9 +29,11 @@ export type GetResponseData<
 	M extends HttpMethod = 'get'
 > = paths[P][M] extends { responses: { 200: { content: { 'application/json': infer T } } } }
 	? T
-	: paths[P][M] extends { responses: { 200: { content?: never } } }
-		? never
-		: never;
+	: paths[P][M] extends { responses: { 201: { content: { 'application/json': infer T } } } }
+		? T
+		: paths[P][M] extends { responses: { 200: { content?: never } } }
+			? never
+			: never;
 
 export type GetRequestData<
 	P extends keyof paths,

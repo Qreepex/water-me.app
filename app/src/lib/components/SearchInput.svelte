@@ -15,13 +15,13 @@
 <div class="relative flex-1">
 	<input
 		type="text"
-		bind:value={value}
-		placeholder={placeholder}
+		bind:value
+		{placeholder}
 		aria-label={ariaLabel}
-		class="w-full rounded-lg border border-[var(--p-emerald)]/30 bg-white py-2 pl-10 pr-10 text-sm placeholder-[var(--text-light-main)]/40 transition-all focus:border-[var(--p-emerald)]/60 focus:outline-none focus:ring-2 focus:ring-[var(--p-emerald)]/20"
+		class="w-full rounded-lg border border-[var(--p-emerald)]/30 bg-white py-2 pr-10 pl-10 text-sm placeholder-[var(--text-light-main)]/40 transition-all focus:border-[var(--p-emerald)]/60 focus:ring-2 focus:ring-[var(--p-emerald)]/20 focus:outline-none"
 	/>
 	<svg
-		class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--p-emerald)]/50"
+		class="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-[var(--p-emerald)]/50"
 		fill="none"
 		stroke="currentColor"
 		viewBox="0 0 24 24"
@@ -37,7 +37,7 @@
 		<button
 			type="button"
 			onclick={clear}
-			class="absolute right-2 top-1/2 -translate-y-1/2 rounded-full p-1 text-[var(--text-light-main)]/60 transition hover:bg-[var(--p-emerald)]/10 hover:text-[var(--p-emerald-dark)]"
+			class="absolute top-1/2 right-2 -translate-y-1/2 rounded-full p-1 text-[var(--text-light-main)]/60 transition hover:bg-[var(--p-emerald)]/10 hover:text-[var(--p-emerald-dark)]"
 			aria-label="Clear search"
 		>
 			<svg viewBox="0 0 20 20" class="h-4 w-4" fill="currentColor">

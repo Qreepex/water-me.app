@@ -162,11 +162,11 @@ type Plant struct {
 	Species string `json:"species" bson:"species"`
 	IsToxic bool   `json:"isToxic" bson:"isToxic"`
 
-	Sunlight            SunlightRequirement `json:"sunlight"            bson:"sunlight"`
-	PreferedTemperature float64             `json:"preferedTemperature" bson:"preferedTemperature"`
-	Location            *Location           `json:"location,omitempty"  bson:"location,omitempty"`
+	Sunlight            *SunlightRequirement `json:"sunlight,omitempty"            bson:"sunlight,omitempty"`
+	PreferedTemperature float64              `json:"preferedTemperature" bson:"preferedTemperature"`
+	Location            *Location            `json:"location,omitempty"  bson:"location,omitempty"`
 
-	Watering    WateringConfig       `json:"watering"              bson:"watering"`
+	Watering    *WateringConfig      `json:"watering,omitempty"              bson:"watering,omitempty"`
 	Fertilizing *FertilizerConfig    `json:"fertilizing,omitempty" bson:"fertilizing,omitempty"`
 	Humidity    *HumidityConfig      `json:"humidity,omitempty"    bson:"humidity,omitempty"`
 	Soil        *SoilConfig          `json:"soil,omitempty"        bson:"soil,omitempty"`
@@ -185,13 +185,13 @@ type Plant struct {
 
 // CreatePlantRequest is the request body for creating a new plant.
 type CreatePlantRequest struct {
-	Name                string               `json:"name"`
-	Species             string               `json:"species,omitempty"`
-	IsToxic             bool                 `json:"isToxic"`
-	Sunlight            SunlightRequirement  `json:"sunlight,omitempty"`
-	PreferedTemperature float64              `json:"preferedTemperature"`
-	Location            *Location            `json:"location,omitempty"`
-	Watering            WateringConfig       `json:"watering"`
+	Name                string                `json:"name"`
+	Species             string                `json:"species,omitempty"`
+	IsToxic             bool                  `json:"isToxic"`
+	Sunlight            *SunlightRequirement  `json:"sunlight,omitempty"`
+	PreferedTemperature float64               `json:"preferedTemperature"`
+	Location            *Location             `json:"location,omitempty"`
+	Watering            *WateringConfig       `json:"watering,omitempty"`
 	Fertilizing         *FertilizerConfig    `json:"fertilizing,omitempty"`
 	Humidity            *HumidityConfig      `json:"humidity,omitempty"`
 	Soil                *SoilConfig          `json:"soil,omitempty"`

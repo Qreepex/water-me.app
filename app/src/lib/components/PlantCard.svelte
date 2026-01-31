@@ -40,7 +40,7 @@
 	tabindex="0"
 	onclick={openPlant}
 	onkeydown={onKeydown}
-	class="group cursor-pointer overflow-hidden rounded-2xl border border-[var(--p-emerald)]/30 bg-[var(--card-light)] shadow-md transition-all duration-300 hover:border-[var(--p-emerald)]/60 hover:shadow-xl hover:bg-[var(--card-light)]/80"
+	class="group cursor-pointer overflow-hidden rounded-2xl border border-[var(--p-emerald)]/30 bg-[var(--card-light)] shadow-md transition-all duration-300 hover:border-[var(--p-emerald)]/60 hover:bg-[var(--card-light)]/80 hover:shadow-xl"
 >
 	<!-- Image -->
 	<div

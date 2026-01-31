@@ -5,7 +5,7 @@
 		formData: FormData;
 	}
 
-	const { formData }: Props = $props();
+	let { formData = $bindable() }: Props = $props();
 </script>
 
 <details class="space-y-4">

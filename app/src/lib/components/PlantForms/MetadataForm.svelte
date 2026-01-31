@@ -8,7 +8,7 @@
 		newNote: string;
 	}
 
-	let { formData, newNote = $bindable() }: Props = $props();
+	let { formData = $bindable(), newNote = $bindable() }: Props = $props();
 
 	function toggleFlag(flag: PlantFlag): void {
 		if (formData.flags.includes(flag)) {

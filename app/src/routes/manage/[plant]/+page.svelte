@@ -63,6 +63,7 @@
 	let removedPhotoIds = $state<string[]>([]); // Track removed existing photos
 
 	let formData = $state<FormData>(createEmptyFormData());
+	let originalFormData = $state<FormData>(createEmptyFormData());
 
 	onMount(async () => {
 		try {
@@ -78,6 +79,7 @@
 
 			plant = response.data;
 			formData = initializeFormData();
+			originalFormData = JSON.parse(JSON.stringify(formData));
 			await loadPhotoPreviews();
 		} catch (err) {
 			error = err instanceof Error ? err.message : 'Failed to load plant';
@@ -335,49 +337,109 @@
 			);
 			const allPhotoIds = [...existingPhotoIds, ...uploadedPhotoKeys];
 
-			const updatePayload = {
-				name: formData.name,
-				species: formData.species,
-				isToxic: formData.isToxic,
-				sunlight: formData.sunlight,
-				preferedTemperature: formData.preferedTemperature,
-				location: {
+			// Helper to check if value changed
+			const hasChanged = (key: keyof FormData): boolean => {
+				return JSON.stringify(formData[key]) !== JSON.stringify(originalFormData[key]);
+			};
+
+			// Build updatePayload with only changed fields
+			type UpdatePayload = Record<string, unknown>;
+			const updatePayload: UpdatePayload = {};
+
+			// Basic info
+			if (hasChanged('name')) updatePayload.name = formData.name;
+			if (hasChanged('species')) updatePayload.species = formData.species;
+			if (hasChanged('isToxic')) updatePayload.isToxic = formData.isToxic;
+			if (hasChanged('sunlight')) updatePayload.sunlight = formData.sunlight;
+			if (hasChanged('preferedTemperature'))
+				updatePayload.preferedTemperature = formData.preferedTemperature;
+
+			// Location
+			if (hasChanged('room') || hasChanged('position') || hasChanged('isOutdoors')) {
+				updatePayload.location = {
 					room: formData.room,
 					position: formData.position,
 					isOutdoors: formData.isOutdoors
-				},
-				watering: {
+				};
+			}
+
+			// Watering
+			if (
+				hasChanged('wateringIntervalDays') ||
+				hasChanged('wateringMethod') ||
+				hasChanged('waterType')
+			) {
+				updatePayload.watering = {
 					intervalDays: formData.wateringIntervalDays,
 					method: formData.wateringMethod,
 					waterType: formData.waterType
-				},
-				fertilizing: {
+				};
+			}
+
+			// Fertilizing
+			if (
+				hasChanged('fertilizingType') ||
+				hasChanged('fertilizingIntervalDays') ||
+				hasChanged('npkRatio') ||
+				hasChanged('concentrationPercent') ||
+				hasChanged('activeInWinter')
+			) {
+				updatePayload.fertilizing = {
 					type: formData.fertilizingType,
 					intervalDays: formData.fertilizingIntervalDays,
 					npkRatio: formData.npkRatio,
 					concentrationPercent: formData.concentrationPercent,
 					activeInWinter: formData.activeInWinter
-				},
-				humidity: {
+				};
+			}
+
+			// Humidity
+			if (
+				hasChanged('targetHumidity') ||
+				hasChanged('requiresMisting') ||
+				hasChanged('mistingIntervalDays') ||
+				hasChanged('requiresHumidifier')
+			) {
+				updatePayload.humidity = {
 					targetHumidityPct: formData.targetHumidity,
 					requiresMisting: formData.requiresMisting,
 					mistingIntervalDays: formData.mistingIntervalDays,
 					requiresHumidifier: formData.requiresHumidifier
-				},
-				soil: {
+				};
+			}
+
+			// Soil
+			if (hasChanged('soilType') || hasChanged('repottingCycle') || hasChanged('soilComponents')) {
+				updatePayload.soil = {
 					type: formData.soilType,
 					repottingCycle: formData.repottingCycle,
 					components: formData.soilComponents
-				},
-				seasonality: {
+				};
+			}
+
+			// Seasonality
+			if (
+				hasChanged('winterRestPeriod') ||
+				hasChanged('winterWaterFactor') ||
+				hasChanged('minTempCelsius')
+			) {
+				updatePayload.seasonality = {
 					winterRestPeriod: formData.winterRestPeriod,
 					winterWaterFactor: formData.winterWaterFactor,
 					minTempCelsius: formData.minTempCelsius
-				},
-				flags: formData.flags,
-				notes: formData.notes,
-				photoIds: allPhotoIds
-			};
+				};
+			}
+
+			// Metadata
+			if (hasChanged('flags')) updatePayload.flags = formData.flags;
+			if (hasChanged('notes')) updatePayload.notes = formData.notes;
+
+			// Photos - only send if changed
+			if (uploadedPhotoKeys.length > 0 || removedPhotoIds.length > 0) {
+				updatePayload.photoIds = allPhotoIds;
+			}
+
+			console.log('Sending update payload:', updatePayload);
 
 			const res = await fetchData('/api/plants/{id}', {
 				method: 'patch',
@@ -392,21 +454,40 @@
 			success = 'Plant updated successfully!';
 			if (res.data) {
 				plant = res.data;
+				formData = initializeFormData();
+				originalFormData = JSON.parse(JSON.stringify(formData));
 			}
 			// Clear uploaded photos since they were successfully applied
 			uploadedPhotoKeys = [];
 			uploadTimestamps = {};
+			removedPhotoIds = [];
 
-			// Invalidate cache for this plant and the plants list
+			// Invalidate cache for this plant and the plants list BEFORE redirecting
 			const plantId = plant?.id ?? '';
 			if (navigator.serviceWorker?.controller && plantId) {
-				navigator.serviceWorker.controller.postMessage({
-					type: 'INVALIDATE_CACHE',
-					urls: [`/api/plants/${plantId}`, '/api/plants']
+				// Wait for cache invalidation using MessageChannel
+				await new Promise<void>((resolve) => {
+					const channel = new MessageChannel();
+					channel.port1.onmessage = () => {
+						console.log('✓ Cache invalidation confirmed by Service Worker');
+						resolve();
+					};
+					navigator.serviceWorker.controller!.postMessage(
+						{
+							type: 'INVALIDATE_CACHE',
+							urls: [`/api/plants/${plantId}`, '/api/plants']
+						},
+						[channel.port2]
+					);
+					// Fallback timeout in case service worker doesn't respond
+					setTimeout(() => {
+						console.warn('⏱️ Cache invalidation timeout - proceeding anyway');
+						resolve();
+					}, 100);
 				});
 			}
 
-			goto(resolve(plant ? `/plant/${plant.id}` : "/"));
+			goto(resolve(plant ? `/plant/${plant.id}` : '/'));
 		} catch (err) {
 			error = err instanceof Error ? err.message : 'Unknown error';
 		} finally {
@@ -449,7 +530,7 @@
 
 	function handleBackClick(): void {
 		cleanupUnappliedUploads();
-		goto(resolve(plant ? `/plant/${plant.id}` : "/"));
+		goto(resolve(plant ? `/plant/${plant.id}` : '/'));
 	}
 
 	function toggleSection(section: string): void {
@@ -458,13 +539,18 @@
 
 	function resetForm(): void {
 		formData = initializeFormData();
+		originalFormData = JSON.parse(JSON.stringify(formData));
 		error = null;
 	}
 </script>
 
 <div class="flex h-full min-h-0 flex-col overflow-hidden">
 	<div class="flex-shrink-0">
-		<PageHeader icon="✏️" title={plant?.name || $tStore('plants.editPlant')} description={plant?.species || ''}>
+		<PageHeader
+			icon="✏️"
+			title={plant?.name || $tStore('plants.editPlant')}
+			description={plant?.species || ''}
+		>
 			<Button
 				variant="ghost"
 				size="sm"
@@ -484,7 +570,7 @@
 				<Button variant="secondary" onclick={() => handleBackClick()} text="common.back" />
 			</div>
 		{:else}
-			<div class="min-h-0 flex-1 h-full overflow-y-auto pb-24">
+			<div class="h-full min-h-0 flex-1 overflow-y-auto pb-24">
 				<!-- Messages -->
 				{#if success}
 					<Alert type="success" title="common.success" description={success} />
@@ -501,19 +587,19 @@
 							onclick={() => toggleSection('photos')}
 							aria-expanded={expandedSections.photos}
 							aria-label={`${$tStore('plants.photos')} section, ${expandedSections.photos ? 'expanded' : 'collapsed'}`}
-							class="w-full cursor-pointer bg-gradient-to-r from-emerald-50 to-emerald-100/50 px-4 py-3 text-left font-semibold text-emerald-900 flex items-center justify-between hover:bg-emerald-100 transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
+							class="flex w-full cursor-pointer items-center justify-between bg-gradient-to-r from-emerald-50 to-emerald-100/50 px-4 py-3 text-left font-semibold text-emerald-900 transition-colors hover:bg-emerald-100 focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 focus:outline-none"
 						>
 							<span class="flex items-center gap-2">
 								<span>📸 {$tStore('plants.photos')}</span>
-								<span class="text-xs font-normal bg-emerald-200 px-2 py-0.5 rounded-full">
-									{previewUrls.length + photos.filter(p => p.status === 'uploaded').length}
+								<span class="rounded-full bg-emerald-200 px-2 py-0.5 text-xs font-normal">
+									{previewUrls.length + photos.filter((p) => p.status === 'uploaded').length}
 								</span>
 							</span>
 							<span class="text-lg" aria-hidden="true">{expandedSections.photos ? '−' : '+'}</span>
 						</button>
 
 						{#if expandedSections.photos}
-							<div class="p-4 space-y-4 border-t border-emerald-100">
+							<div class="space-y-4 border-t border-emerald-100 p-4">
 								<label class="block">
 									<span class="text-sm font-medium text-emerald-900"
 										>{$tStore('plants.addImages')}</span
@@ -524,23 +610,27 @@
 										multiple
 										onchange={onFilesSelected}
 										aria-label={$tStore('plants.addImages')}
-										class="mt-2 w-full rounded-lg border border-emerald-300 bg-white p-3 text-sm touch-manipulation cursor-pointer"
+										class="mt-2 w-full cursor-pointer touch-manipulation rounded-lg border border-emerald-300 bg-white p-3 text-sm"
 									/>
 								</label>
 
 								{#if photos.length}
 									<div>
-										<p class="mb-2 text-xs font-semibold text-emerald-700">{$tStore('plants.newUploads')}</p>
+										<p class="mb-2 text-xs font-semibold text-emerald-700">
+											{$tStore('plants.newUploads')}
+										</p>
 										<div class="grid grid-cols-2 gap-2">
 											{#each photos as p (p.previewUrl)}
-												<div class="rounded-lg border border-emerald-200 bg-emerald-50 overflow-hidden">
+												<div
+													class="overflow-hidden rounded-lg border border-emerald-200 bg-emerald-50"
+												>
 													<img
 														src={p.previewUrl}
 														alt={p.fileName}
 														class="h-20 w-full object-cover"
 													/>
 													<div class="p-2 text-xs">
-														<div class="truncate text-emerald-900 font-medium mb-1">
+														<div class="mb-1 truncate font-medium text-emerald-900">
 															{p.fileName}
 														</div>
 														<div class="text-xs">
@@ -565,15 +655,23 @@
 
 								{#if previewUrls.length}
 									<div>
-										<p class="mb-2 text-xs font-semibold text-emerald-700">{$tStore('plants.existingPhotos')}</p>
+										<p class="mb-2 text-xs font-semibold text-emerald-700">
+											{$tStore('plants.existingPhotos')}
+										</p>
 										<div class="grid grid-cols-2 gap-2">
 											{#each previewUrls as u, i (u)}
-												<div class="group relative rounded-lg overflow-hidden border border-emerald-200">
-													<img src={u} alt={plant?.name || 'Plant'} class="h-20 w-full object-cover" />
+												<div
+													class="group relative overflow-hidden rounded-lg border border-emerald-200"
+												>
+													<img
+														src={u}
+														alt={plant?.name || 'Plant'}
+														class="h-20 w-full object-cover"
+													/>
 													<button
 														onclick={() => removeExistingPhoto(plant?.photoIds?.[i] ?? '', i)}
 														aria-label={$tStore('plants.deletePhoto')}
-														class="absolute inset-0 cursor-pointer flex items-center justify-center bg-red-600/80 opacity-0 group-hover:opacity-100 hover:bg-red-700/90 transition-all font-bold text-white text-sm focus:outline-none focus:opacity-100"
+														class="absolute inset-0 flex cursor-pointer items-center justify-center bg-red-600/80 text-sm font-bold text-white opacity-0 transition-all group-hover:opacity-100 hover:bg-red-700/90 focus:opacity-100 focus:outline-none"
 													>
 														{$tStore('common.delete')}
 													</button>
@@ -602,7 +700,7 @@
 							onclick={() => toggleSection('basic')}
 							aria-expanded={expandedSections.basic}
 							aria-label={`${$tStore('plants.basicInformation')} section, ${expandedSections.basic ? 'expanded' : 'collapsed'}`}
-							class="w-full cursor-pointer bg-gray-50 px-4 py-3 text-left font-semibold text-gray-900 flex items-center justify-between hover:bg-gray-100 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
+							class="flex w-full cursor-pointer items-center justify-between bg-gray-50 px-4 py-3 text-left font-semibold text-gray-900 transition-colors hover:bg-gray-100 focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 focus:outline-none"
 						>
 							<span>📋 {$tStore('plants.basicInformation')}</span>
 							<span class="text-lg" aria-hidden="true">{expandedSections.basic ? '−' : '+'}</span>
@@ -620,10 +718,11 @@
 							onclick={() => toggleSection('location')}
 							aria-expanded={expandedSections.location}
 							aria-label={`${$tStore('plants.location')} section, ${expandedSections.location ? 'expanded' : 'collapsed'}`}
-							class="w-full cursor-pointer bg-gray-50 px-4 py-3 text-left font-semibold text-gray-900 flex items-center justify-between hover:bg-gray-100 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
+							class="flex w-full cursor-pointer items-center justify-between bg-gray-50 px-4 py-3 text-left font-semibold text-gray-900 transition-colors hover:bg-gray-100 focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 focus:outline-none"
 						>
 							<span>📍 {$tStore('plants.location')}</span>
-							<span class="text-lg" aria-hidden="true">{expandedSections.location ? '−' : '+'}</span>
+							<span class="text-lg" aria-hidden="true">{expandedSections.location ? '−' : '+'}</span
+							>
 						</button>
 						{#if expandedSections.location}
 							<div class="border-t border-gray-100 p-4">
@@ -638,10 +737,11 @@
 							onclick={() => toggleSection('watering')}
 							aria-expanded={expandedSections.watering}
 							aria-label={`${$tStore('plants.wateringTitle')} section, ${expandedSections.watering ? 'expanded' : 'collapsed'}`}
-							class="w-full cursor-pointer bg-blue-50 px-4 py-3 text-left font-semibold text-blue-900 flex items-center justify-between hover:bg-blue-100 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+							class="flex w-full cursor-pointer items-center justify-between bg-blue-50 px-4 py-3 text-left font-semibold text-blue-900 transition-colors hover:bg-blue-100 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none"
 						>
 							<span>💧 {$tStore('plants.wateringTitle')}</span>
-							<span class="text-lg" aria-hidden="true">{expandedSections.watering ? '−' : '+'}</span>
+							<span class="text-lg" aria-hidden="true">{expandedSections.watering ? '−' : '+'}</span
+							>
 						</button>
 						{#if expandedSections.watering}
 							<div class="border-t border-blue-100 p-4">
@@ -656,10 +756,12 @@
 							onclick={() => toggleSection('fertilizing')}
 							aria-expanded={expandedSections.fertilizing}
 							aria-label={`${$tStore('plants.fertilizingTitle')} section, ${expandedSections.fertilizing ? 'expanded' : 'collapsed'}`}
-							class="w-full cursor-pointer bg-yellow-50 px-4 py-3 text-left font-semibold text-yellow-900 flex items-center justify-between hover:bg-yellow-100 transition-colors focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2"
+							class="flex w-full cursor-pointer items-center justify-between bg-yellow-50 px-4 py-3 text-left font-semibold text-yellow-900 transition-colors hover:bg-yellow-100 focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2 focus:outline-none"
 						>
 							<span>🍯 {$tStore('plants.fertilizingTitle')}</span>
-							<span class="text-lg" aria-hidden="true">{expandedSections.fertilizing ? '−' : '+'}</span>
+							<span class="text-lg" aria-hidden="true"
+								>{expandedSections.fertilizing ? '−' : '+'}</span
+							>
 						</button>
 						{#if expandedSections.fertilizing}
 							<div class="border-t border-yellow-100 p-4">
@@ -674,13 +776,14 @@
 							onclick={() => toggleSection('humidity')}
 							aria-expanded={expandedSections.humidity}
 							aria-label={`${$tStore('plants.humidityTitle')} section, ${expandedSections.humidity ? 'expanded' : 'collapsed'}`}
-							class="w-full cursor-pointer bg-purple-50 px-4 py-3 text-left font-semibold text-purple-900 flex items-center justify-between hover:bg-purple-100 transition-colors focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2"
+							class="flex w-full cursor-pointer items-center justify-between bg-purple-50 px-4 py-3 text-left font-semibold text-purple-900 transition-colors hover:bg-purple-100 focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:outline-none"
 						>
 							<span>💨 {$tStore('plants.humidityTitle')}</span>
-							<span class="text-lg" aria-hidden="true">{expandedSections.humidity ? '−' : '+'}</span>
+							<span class="text-lg" aria-hidden="true">{expandedSections.humidity ? '−' : '+'}</span
+							>
 						</button>
 						{#if expandedSections.humidity}
-							<div class="border-t border-purple-100 p-4 space-y-4">
+							<div class="space-y-4 border-t border-purple-100 p-4">
 								<MistingForm {formData} />
 							</div>
 						{/if}
@@ -692,7 +795,7 @@
 							onclick={() => toggleSection('soil')}
 							aria-expanded={expandedSections.soil}
 							aria-label={`${$tStore('plants.soilTitle')} section, ${expandedSections.soil ? 'expanded' : 'collapsed'}`}
-							class="w-full cursor-pointer bg-amber-50 px-4 py-3 text-left font-semibold text-amber-900 flex items-center justify-between hover:bg-amber-100 transition-colors focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2"
+							class="flex w-full cursor-pointer items-center justify-between bg-amber-50 px-4 py-3 text-left font-semibold text-amber-900 transition-colors hover:bg-amber-100 focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 focus:outline-none"
 						>
 							<span>🌍 {$tStore('plants.soilTitle')}</span>
 							<span class="text-lg" aria-hidden="true">{expandedSections.soil ? '−' : '+'}</span>
@@ -710,10 +813,12 @@
 							onclick={() => toggleSection('seasonality')}
 							aria-expanded={expandedSections.seasonality}
 							aria-label={`${$tStore('plants.seasonalityTitle')} section, ${expandedSections.seasonality ? 'expanded' : 'collapsed'}`}
-							class="w-full cursor-pointer bg-orange-50 px-4 py-3 text-left font-semibold text-orange-900 flex items-center justify-between hover:bg-orange-100 transition-colors focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2"
+							class="flex w-full cursor-pointer items-center justify-between bg-orange-50 px-4 py-3 text-left font-semibold text-orange-900 transition-colors hover:bg-orange-100 focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 focus:outline-none"
 						>
 							<span>❄️ {$tStore('plants.seasonalityTitle')}</span>
-							<span class="text-lg" aria-hidden="true">{expandedSections.seasonality ? '−' : '+'}</span>
+							<span class="text-lg" aria-hidden="true"
+								>{expandedSections.seasonality ? '−' : '+'}</span
+							>
 						</button>
 						{#if expandedSections.seasonality}
 							<div class="border-t border-orange-100 p-4">
@@ -728,10 +833,11 @@
 							onclick={() => toggleSection('metadata')}
 							aria-expanded={expandedSections.metadata}
 							aria-label={`${$tStore('plants.metadata')} section, ${expandedSections.metadata ? 'expanded' : 'collapsed'}`}
-							class="w-full cursor-pointer bg-red-50 px-4 py-3 text-left font-semibold text-red-900 flex items-center justify-between hover:bg-red-100 transition-colors focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+							class="flex w-full cursor-pointer items-center justify-between bg-red-50 px-4 py-3 text-left font-semibold text-red-900 transition-colors hover:bg-red-100 focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:outline-none"
 						>
 							<span>🏷️ {$tStore('plants.metadata')}</span>
-							<span class="text-lg" aria-hidden="true">{expandedSections.metadata ? '−' : '+'}</span>
+							<span class="text-lg" aria-hidden="true">{expandedSections.metadata ? '−' : '+'}</span
+							>
 						</button>
 						{#if expandedSections.metadata}
 							<div class="border-t border-red-100 p-4">
@@ -741,7 +847,9 @@
 					</div>
 
 					<!-- Action Buttons -->
-					<div class="sticky bottom-0 flex gap-3 px-4 py-4 bg-gradient-to-t from-white via-white to-white/80 border-t border-gray-200">
+					<div
+						class="sticky bottom-0 flex gap-3 border-t border-gray-200 bg-gradient-to-t from-white via-white to-white/80 px-4 py-4"
+					>
 						<Button
 							variant="secondary"
 							size="md"

@@ -82,7 +82,11 @@
 		"speciesAsc": "Species (A-Z)",
 		"speciesDesc": "Species (Z-A)"
 	},
-	"editPlant": "Edit Plant",
+	"newPlant": "New Plant",
+	"addPlant": "Add Plant",
+	"createPlant": "Create Plant",
+	"createDescription": "Create a new plant and fill in the details in the next step.",
+	"creating": "Creating plant...",
 	"photos": "Photos",
 	"basicInformation": "Basic Information",
 	"location": "Location",

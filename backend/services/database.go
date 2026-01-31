@@ -39,8 +39,14 @@ func (m *MongoDB) CreatePlant(ctx context.Context, plantInput types.Plant) (*typ
 		return nil, types.ErrNoDocuments
 	}
 
-	_, err := collection.InsertOne(ctx, plantInput)
-	return &plantInput, err
+	result, err := collection.InsertOne(ctx, plantInput)
+	if err != nil {
+		return nil, err
+	}
+
+	// Set the ID from the MongoDB InsertedID
+	plantInput.ID = result.InsertedID.(primitive.ObjectID).Hex()
+	return &plantInput, nil
 }
 
 func (m *MongoDB) UpdatePlant(

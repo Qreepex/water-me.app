@@ -38,12 +38,13 @@
 
 		return filtered;
 	});
-
 </script>
 
 <div class="flex h-full min-h-0 flex-col">
 	<!-- Header Bar with Search and Sort Button -->
-	<div class="mb-4 flex flex-shrink-0 flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+	<div
+		class="mb-4 flex flex-shrink-0 flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
+	>
 		<!-- Search Input -->
 		<SearchInput
 			bind:value={searchQuery}
@@ -59,7 +60,7 @@
 					: ' ' + $tStore('common.plants')}
 			</div>
 
-			<SortControls sortBy={sortBy} onSortChange={onSortChange} />
+			<SortControls {sortBy} {onSortChange} />
 		</div>
 	</div>
 
@@ -72,4 +73,3 @@
 		</div>
 	</div>
 </div>
-

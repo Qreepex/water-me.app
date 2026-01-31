@@ -7,7 +7,7 @@
 		soilComponentInput: string;
 	}
 
-	let { formData, soilComponentInput = $bindable() }: Props = $props();
+	let { formData = $bindable(), soilComponentInput = $bindable() }: Props = $props();
 
 	function addSoilComponent(): void {
 		if (soilComponentInput.trim()) {

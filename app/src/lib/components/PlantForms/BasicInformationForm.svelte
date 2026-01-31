@@ -6,7 +6,7 @@
 		formData: FormData;
 	}
 
-	const { formData }: Props = $props();
+	let { formData = $bindable() }: Props = $props();
 </script>
 
 <div class="rounded-2xl border border-emerald-100 bg-white/90 p-6 shadow-md backdrop-blur">
@@ -21,6 +21,7 @@
 			<input
 				type="text"
 				id="name"
+				required
 				bind:value={formData.name}
 				class="w-full rounded-lg border-2 border-emerald-200 px-3 py-2 shadow-sm focus:border-emerald-500 focus:outline-none"
 			/>
@@ -28,10 +29,11 @@
 
 		<!-- Species -->
 		<div>
-			<label for="species" class="mb-1 block text-sm font-semibold text-gray-700"> Species </label>
+			<label for="species" class="mb-1 block text-sm font-semibold text-gray-700"> Species *</label>
 			<input
 				type="text"
 				id="species"
+				required
 				bind:value={formData.species}
 				class="w-full rounded-lg border-2 border-emerald-200 px-3 py-2 shadow-sm focus:border-emerald-500 focus:outline-none"
 			/>

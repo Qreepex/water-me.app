@@ -70,7 +70,11 @@
 		"speciesAsc": "Art (A-Z)",
 		"speciesDesc": "Art (Z-A)"
 	},
-	"editPlant": "Pflanze bearbeiten",
+	"newPlant": "Neue Pflanze",
+	"addPlant": "Pflanze hinzufügen",
+	"createPlant": "Pflanze erstellen",
+	"createDescription": "Erstelle eine neue Pflanze und fülle die Details im nächsten Schritt aus.",
+	"creating": "Pflanze wird erstellt...",
 	"photos": "Fotos",
 	"basicInformation": "Grundinformationen",
 	"location": "Standort",
