@@ -21,24 +21,46 @@ function translate(key: string, locale: Locale): string {
 
 	// Allow single-part keys mapped to 'common'
 	let concern: string;
-	let translationKey: string;
+	let rest: string[];
 
 	if (parts.length === 1) {
 		concern = 'common';
-		translationKey = parts[0];
-	} else if (parts.length === 2) {
-		[concern, translationKey] = parts as [string, string];
+		rest = parts.slice();
+	} else if (parts.length >= 2) {
+		[concern, ...rest] = parts;
 	} else {
 		return key;
 	}
 
-	const translation = translations[locale]?.[concern]?.[translationKey];
+	const concernTranslation = translations[locale]?.[concern];
+	if (!concernTranslation) {
+		if (locale !== 'en') {
+			return translate(key, 'en');
+		}
 
-	if (!translation && locale !== 'en') {
-		return translations['en']?.[concern]?.[translationKey] || key;
+		// Concern not loaded yet
+		return key;
 	}
 
-	return translation || key;
+	let concernTranslationValue: any = concernTranslation;
+
+	for (const part of rest) {
+		if (typeof concernTranslationValue === 'object' && concernTranslationValue !== null) {
+			concernTranslationValue = concernTranslationValue[part];
+			if (concernTranslationValue === undefined) {
+				break;
+			}
+		} else {
+			break;
+		}
+	}
+
+	// If not found and not already using English fallback, try English
+	if (concernTranslationValue === undefined && locale !== 'en') {
+		return translate(key, 'en');
+	}
+
+	return typeof concernTranslationValue === 'string' ? concernTranslationValue : key;
 }
 
 // Create writable store for reactive translations

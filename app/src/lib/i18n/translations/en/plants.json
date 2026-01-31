@@ -24,5 +24,12 @@
 	"cancel": "Cancel",
 	"confirm": "Confirm",
 	"watering": "Watering…",
-	"allPlantsWatered": "All your plants are watered! Good job!"
+	"allPlantsWatered": "All your plants are watered! Good job!",
+	"sunlight": {
+		"Full Sun": "Full Sun",
+		"Indirect Sun": "Indirect Sun",
+		"Partial Shade": "Partial Shade",
+		"Partial to Full Shade": "Partial to Full Shade",
+		"Full Shade": "Full Shade"
+	}
 }

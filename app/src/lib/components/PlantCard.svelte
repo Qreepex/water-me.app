@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { tStore } from '$lib/i18n';
 	import type { Plant } from '$lib/types/api';
 	import { getImageObjectURL, revokeObjectURL } from '$lib/utils/imageCache';
 	import { onMount, onDestroy } from 'svelte';
@@ -62,31 +63,37 @@
 		</div>
 
 		<!-- Metadata Grid -->
-		<div class="mb-4 grid grid-cols-2 gap-3 text-xs">
+		<div class="grid grid-cols-2 gap-3 text-xs">
 			<div class="rounded-lg bg-[var(--p-emerald)]/20 p-2">
 				<div class="font-semibold text-[var(--p-emerald-dark)]">💧</div>
 				<p class="mt-1 text-xs text-[var(--text-light-main)]/80">
 					Every {plant.watering?.intervalDays}d
 				</p>
 			</div>
-			<div class="rounded-lg bg-[var(--status-warn)]/20 p-2">
-				<div class="font-semibold text-[var(--status-warn)]">🥗</div>
-				<p class="mt-1 text-xs text-[var(--text-light-main)]/80">
-					Every {plant.fertilizing?.intervalDays}d
-				</p>
-			</div>
-			<div class="rounded-lg bg-[var(--status-info)]/20 p-2">
-				<div class="font-semibold text-[var(--status-info)]">☀️</div>
-				<p class="mt-1 text-xs text-[var(--text-light-main)]/80">
-					{plant.sunlight.split(' ').slice(0, 1).join('')}
-				</p>
-			</div>
-			<div class="rounded-lg bg-[var(--p-emerald)]/20 p-2">
-				<div class="font-semibold text-[var(--p-emerald-dark)]">💨</div>
-				<p class="mt-1 text-xs text-[var(--text-light-main)]/80">
-					{plant.humidity?.targetHumidityPct}%
-				</p>
-			</div>
+			{#if plant.fertilizing?.intervalDays}
+				<div class="rounded-lg bg-[var(--status-warn)]/20 p-2">
+					<div class="font-semibold text-[var(--status-warn)]">🥗</div>
+					<p class="mt-1 text-xs text-[var(--text-light-main)]/80">
+						Every {plant.fertilizing?.intervalDays}d
+					</p>
+				</div>
+			{/if}
+			{#if plant.sunlight}
+				<div class="rounded-lg bg-[var(--status-info)]/20 p-2">
+					<div class="font-semibold text-[var(--status-info)]">☀️</div>
+					<p class="mt-1 text-xs text-[var(--text-light-main)]/80">
+						{$tStore('plants.sunlight.' + plant.sunlight)}
+					</p>
+				</div>
+			{/if}
+			{#if plant.humidity}
+				<div class="rounded-lg bg-[var(--p-emerald)]/20 p-2">
+					<div class="font-semibold text-[var(--p-emerald-dark)]">💨</div>
+					<p class="mt-1 text-xs text-[var(--text-light-main)]/80">
+						{plant.humidity?.targetHumidityPct}%
+					</p>
+				</div>
+			{/if}
 		</div>
 
 		<!-- Spray Info -->
