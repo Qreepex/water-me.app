@@ -1,7 +1,11 @@
 <script lang="ts">
 	import type { FormData } from '$lib/types/forms';
 
-	export let formData: FormData;
+	interface Props {
+		formData: FormData;
+	}
+
+	const { formData }: Props = $props();
 </script>
 
 <details class="space-y-4">

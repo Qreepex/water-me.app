@@ -3,11 +3,15 @@
 	import { getImageObjectURL, revokeObjectURL } from '$lib/utils/imageCache';
 	import { onMount, onDestroy } from 'svelte';
 
-	export let plant: Plant;
-	export let daysAgo: (dateString: string) => string;
-	export let getWateringStatus: (plant: Plant) => { text: string; color: string };
+	interface Props {
+		plant: Plant;
+		daysAgo: (dateString: string) => string;
+		getWateringStatus: (plant: Plant) => { text: string; color: string };
+	}
 
-	let previewUrl: string | null = null;
+	const { plant, daysAgo, getWateringStatus }: Props = $props();
+
+	let previewUrl: string | null = $state(null);
 
 	onMount(async () => {
 		const firstId = plant.photoIds?.[0];
@@ -24,11 +28,11 @@
 </script>
 
 <div
-	class="group cursor-pointer overflow-hidden rounded-2xl bg-white shadow-md transition-all duration-300 hover:scale-105 hover:shadow-xl"
+	class="group cursor-pointer overflow-hidden rounded-2xl border border-[var(--p-emerald)]/30 bg-[var(--card-light)] shadow-md transition-all duration-300 hover:scale-105 hover:shadow-xl"
 >
 	<!-- Image -->
 	<div
-		class="relative flex h-48 items-center justify-center overflow-hidden bg-gradient-to-br from-green-200 to-emerald-300"
+		class="relative flex h-48 items-center justify-center overflow-hidden bg-gradient-to-br from-[var(--p-emerald)] to-[var(--p-emerald-dark)]"
 	>
 		{#if previewUrl}
 			<img
@@ -44,46 +48,56 @@
 	<!-- Content -->
 	<div class="p-5">
 		<!-- Name and Species -->
-		<h3 class="mb-1 line-clamp-2 text-xl font-bold text-green-800">{plant.name}</h3>
-		<p class="mb-4 line-clamp-1 text-sm text-green-600">{plant.species}</p>
+		<h3 class="mb-1 line-clamp-2 text-xl font-bold text-[var(--text-light-main)]">{plant.name}</h3>
+		<p class="mb-4 line-clamp-1 text-sm text-[var(--status-success)]">{plant.species}</p>
 
 		<!-- Watering Status -->
 		<div class="mb-4">
 			<div class={`mb-2 text-sm font-semibold ${getWateringStatus(plant).color}`}>
 				{getWateringStatus(plant).text}
 			</div>
-			<p class="text-xs text-gray-600">Watered {daysAgo(plant.watering?.lastWatered ?? '')}</p>
+			<p class="text-xs text-[var(--text-light-main)]/60">
+				Watered {daysAgo(plant.watering?.lastWatered ?? '')}
+			</p>
 		</div>
 
 		<!-- Metadata Grid -->
 		<div class="mb-4 grid grid-cols-2 gap-3 text-xs">
-			<div class="rounded-lg bg-blue-50 p-2">
-				<div class="font-semibold text-blue-600">💧</div>
-				<p class="mt-1 text-xs text-gray-700">Every {plant.watering?.intervalDays}d</p>
+			<div class="rounded-lg bg-[var(--p-emerald)]/20 p-2">
+				<div class="font-semibold text-[var(--p-emerald-dark)]">💧</div>
+				<p class="mt-1 text-xs text-[var(--text-light-main)]/80">
+					Every {plant.watering?.intervalDays}d
+				</p>
 			</div>
-			<div class="rounded-lg bg-yellow-50 p-2">
-				<div class="font-semibold text-yellow-600">🥗</div>
-				<p class="mt-1 text-xs text-gray-700">Every {plant.fertilizing?.intervalDays}d</p>
+			<div class="rounded-lg bg-[var(--status-warn)]/20 p-2">
+				<div class="font-semibold text-[var(--status-warn)]">🥗</div>
+				<p class="mt-1 text-xs text-[var(--text-light-main)]/80">
+					Every {plant.fertilizing?.intervalDays}d
+				</p>
 			</div>
-			<div class="rounded-lg bg-purple-50 p-2">
-				<div class="font-semibold text-purple-600">☀️</div>
-				<p class="mt-1 text-xs text-gray-700">{plant.sunlight.split(' ').slice(0, 1).join('')}</p>
+			<div class="rounded-lg bg-[var(--status-info)]/20 p-2">
+				<div class="font-semibold text-[var(--status-info)]">☀️</div>
+				<p class="mt-1 text-xs text-[var(--text-light-main)]/80">
+					{plant.sunlight.split(' ').slice(0, 1).join('')}
+				</p>
 			</div>
-			<div class="rounded-lg bg-teal-50 p-2">
-				<div class="font-semibold text-teal-600">💨</div>
-				<p class="mt-1 text-xs text-gray-700">{plant.humidity?.targetHumidityPct}%</p>
+			<div class="rounded-lg bg-[var(--p-emerald)]/20 p-2">
+				<div class="font-semibold text-[var(--p-emerald-dark)]">💨</div>
+				<p class="mt-1 text-xs text-[var(--text-light-main)]/80">
+					{plant.humidity?.targetHumidityPct}%
+				</p>
 			</div>
 		</div>
 
 		<!-- Spray Info -->
 		{#if plant.humidity?.requiresMisting}
-			<div class="mb-3 rounded-lg bg-cyan-50 p-2">
-				<p class="text-xs text-gray-600">
-					💦 Spray every <span class="font-semibold text-cyan-700"
+			<div class="mb-3 rounded-lg bg-[var(--status-info)]/20 p-2">
+				<p class="text-xs text-[var(--text-light-main)]/70">
+					💦 Spray every <span class="font-semibold text-[var(--status-info)]"
 						>{plant.humidity?.mistingIntervalDays}</span
 					> days
 				</p>
-				<p class="mt-1 text-xs text-gray-600">
+				<p class="mt-1 text-xs text-[var(--text-light-main)]/70">
 					Last: <span class="font-semibold">{daysAgo(plant.fertilizing?.lastFertilized ?? '')}</span
 					>
 				</p>
@@ -94,7 +108,8 @@
 		{#if plant.flags && plant.flags.length > 0}
 			<div class="mb-3 flex flex-wrap gap-2">
 				{#each plant.flags as flag (flag)}
-					<span class="rounded-full bg-orange-100 px-2 py-1 text-xs font-medium text-orange-800"
+					<span
+						class="rounded-full bg-[var(--status-warn)]/30 px-2 py-1 text-xs font-medium text-[var(--status-warn)]"
 						>⚡ {flag}</span
 					>
 				{/each}
@@ -103,8 +118,8 @@
 
 		<!-- Notes Preview -->
 		{#if plant.notes && plant.notes.length > 0}
-			<div class="border-t border-gray-200 pt-3">
-				<p class="line-clamp-2 text-xs text-gray-600">📝 {plant.notes[0]}</p>
+			<div class="border-t border-[var(--p-emerald)]/30 pt-3">
+				<p class="line-clamp-2 text-xs text-[var(--text-light-main)]/60">📝 {plant.notes[0]}</p>
 			</div>
 		{/if}
 	</div>

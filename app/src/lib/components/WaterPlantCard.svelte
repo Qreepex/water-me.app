@@ -12,24 +12,24 @@
 		onToggle: (id: string) => void;
 	}
 
-	let { plant, isSelected, status, statusText, statusIcon, onToggle }: Props = $props();
+	const { plant, isSelected, status, statusText, statusIcon, onToggle }: Props = $props();
 
 	let previewUrl = $state<string | null>(null);
 
 	function getStatusColor(status: 'overdue' | 'due-soon' | 'ok'): string {
 		switch (status) {
 			case 'overdue':
-				return 'bg-red-100 border-red-300';
+				return 'bg-[var(--status-error)]/20 border-[var(--status-error)]';
 			case 'due-soon':
-				return 'bg-yellow-100 border-yellow-300';
+				return 'bg-[var(--status-warn)]/20 border-[var(--status-warn)]';
 			default:
-				return 'bg-green-100 border-green-300';
+				return 'bg-[var(--status-success)]/20 border-[var(--status-success)]';
 		}
 	}
 
 	onMount(async () => {
 		const firstId = plant.photoIds?.[0];
-		const firstUrl = (plant as any)?.photoUrls?.[0] as string | undefined;
+		const firstUrl = plant?.photoUrls?.[0] as string | undefined;
 		if (firstId && firstUrl) {
 			previewUrl = await getImageObjectURL(firstId, firstUrl);
 		}
@@ -42,16 +42,16 @@
 
 <button
 	onclick={() => onToggle(plant.id)}
-	class="w-full rounded-2xl border-2 bg-white/90 p-4 shadow-md backdrop-blur transition {isSelected
-		? 'border-emerald-500 bg-emerald-50'
-		: `border-emerald-100 ${getStatusColor(status)}`}"
+	class="w-full rounded-2xl border-2 bg-[var(--card-light)] p-4 shadow-md backdrop-blur transition {isSelected
+		? 'border-[var(--p-emerald)] bg-[var(--p-emerald)]/10'
+		: `border-[var(--p-emerald)]/30 ${getStatusColor(status)}`}"
 >
 	<div class="flex items-center gap-4">
 		<!-- Checkbox -->
 		<div
 			class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg border-2 transition {isSelected
-				? 'border-emerald-600 bg-emerald-600 text-white'
-				: 'border-gray-300 bg-white text-gray-400'}"
+				? 'border-[var(--p-emerald)] bg-[var(--p-emerald)] text-white'
+				: 'border-[var(--p-emerald)] bg-[var(--card-light)] text-[var(--p-emerald)]'}"
 		>
 			{#if isSelected}
 				<span class="text-xl">✓</span>
@@ -69,7 +69,7 @@
 			/>
 		{:else}
 			<div
-				class="flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-lg bg-green-200 text-2xl"
+				class="flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-lg bg-[var(--p-emerald)]/30 text-2xl"
 			>
 				🌿
 			</div>
@@ -79,10 +79,10 @@
 		<div class="flex-1 text-left">
 			<div class="mb-1 flex items-center gap-2">
 				<span class="text-xl">{statusIcon}</span>
-				<h3 class="text-lg font-bold text-gray-900">{plant.name}</h3>
+				<h3 class="text-lg font-bold text-[var(--text-light-main)]">{plant.name}</h3>
 			</div>
-			<p class="mb-1 text-sm italic text-gray-600">{plant.species}</p>
-			<p class="text-sm font-medium text-gray-700">{statusText}</p>
+			<p class="mb-1 text-sm text-[var(--text-light-main)]/60 italic">{plant.species}</p>
+			<p class="text-sm font-medium text-[var(--text-light-main)]">{statusText}</p>
 		</div>
 	</div>
 </button>

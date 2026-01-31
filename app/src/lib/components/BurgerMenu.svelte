@@ -5,6 +5,8 @@
 	import { tStore } from '$lib/i18n';
 	import NotificationDebug from './NotificationDebug.svelte';
 	import { resolve } from '$app/paths';
+	import Burger from '$lib/assets/Burger.svg.svelte';
+	import Bell from '$lib/assets/Bell.svg.svelte';
 
 	const { onClose } = $props<{ onClose?: () => void }>();
 
@@ -32,14 +34,7 @@
 		onclick={onClose}
 		class="flex w-full items-center gap-3 rounded-xl px-6 py-4 text-left text-lg transition-colors hover:bg-emerald-50"
 	>
-		<svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-			<path
-				stroke-linecap="round"
-				stroke-linejoin="round"
-				stroke-width="2"
-				d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-			></path>
-		</svg>
+		<Burger isActive={false} />
 		<span class="font-medium text-emerald-900">User Profile</span>
 	</a>
 </div>
@@ -90,15 +85,7 @@
 		class="flex w-full items-center justify-between rounded-lg px-4 py-3 text-left text-base text-emerald-700 transition-colors hover:bg-emerald-50"
 	>
 		<span>🔔 Push Notifications (Debug)</span>
-		<svg
-			class="h-4 w-4 transition-transform {showNotificationDebug ? 'rotate-180' : ''}"
-			fill="none"
-			stroke="currentColor"
-			viewBox="0 0 24 24"
-		>
-			<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"
-			></path>
-		</svg>
+		<Bell />
 	</button>
 	{#if showNotificationDebug}
 		<div class="mt-3">

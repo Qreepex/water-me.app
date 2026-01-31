@@ -17,6 +17,12 @@
 	import SoilForm from '$lib/components/PlantForms/SoilForm.svelte';
 	import SeasonalityForm from '$lib/components/PlantForms/SeasonalityForm.svelte';
 	import MetadataForm from '$lib/components/PlantForms/MetadataForm.svelte';
+	import PageContainer from '$lib/components/layout/PageContainer.svelte';
+	import PageHeader from '$lib/components/layout/PageHeader.svelte';
+	import Button from '$lib/components/ui/Button.svelte';
+	import Card from '$lib/components/ui/Card.svelte';
+	import LoadingSpinner from '$lib/components/ui/LoadingSpinner.svelte';
+	import Alert from '$lib/components/ui/Alert.svelte';
 
 	let plant = $state<Plant | null>(null);
 	let loading = $state(true);
@@ -439,149 +445,112 @@
 </script>
 
 <div class="min-h-screen bg-gradient-to-br from-emerald-50 via-green-50 to-teal-100 p-6 md:p-10">
-	<div class="mx-auto max-w-4xl">
+	<PageContainer gradient>
 		{#if loading}
-			<div class="flex min-h-screen items-center justify-center">
-				<div class="text-center">
-					<div class="mb-4 animate-spin text-4xl">🌱</div>
-					<p class="text-lg text-gray-600">Loading plant details...</p>
-				</div>
-			</div>
+			<LoadingSpinner message="Loading plant details..." icon="🌱" />
 		{:else if !plant}
-			<div class="flex min-h-screen items-center justify-center">
-				<div class="text-center">
-					<p class="mb-4 text-lg text-red-600">{error || 'Plant not found'}</p>
-					<a
-						href={resolve('/manage')}
-						onclick={(e) => {
-							e.preventDefault();
-							handleBackClick();
-						}}
-						class="rounded-xl bg-gray-600 px-4 py-2 font-medium text-white shadow-sm transition hover:bg-gray-700"
-					>
-						← Back to Plants
-					</a>
-				</div>
+			<div class="flex flex-col items-center justify-center gap-6 py-12">
+				<p class="text-lg text-red-600">{error || 'Plant not found'}</p>
+				<Button variant="secondary" onclick={() => handleBackClick()} text="backToPlants" />
 			</div>
 		{:else}
-			<div class="mb-8">
-				<div class="mb-4 flex items-center justify-between">
-					<div>
-						<h1 class="flex items-center gap-3 text-4xl font-bold text-green-900">
-							🌿 {plant?.name || 'Plant'}
-						</h1>
-						<p class="mt-1 text-sm text-emerald-700 italic">{plant?.species || ''}</p>
-					</div>
-					<a
-						href={resolve('/manage')}
-						onclick={(e) => {
-							e.preventDefault();
-							handleBackClick();
-						}}
-						class="rounded-xl bg-gray-600 px-4 py-2 font-medium text-white shadow-sm transition hover:bg-gray-700"
-					>
-						← Back
-					</a>
-				</div>
-			</div>
+			<PageHeader icon="🌿" title={plant?.name || 'Plant'} description={plant?.species || ''}>
+				<Button variant="ghost" size="sm" onclick={() => handleBackClick()} text="backToPlants" />
+			</PageHeader>
 
 			<!-- Messages -->
 			{#if success}
-				<div
-					class="mb-6 rounded-lg border-2 border-green-400 bg-green-100 px-6 py-4 text-green-800"
-				>
-					✓ {success}
-				</div>
+				<Alert type="success" title="Success" description={success} />
 			{/if}
 
 			{#if error}
-				<div class="mb-6 rounded-lg border-2 border-red-400 bg-red-100 px-6 py-4 text-red-800">
-					✕ {error}
-				</div>
+				<Alert type="error" title="Error" description={error} />
 			{/if}
 
 			<div class="space-y-6">
 				<!-- Images Section -->
-				<div class="rounded-2xl border border-emerald-100 bg-white/90 p-6 shadow-md backdrop-blur">
-					<h2 class="mb-4 text-2xl font-bold text-green-800">📸 Photos</h2>
-					<div class="space-y-4">
-						<label class="block">
-							<span class="text-sm font-medium text-green-800"
-								>Add new images (JPEG/PNG/WebP, auto-compressed ≤ 2MB)</span
-							>
-							<input
-								type="file"
-								accept="image/jpeg,image/png,image/webp"
-								multiple
-								onchange={onFilesSelected}
-								class="mt-2 w-full rounded-lg border border-emerald-200 bg-white p-2 text-sm"
-							/>
-						</label>
+				<Card rounded="2xl">
+					<div class="p-6">
+						<h2 class="mb-4 text-2xl font-bold text-green-800">📸 Photos</h2>
+						<div class="space-y-4">
+							<label class="block">
+								<span class="text-sm font-medium text-green-800"
+									>Add new images (JPEG/PNG/WebP, auto-compressed ≤ 2MB)</span
+								>
+								<input
+									type="file"
+									accept="image/jpeg,image/png,image/webp"
+									multiple
+									onchange={onFilesSelected}
+									class="mt-2 w-full rounded-lg border border-emerald-200 bg-white p-2 text-sm"
+								/>
+							</label>
 
-						{#if photos.length}
-							<div>
-								<p class="mb-2 text-sm font-medium text-green-800">New uploads:</p>
-								<div class="grid grid-cols-2 gap-3 md:grid-cols-4">
-									{#each photos as p (p.previewUrl)}
-										<div class="rounded-md border border-emerald-200 bg-emerald-50 p-2">
-											<img
-												src={p.previewUrl}
-												alt={p.fileName}
-												class="h-24 w-full rounded object-cover"
-											/>
-											<div class="mt-1 text-xs text-emerald-800">
-												{p.fileName}
+							{#if photos.length}
+								<div>
+									<p class="mb-2 text-sm font-medium text-green-800">New uploads:</p>
+									<div class="grid grid-cols-2 gap-3 md:grid-cols-4">
+										{#each photos as p (p.previewUrl)}
+											<div class="rounded-md border border-emerald-200 bg-emerald-50 p-2">
+												<img
+													src={p.previewUrl}
+													alt={p.fileName}
+													class="h-24 w-full rounded object-cover"
+												/>
+												<div class="mt-1 text-xs text-emerald-800">
+													{p.fileName}
+												</div>
+												<div class="text-xs">
+													{#if p.status === 'pending'}
+														<span class="text-gray-600">⏸️ Pending</span>
+													{:else if p.status === 'compressing'}
+														<span class="text-blue-600">⚙️ Compressing...</span>
+													{:else if p.status === 'uploading'}
+														<span class="text-emerald-600">📤 Uploading...</span>
+													{:else if p.status === 'uploaded'}
+														<span class="font-semibold text-green-700">✓ Uploaded!</span>
+													{:else}
+														<span class="text-red-600">✕ {p.error || 'Error'}</span>
+													{/if}
+												</div>
 											</div>
-											<div class="text-xs">
-												{#if p.status === 'pending'}
-													<span class="text-gray-600">⏸️ Pending</span>
-												{:else if p.status === 'compressing'}
-													<span class="text-blue-600">⚙️ Compressing...</span>
-												{:else if p.status === 'uploading'}
-													<span class="text-emerald-600">📤 Uploading...</span>
-												{:else if p.status === 'uploaded'}
-													<span class="font-semibold text-green-700">✓ Uploaded!</span>
-												{:else}
-													<span class="text-red-600">✕ {p.error || 'Error'}</span>
-												{/if}
-											</div>
-										</div>
-									{/each}
+										{/each}
+									</div>
 								</div>
-							</div>
-						{/if}
+							{/if}
 
-						{#if previewUrls.length}
-							<div>
-								<p class="mb-2 text-sm font-medium text-green-800">Existing photos:</p>
-								<div class="grid grid-cols-2 gap-3 md:grid-cols-3">
-									{#each previewUrls as u, i (u)}
-										<div class="group relative">
-											<img src={u} alt="" class="h-32 w-full rounded object-cover" />
-											<button
-												type="button"
-												onclick={() => removeExistingPhoto(plant?.photoIds?.[i] ?? '', i)}
-												class="absolute top-1 right-1 flex h-6 w-6 items-center justify-center rounded-full bg-red-600 text-white opacity-0 shadow-lg transition-opacity group-hover:opacity-100 hover:bg-red-700"
-												title="Remove photo"
-											>
-												×
-											</button>
-										</div>
-									{/each}
+							{#if previewUrls.length}
+								<div>
+									<p class="mb-2 text-sm font-medium text-green-800">Existing photos:</p>
+									<div class="grid grid-cols-2 gap-3 md:grid-cols-3">
+										{#each previewUrls as u, i (u)}
+											<div class="group relative">
+												<img src={u} alt="" class="h-32 w-full rounded object-cover" />
+												<button
+													type="button"
+													onclick={() => removeExistingPhoto(plant?.photoIds?.[i] ?? '', i)}
+													class="absolute top-1 right-1 flex h-6 w-6 items-center justify-center rounded-full bg-red-600 text-white opacity-0 shadow-lg transition-opacity group-hover:opacity-100 hover:bg-red-700"
+													title="Remove photo"
+												>
+													×
+												</button>
+											</div>
+										{/each}
+									</div>
 								</div>
-							</div>
-						{:else if !photos.length}
-							<div
-								class="flex h-48 items-center justify-center rounded-lg border-2 border-dashed border-emerald-300 bg-emerald-50"
-							>
-								<div class="text-center">
-									<div class="mb-2 text-4xl">🖼️</div>
-									<p class="text-sm text-emerald-700">No photos yet</p>
+							{:else if !photos.length}
+								<div
+									class="flex h-48 items-center justify-center rounded-lg border-2 border-dashed border-emerald-300 bg-emerald-50"
+								>
+									<div class="text-center">
+										<div class="mb-2 text-4xl">🖼️</div>
+										<p class="text-sm text-emerald-700">No photos yet</p>
+									</div>
 								</div>
-							</div>
-						{/if}
+							{/if}
+						</div>
 					</div>
-				</div>
+				</Card>
 
 				<!-- Form Sections -->
 				<BasicInformationForm {formData} />
@@ -602,23 +571,18 @@
 
 				<!-- Action Buttons -->
 				<div class="flex justify-between gap-3">
-					<button
-						onclick={resetForm}
-						class="rounded-lg bg-gray-200 px-6 py-3 font-semibold text-gray-800 transition hover:bg-gray-300"
-					>
-						Reset
-					</button>
-					<button
-						onclick={submitForm}
+					<Button variant="secondary" size="md" onclick={resetForm} text="reset" />
+					<Button
+						variant="primary"
+						size="md"
 						disabled={submitting}
-						class="rounded-lg bg-gradient-to-r from-emerald-600 to-green-600 px-8 py-3 font-semibold text-white shadow-md transition hover:from-emerald-700 hover:to-green-700 disabled:opacity-50"
-					>
-						{submitting ? 'Saving...' : 'Save Changes'}
-					</button>
+						onclick={submitForm}
+						text={submitting ? 'saving' : 'saveChanges'}
+					/>
 				</div>
 			</div>
 		{/if}
-	</div>
+	</PageContainer>
 </div>
 
 <style>

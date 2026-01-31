@@ -2,8 +2,12 @@
 	import type { FormData } from '$lib/types/forms';
 	import { PlantFlag } from '$lib/types/api';
 
-	export let formData: FormData;
-	export let newNote: string;
+	interface Props {
+		formData: FormData;
+		newNote: string;
+	}
+
+	let { formData, newNote = $bindable() }: Props = $props();
 
 	function toggleFlag(flag: PlantFlag): void {
 		if (formData.flags.includes(flag)) {
@@ -41,7 +45,7 @@
 						<input
 							type="checkbox"
 							checked={formData.flags.includes(flag)}
-							on:change={() => toggleFlag(flag)}
+							onchange={() => toggleFlag(flag)}
 							class="h-4 w-4"
 						/>
 						<span class="text-sm text-gray-700">{flag}</span>
@@ -57,13 +61,13 @@
 				<input
 					type="text"
 					bind:value={newNote}
-					on:keydown={(e) => e.key === 'Enter' && addNote()}
+					onkeydown={(e) => e.key === 'Enter' && addNote()}
 					placeholder="Add a note..."
 					class="flex-1 rounded-lg border-2 border-emerald-200 px-3 py-2 shadow-sm focus:border-emerald-500 focus:outline-none"
 				/>
 				<button
 					type="button"
-					on:click={addNote}
+					onclick={addNote}
 					class="rounded-lg bg-emerald-600 px-4 py-2 text-white shadow-sm transition hover:bg-emerald-700"
 				>
 					Add
@@ -77,7 +81,7 @@
 							<p class="flex-1 text-sm text-gray-800">{note}</p>
 							<button
 								type="button"
-								on:click={() => removeNote(i)}
+								onclick={() => removeNote(i)}
 								class="ml-2 font-bold text-red-500 hover:text-red-700"
 							>
 								×

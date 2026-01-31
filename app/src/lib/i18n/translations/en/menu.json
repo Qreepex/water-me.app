@@ -10,5 +10,6 @@
 	"version": "Version",
 	"pushNotifications": "Push Notifications (Debug)",
 	"sourceCode": "Source Code",
-	"imprint": "Imprint"
+	"imprint": "Imprint",
+	"backToPlants": "Back to Plants"
 }

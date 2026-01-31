@@ -2,7 +2,11 @@
 	import type { FormData } from '$lib/types/forms';
 	import { FertilizerType } from '$lib/types/api';
 
-	export let formData: FormData;
+	interface Props {
+		formData: FormData;
+	}
+
+	const { formData }: Props = $props();
 </script>
 
 <div class="rounded-2xl border border-emerald-100 bg-white/90 p-6 shadow-md backdrop-blur">

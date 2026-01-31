@@ -9,5 +9,12 @@
 	"cancel": "Cancel",
 	"save": "Save",
 	"close": "Close",
-	"madeWith": "Made with 🌿 for plant lovers"
+	"madeWith": "Made with 🌿 for plant lovers",
+	"selectAll": "Select All",
+	"deselectAll": "Deselect All",
+	"clear": "Clear",
+	"selectOverdue": "Select Overdue",
+	"edit": "Edit",
+	"delete": "Delete",
+	"reset": "Reset"
 }

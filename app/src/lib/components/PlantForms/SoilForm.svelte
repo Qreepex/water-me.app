@@ -1,8 +1,12 @@
 <script lang="ts">
 	import type { FormData } from '$lib/types/forms';
 
-	export let formData: FormData;
-	export let soilComponentInput: string;
+	interface Props {
+		formData: FormData;
+		soilComponentInput: string;
+	}
+
+	let { formData, soilComponentInput = $bindable() }: Props = $props();
 
 	function addSoilComponent(): void {
 		if (soilComponentInput.trim()) {
@@ -63,7 +67,7 @@
 					/>
 					<button
 						type="button"
-						on:click={addSoilComponent}
+						onclick={addSoilComponent}
 						class="rounded-lg bg-emerald-600 px-3 py-2 text-white shadow-sm transition hover:bg-emerald-700"
 					>
 						Add
@@ -77,7 +81,7 @@
 								<span class="text-sm text-gray-800">{component}</span>
 								<button
 									type="button"
-									on:click={() => removeSoilComponent(i)}
+									onclick={() => removeSoilComponent(i)}
 									class="font-bold text-red-500 hover:text-red-700"
 								>
 									×

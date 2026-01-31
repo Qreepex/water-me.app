@@ -1,9 +1,8 @@
 const CACHE_NAME = 'plants-images-v1';
 const API_CACHE_NAME = 'plants-api-v1';
 const CACHE_TTL = 15 * 60 * 1000; // 15 minutes in milliseconds
-const MAX_ENTRIES = 200;
 
-self.addEventListener('install', (event) => {
+self.addEventListener('install', () => {
   self.skipWaiting();
 });
 
@@ -104,7 +103,9 @@ self.addEventListener('fetch', (event) => {
             cache.put(req, withTimestamp.clone());
           }
           return res;
-        } catch (err) {
+        } catch (error) {
+          console.error('Fetch failed; returning cached data if available.', error);
+
           // No network - return cached response even if expired
           if (cached) return cached;
           return new Response(JSON.stringify({ error: { message: 'Network unavailable' } }), {
