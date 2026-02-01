@@ -69,12 +69,18 @@
 
 <!-- Menu Overlay -->
 {#if showMenu}
-	<div class="fixed inset-0 bottom-20 z-50 overflow-y-auto bg-white">
-		<BurgerMenu />
+	<div class="pt-safe fixed inset-0 bottom-20 z-50 bg-white">
+		<div class="flex h-full flex-col overflow-hidden px-3 pt-2 md:px-10 md:pt-10 xl:px-32 xl:pt-14">
+			<BurgerMenu />
+		</div>
 	</div>
 {/if}
 
 <style>
+	.pt-safe {
+		padding-top: env(safe-area-inset-top);
+	}
+
 	.pb-safe {
 		padding-bottom: env(safe-area-inset-bottom);
 	}
