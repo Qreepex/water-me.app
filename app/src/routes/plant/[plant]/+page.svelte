@@ -10,10 +10,10 @@
 	import Card from '$lib/components/ui/Card.svelte';
 	import LoadingSpinner from '$lib/components/ui/LoadingSpinner.svelte';
 	import Alert from '$lib/components/ui/Message.svelte';
-	import { daysAgo } from '$lib/utils/plant';
 	import { resolve } from '$app/paths';
 	import { SvelteMap, SvelteSet } from 'svelte/reactivity';
 	import Scrollable from '$lib/components/layout/Scrollable.svelte';
+	import { formatPastTimestamp } from '$lib/utils/timestamp.svelte';
 
 	const store = getPlantsStore();
 	const plantId = $derived($page.params.plant ?? '');
@@ -159,7 +159,9 @@
 									{$tStore('plants.lastWatered')}
 								</div>
 								<div class="mt-1 text-sm text-[var(--text-light-main)]">
-									{plant.watering?.lastWatered ? daysAgo(plant.watering.lastWatered) : '-'}
+									{plant.watering?.lastWatered
+										? formatPastTimestamp(new Date(plant.watering.lastWatered))
+										: '-'}
 								</div>
 							</div>
 							<div class="rounded-xl bg-[var(--status-warn)]/10 p-4">
@@ -168,7 +170,7 @@
 								</div>
 								<div class="mt-1 text-sm text-[var(--text-light-main)]">
 									{plant.fertilizing?.lastFertilized
-										? daysAgo(plant.fertilizing.lastFertilized)
+										? formatPastTimestamp(new Date(plant.fertilizing.lastFertilized))
 										: '-'}
 								</div>
 							</div>

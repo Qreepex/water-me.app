@@ -16,7 +16,7 @@ function normalizeLocale(locale: string): Locale {
 	return locales.includes(locale as Locale) ? (locale as Locale) : 'en';
 }
 
-function translate(key: string, locale: Locale): string {
+function translate(key: string, locale: Locale, args?: string[]): string {
 	const parts = key.split('.');
 
 	// Allow single-part keys mapped to 'common'
@@ -60,12 +60,19 @@ function translate(key: string, locale: Locale): string {
 		return translate(key, 'en');
 	}
 
+	for (let i = 0; args && i < args.length; i++) {
+		const placeholder = `%s`;
+		if (typeof concernTranslationValue === 'string') {
+			concernTranslationValue = concernTranslationValue.replace(placeholder, args[i]);
+		}
+	}
+
 	return typeof concernTranslationValue === 'string' ? concernTranslationValue : key;
 }
 
 // Create writable store for reactive translations
-const tStoreInternal = writable<(key: string) => string>((key: string) =>
-	translate(key, activeLocale)
+const tStoreInternal = writable<(key: string, args?: string[]) => string>(
+	(key: string, args?: string[]) => translate(key, activeLocale, args)
 );
 export const tStore = { subscribe: tStoreInternal.subscribe };
 
@@ -107,7 +114,7 @@ languageStore.subscribe((nextLocale) => {
 		normalized !== 'en' ? loadLocale('en') : Promise.resolve()
 	]).then(() => {
 		// Update store after both locales are loaded
-		tStoreInternal.set((key: string) => translate(key, activeLocale));
+		tStoreInternal.set((key: string, args?: string[]) => translate(key, activeLocale, args));
 	});
 });
 
@@ -128,7 +135,7 @@ export async function initializeI18n() {
 		await loadLocale('en');
 	}
 	// Update store after initialization
-	tStoreInternal.set((key: string) => translate(key, activeLocale));
+	tStoreInternal.set((key: string, args?: string[]) => translate(key, activeLocale, args));
 }
 
 // Eager-load English to avoid raw keys on first render

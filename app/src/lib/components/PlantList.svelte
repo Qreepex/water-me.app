@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { Plant } from '$lib/types/api';
-	import { sortPlants, daysAgo, getWateringStatus, type SortOption } from '$lib/utils/plant';
+	import { sortPlants, type SortOption } from '$lib/utils/plant';
 	import PlantCard from './PlantCard.svelte';
 	import SortControls from './SortControls.svelte';
 	import SearchInput from './SearchInput.svelte';
@@ -64,6 +64,6 @@
 
 <Scrollable multi>
 	{#each filteredPlants as plant (plant.id)}
-		<PlantCard {plant} {daysAgo} {getWateringStatus} />
+		<PlantCard {plant} />
 	{/each}
 </Scrollable>

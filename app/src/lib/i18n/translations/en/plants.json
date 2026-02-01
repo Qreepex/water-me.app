@@ -18,8 +18,6 @@
 	"watered": "Watered",
 	"every": "Every",
 	"days": "days",
-	"addPlant": "Add Plant",
-	"newPlant": "New Plant",
 	"readyToWater": "Ready to water?",
 	"cancel": "Cancel",
 	"confirm": "Confirm",
@@ -95,7 +93,7 @@
 	"soil": "Soil",
 	"seasonality": "Seasonality",
 	"metadata": "Metadata",
-	"addImages": "Add images (auto-compressed ≤ 2MB)",
+	"addImages": "Add images",
 	"newUploads": "New uploads:",
 	"existingPhotos": "Existing photos:",
 	"noPhotosYet": "No photos yet",
@@ -107,5 +105,14 @@
 	"failedToWaterPlant": "Failed to water plant",
 	"failedToCreatePlant": "Failed to create plant",
 	"invalidResponse": "Invalid response from server",
-	"editPlant": "Edit Plant"
+	"editPlant": "Edit Plant",
+	"needsWaterStatus": "Needs water",
+	"waterSoonStatus": "Water soon",
+	"waterInDays": "Water in %s days",
+	"waterDaysOverdue": "%s days overdue",
+	"dueTodayStatus": "Due today",
+	"dueTomorrowStatus": "Due tomorrow",
+	"sprayEvery": "Spray every",
+	"lastSprayedStatus": "Last sprayed",
+	"noConfig": "No configuration set"
 }

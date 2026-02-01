@@ -5,18 +5,20 @@
 	import { onDestroy } from 'svelte';
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
+	import { formatPastTimestamp } from '$lib/utils/timestamp.svelte';
+	import { getWateringStatus } from '$lib/utils/plant';
 
 	interface Props {
 		plant: Plant;
-		daysAgo: (dateString: string) => string;
-		getWateringStatus: (plant: Plant) => { text: string; color: string };
 	}
 
-	const { plant, daysAgo, getWateringStatus }: Props = $props();
+	const { plant }: Props = $props();
 
 	const firstId = $derived(plant.photoIds?.[0]);
 	// Get the URL from cache once (already preloaded in Auth)
 	const previewUrl = $derived(firstId ? imageCacheStore.getImageURLSync(firstId) : null);
+
+	const wateringStatus = $derived(getWateringStatus(plant));
 
 	function openPlant() {
 		goto(resolve(`/plant/${plant.id}`));
@@ -65,28 +67,38 @@
 		<p class="mb-4 line-clamp-1 text-sm text-[var(--status-success)]">{plant.species}</p>
 
 		<!-- Watering Status -->
-		<div class="mb-4">
-			<div class={`mb-2 text-sm font-semibold ${getWateringStatus(plant).color}`}>
-				{getWateringStatus(plant).text}
-			</div>
-			<p class="text-xs text-[var(--text-light-main)]/60">
-				Watered {daysAgo(plant.watering?.lastWatered ?? '')}
-			</p>
-		</div>
-
-		<!-- Metadata Grid -->
-		<div class="grid grid-cols-2 gap-3 text-xs">
-			<div class="rounded-lg bg-[var(--p-emerald)]/20 p-2">
-				<div class="font-semibold text-[var(--p-emerald-dark)]">💧</div>
-				<p class="mt-1 text-xs text-[var(--text-light-main)]/80">
-					Every {plant.watering?.intervalDays}d
+		{#if wateringStatus}
+			<div class="mb-4">
+				<div class={`mb-2 flex items-center gap-2 text-sm font-semibold ${wateringStatus.color}`}>
+					<span>{wateringStatus.emoji}</span>
+					<span>{$tStore(wateringStatus.text, wateringStatus.args)}</span>
+				</div>
+				<p class="text-xs text-[var(--text-light-main)]/60">
+					{$tStore('plants.lastWatered')}: {formatPastTimestamp(
+						new Date(plant.watering?.lastWatered ?? '')
+					)}
 				</p>
 			</div>
+		{/if}
+		<!-- Metadata Grid -->
+		<div class="grid grid-cols-2 gap-3 text-xs">
+			{#if plant.watering?.intervalDays}
+				<div class="rounded-lg bg-[var(--p-emerald)]/20 p-2">
+					<div class="font-semibold text-[var(--p-emerald-dark)]">💧</div>
+					<p class="mt-1 text-xs text-[var(--text-light-main)]/80">
+						{$tStore('plants.every')}
+						{plant.watering?.intervalDays}
+						{$tStore('plants.days')}
+					</p>
+				</div>
+			{/if}
 			{#if plant.fertilizing?.intervalDays}
 				<div class="rounded-lg bg-[var(--status-warn)]/20 p-2">
 					<div class="font-semibold text-[var(--status-warn)]">🥗</div>
 					<p class="mt-1 text-xs text-[var(--text-light-main)]/80">
-						Every {plant.fertilizing?.intervalDays}d
+						{$tStore('plants.every')}
+						{plant.fertilizing?.intervalDays}
+						{$tStore('plants.days')}
 					</p>
 				</div>
 			{/if}
@@ -98,26 +110,27 @@
 					</p>
 				</div>
 			{/if}
-			{#if plant.humidity}
-				<div class="rounded-lg bg-[var(--p-emerald)]/20 p-2">
-					<div class="font-semibold text-[var(--p-emerald-dark)]">💨</div>
-					<p class="mt-1 text-xs text-[var(--text-light-main)]/80">
-						{plant.humidity?.targetHumidityPct}%
-					</p>
-				</div>
+			{#if plant.humidity?.targetHumidityPct}
+				<p class="mt-1 text-xs text-[var(--text-light-main)]/80">
+					{plant.humidity?.targetHumidityPct}%
+				</p>
 			{/if}
 		</div>
 
 		<!-- Spray Info -->
-		{#if plant.humidity?.requiresMisting}
+		{#if plant.humidity?.requiresMisting && plant.humidity?.mistingIntervalDays}
 			<div class="mb-3 rounded-lg bg-[var(--status-info)]/20 p-2">
 				<p class="text-xs text-[var(--text-light-main)]/70">
-					💦 Spray every <span class="font-semibold text-[var(--status-info)]"
+					💦 {$tStore('plants.sprayEvery')}
+					<span class="font-semibold text-[var(--status-info)]"
 						>{plant.humidity?.mistingIntervalDays}</span
-					> days
+					>
+					{$tStore('plants.days')}
 				</p>
 				<p class="mt-1 text-xs text-[var(--text-light-main)]/70">
-					Last: <span class="font-semibold">{daysAgo(plant.fertilizing?.lastFertilized ?? '')}</span
+					{$tStore('plants.lastSprayedStatus')}:
+					<span class="font-semibold"
+						>{formatPastTimestamp(new Date(plant.humidity?.lastMisted ?? ''))}</span
 					>
 				</p>
 			</div>
@@ -129,7 +142,7 @@
 				{#each plant.flags as flag (flag)}
 					<span
 						class="rounded-full bg-[var(--status-warn)]/30 px-2 py-1 text-xs font-medium text-[var(--status-warn)]"
-						>⚡ {flag}</span
+						>⚡{flag}</span
 					>
 				{/each}
 			</div>

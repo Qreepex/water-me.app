@@ -14,19 +14,14 @@ export type SortOption =
 	| 'speciesDesc';
 
 /**
- * Format days ago as human-readable text
- */
-export function daysAgo(dateString: string): string {
-	const days = Math.floor((Date.now() - new Date(dateString).getTime()) / (1000 * 60 * 60 * 24));
-	if (days === 0) return 'Today';
-	if (days === 1) return 'Yesterday';
-	return `${days} days ago`;
-}
-
-/**
  * Get watering status for a plant
  */
-export function getWateringStatus(plant: Plant): { text: string; color: string } {
+export function getWateringStatus(
+	plant: Plant
+): { text: string; color: string; emoji: string; args?: string[] } | null {
+	// Only show status if watering is configured
+	if (!plant.watering?.intervalDays) return null;
+
 	const last = plant.watering?.lastWatered
 		? new Date(plant.watering.lastWatered).getTime()
 		: Date.now();
@@ -34,9 +29,29 @@ export function getWateringStatus(plant: Plant): { text: string; color: string }
 	const days = Math.floor((Date.now() - last) / (1000 * 60 * 60 * 24));
 	const daysUntilWater = interval - days;
 
-	if (daysUntilWater <= 0) return { text: '🌵 Needs water!', color: 'text-red-600' };
-	if (daysUntilWater <= 1) return { text: '⚠️ Water soon', color: 'text-yellow-600' };
-	return { text: `✓ In ${daysUntilWater} days`, color: 'text-green-600' };
+	if (daysUntilWater <= -1) {
+		return {
+			text: 'plants.waterDaysOverdue',
+			color: 'text-red-600',
+			emoji: '🚨',
+			args: [String(Math.abs(daysUntilWater))]
+		};
+	}
+	if (daysUntilWater === 0) {
+		return { text: 'plants.dueTodayStatus', color: 'text-red-600', emoji: '⚠️' };
+	}
+	if (daysUntilWater === 1) {
+		return { text: 'plants.dueTomorrowStatus', color: 'text-yellow-600', emoji: '⚠️' };
+	}
+	if (daysUntilWater > 1) {
+		return {
+			text: 'plants.waterInDays',
+			color: 'text-green-600',
+			emoji: '✅',
+			args: [String(daysUntilWater)]
+		};
+	}
+	return { text: 'plants.needsWaterStatus', color: 'text-red-600', emoji: '🌵' };
 }
 
 /**

@@ -83,7 +83,7 @@
 	"soil": "Erde",
 	"seasonality": "Saisonalität",
 	"metadata": "Metadaten",
-	"addImages": "Bilder hinzufügen (automatisch komprimiert ≤ 2MB)",
+	"addImages": "Bilder hinzufügen",
 	"newUploads": "Neue Uploads:",
 	"existingPhotos": "Vorhandene Fotos:",
 	"noPhotosYet": "Noch keine Fotos",
@@ -95,5 +95,14 @@
 	"failedToWaterPlant": "Fehler beim Bewässern der Pflanze",
 	"failedToCreatePlant": "Fehler beim Erstellen der Pflanze",
 	"invalidResponse": "Ungültige Antwort vom Server",
-	"editPlant": "Pflanze bearbeiten"
+	"editPlant": "Pflanze bearbeiten",
+	"needsWaterStatus": "Benötigt Wasser",
+	"waterSoonStatus": "Bald bewässern",
+	"waterInDays": "Bewässerung in %s Tagen",
+	"waterDaysOverdue": "%s Tage überfällig",
+	"dueTodayStatus": "Heute fällig",
+	"dueTomorrowStatus": "Morgen fällig",
+	"sprayEvery": "Sprühen alle",
+	"lastSprayedStatus": "Zuletzt besprüht",
+	"noConfig": "Keine Konfiguration festgelegt"
 }

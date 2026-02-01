@@ -257,8 +257,9 @@
 								</div>
 								<Button
 									variant="secondary"
-									text="plants.configureWateringSchedule"
-									onclick={() => goto(resolve(`/manage/${plant.slug}`))}
+									text=""
+									icon="➕"
+									onclick={() => goto(resolve(`/manage/${plant.id}`))}
 								/>
 							</div>
 						{/each}
