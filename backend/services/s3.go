@@ -2,9 +2,11 @@ package services
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/url"
 	"os"
+	"plants-backend/constants"
 	"strings"
 	"time"
 
@@ -27,7 +29,7 @@ type S3Service struct {
 func NewS3Service(ctx context.Context) (*S3Service, error) {
 	bucket := getenv("S3_BUCKET", "plants-app-images")
 	region := getenv("AWS_REGION", "de")
-	endpoint := getenv("S3_ENDPOINT", "https://s3.de.io.cloud.ovh.net")
+	endpoint := getenv("S3_ENDPOINT", "https://s3.eu-central-4.ionoscloud.com")
 
 	// Create credentials provider from environment variables
 	creds := credentials.NewStaticCredentialsProvider(
@@ -49,7 +51,7 @@ func NewS3Service(ctx context.Context) (*S3Service, error) {
 	// Create S3 client with custom endpoint
 	client := s3.NewFromConfig(cfg, func(o *s3.Options) {
 		o.BaseEndpoint = aws.String(endpoint)
-		o.UsePathStyle = true // OVH S3 requires path-style URLs
+		o.UsePathStyle = true // Ionos S3 uses path-style URLs
 	})
 
 	return &S3Service{
@@ -91,6 +93,43 @@ func (s *S3Service) SetupCORS(ctx context.Context, allowedOrigins []string) erro
 	return nil
 }
 
+// SetupBucketPolicy configures a bucket policy to deny uploads larger than MaxUploadBytes.
+// This provides server-side protection against oversized uploads.
+func (s *S3Service) SetupBucketPolicy(ctx context.Context) error {
+	policy := map[string]interface{}{
+		"Version": "2012-10-17",
+		"Statement": []map[string]interface{}{
+			{
+				"Sid":       "DenyLargeUploads",
+				"Effect":    "Deny",
+				"Principal": "*",
+				"Action":    "s3:PutObject",
+				"Resource":  fmt.Sprintf("arn:aws:s3:::%s/*", s.Bucket),
+				"Condition": map[string]interface{}{
+					"NumericGreaterThan": map[string]interface{}{
+						"s3:content-length": constants.MaxUploadBytes,
+					},
+				},
+			},
+		},
+	}
+
+	policyJSON, err := json.Marshal(policy)
+	if err != nil {
+		return fmt.Errorf("marshal bucket policy: %w", err)
+	}
+
+	policyStr := string(policyJSON)
+	_, err = s.Client.PutBucketPolicy(ctx, &s3.PutBucketPolicyInput{
+		Bucket: &s.Bucket,
+		Policy: &policyStr,
+	})
+	if err != nil {
+		return fmt.Errorf("put bucket policy: %w", err)
+	}
+	return nil
+}
+
 // GenerateObjectKey builds a unique, user-scoped object key.
 func (s *S3Service) GenerateObjectKey(userID, filename string) string {
 	id := uuid.New().String()
@@ -104,8 +143,7 @@ func KeyBelongsToUser(key, userID string) bool {
 }
 
 // PresignPutURL generates a pre-signed PUT URL for direct upload.
-// Note: Size limits cannot be enforced with PUT pre-signing; enforce client-side
-// and validate with HeadObject after upload.
+// Size limits are enforced via bucket policy (Ionos S3 supports policies).
 func (s *S3Service) PresignPutURL(
 	ctx context.Context,
 	key, contentType string,
