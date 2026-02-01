@@ -131,9 +131,7 @@ export function getPlantWaterStatus(plant: Plant): 'overdue' | 'due-soon' | 'ok'
 /**
  * Get status text for water page
  */
-export function getPlantStatusText(
-	plant: Plant
-): { key: string; args?: string[] } {
+export function getPlantStatusText(plant: Plant): { key: string; args?: string[] } {
 	const daysUntil = getDaysUntilWater(plant);
 	if (daysUntil < 0)
 		return { key: 'plants.statusDaysOverdue', args: [String(Math.abs(daysUntil))] };

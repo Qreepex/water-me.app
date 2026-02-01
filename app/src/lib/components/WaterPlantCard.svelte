@@ -97,7 +97,9 @@
 			<!-- Status and Info -->
 			<div class="flex items-center gap-2">
 				<span class="text-lg">{statusIcon.emoji}</span>
-				<span class="text-xs font-medium text-[var(--text-light-main)]">{$tStore(statusTextKey.key, statusTextKey.args)}</span>
+				<span class="text-xs font-medium text-[var(--text-light-main)]"
+					>{$tStore(statusTextKey.key, statusTextKey.args)}</span
+				>
 			</div>
 
 			<!-- Additional Info -->

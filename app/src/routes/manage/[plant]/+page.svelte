@@ -9,6 +9,7 @@
 	import { getImageObjectURL, revokeObjectURL } from '$lib/utils/imageCache';
 	import { invalidateApiCache } from '$lib/utils/cache';
 	import { tStore } from '$lib/i18n';
+	import { getPlantsStore } from '$lib/stores/plants.svelte';
 	import type { FormData } from '$lib/types/forms';
 	import { createEmptyFormData } from '$lib/types/forms';
 	import BasicInformationForm from '$lib/components/PlantForms/BasicInformationForm.svelte';
@@ -26,6 +27,7 @@
 	import Alert from '$lib/components/ui/Message.svelte';
 	import Scrollable from '$lib/components/layout/Scrollable.svelte';
 
+	const plantsStore = getPlantsStore();
 	let plant = $state<Plant | null>(null);
 	let loading = $state(true);
 	let error = $state<string | null>(null);
@@ -457,6 +459,16 @@
 				plant = res.data;
 				formData = initializeFormData();
 				originalFormData = JSON.parse(JSON.stringify(formData));
+
+				// Update the store with the new/updated plant
+				const currentPlants = plantsStore.plants;
+				const existingIndex = currentPlants.findIndex((p) => p.id === plant?.id);
+				if (existingIndex >= 0) {
+					currentPlants[existingIndex] = plant;
+				} else {
+					currentPlants.push(plant);
+				}
+				plantsStore.setPlants([...currentPlants]);
 			}
 			// Clear uploaded photos since they were successfully applied
 			uploadedPhotoKeys = [];
@@ -536,7 +548,7 @@
 	icon="✏️"
 	title={plant?.name || $tStore('plants.editPlant')}
 	description={plant?.species || ''}
-	/>
+/>
 
 <PageContent>
 	{#if loading}

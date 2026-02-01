@@ -88,7 +88,7 @@
 </script>
 
 <PageHeader icon="🪴" title={plant?.name ?? 'plants.myPlants'} description={plant?.species}>
-		<Button variant="primary" size="sm" text="common.edit" icon="✏️" onclick={editPlant} />
+	<Button variant="primary" size="sm" text="common.edit" icon="✏️" onclick={editPlant} />
 </PageHeader>
 
 <PageContent>

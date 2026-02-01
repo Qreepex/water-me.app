@@ -10,7 +10,7 @@
 
 	let showMenu = $state(false);
 
-	function isActive(path: '/' | '/water' ): boolean {
+	function isActive(path: '/' | '/water'): boolean {
 		return page.url.pathname === resolve(path) || page.url.pathname.startsWith(resolve(path) + '/');
 	}
 

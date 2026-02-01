@@ -68,7 +68,7 @@
 	<div class="overflow-y-auto">
 		<div class="space-y-6 py-6">
 			<!-- Create Plant -->
-		<Card rounded="2xl">
+			<Card rounded="2xl">
 				<div class="p-6">
 					<p class="mb-4 text-sm font-semibold text-[var(--text-light-main)]">
 						{$tStore('plants.createPlant')}
@@ -81,7 +81,6 @@
 					></Button>
 				</div>
 			</Card>
-
 
 			<!-- Refresh Button Section -->
 			<Card rounded="2xl">
