@@ -53,24 +53,24 @@ Nutze diesen Verlauf für den oberen Bereich der App, um Tiefe zu erzeugen:
 
 ```css
 :root {
-	/* Brand Core */
-	--p-emerald: #00ee57;
-	--p-emerald-dark: #00a343;
+ /* Brand Core */
+ --p-emerald: #00ee57;
+ --p-emerald-dark: #00a343;
 
-	/* Status */
-	--status-error: #e63946;
-	--status-warn: #ffb703;
-	--status-info: #219ebc;
-	--status-success: #008f41;
+ /* Status */
+ --status-error: #e63946;
+ --status-warn: #ffb703;
+ --status-info: #219ebc;
+ --status-success: #008f41;
 
-	/* Theme Light */
-	--bg-light: #f2faf5;
-	--card-light: #ffffff;
-	--text-light-main: #061f12;
+ /* Theme Light */
+ --bg-light: #f2faf5;
+ --card-light: #ffffff;
+ --text-light-main: #061f12;
 
-	/* Theme Dark */
-	--bg-dark: #08140e;
-	--card-dark: #12261d;
-	--text-dark-main: #e0f2e9;
+ /* Theme Dark */
+ --bg-dark: #08140e;
+ --card-dark: #12261d;
+ --text-dark-main: #e0f2e9;
 }
 ```

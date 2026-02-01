@@ -1,4 +1,5 @@
 <script>
+	import { resolve } from '$app/paths';
 </script>
 
 <svelte:head>
@@ -14,7 +15,7 @@
 	<nav class="sticky top-0 z-50 border-b border-[#00ee57]/10 bg-white/80 backdrop-blur-md">
 		<div class="mx-auto max-w-6xl px-4 py-4 sm:px-6 lg:px-8">
 			<div class="flex items-center gap-3">
-				<a href="/" class="flex items-center gap-3 transition hover:opacity-80">
+				<a href={resolve('/')} class="flex items-center gap-3 transition hover:opacity-80">
 					<div class="text-3xl">🌿</div>
 					<span class="text-2xl font-bold text-[#061f12]">Water Me</span>
 				</a>
@@ -144,10 +145,10 @@
 
 <style>
 	:global(h2) {
-		@apply mt-8 mb-4;
+		margin: 2rem 0 1rem;
 	}
 
 	:global(p) {
-		@apply mb-2;
+		margin-bottom: 0.5rem;
 	}
 </style>

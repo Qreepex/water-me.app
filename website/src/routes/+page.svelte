@@ -1,20 +1,18 @@
 <script>
-	import { onMount } from 'svelte';
-
-	let stats = $state({
-		users: 0,
-		plants: 0,
-		reminders: 0
-	});
+	import { resolve } from '$app/paths';
+	import { GITHUB_URL, INSTAGRAM_URL, TIKTOK_URL } from '$lib';
 
 	let displayStats = $state({
 		users: 0,
 		plants: 0,
 		reminders: 0
 	});
+	let hasAnimated = $state(false);
 
-	// Animate stats on mount
-	onMount(() => {
+	$effect(() => {
+		if (hasAnimated) return;
+		hasAnimated = true;
+
 		const targetStats = {
 			users: 2850,
 			plants: 45320,
@@ -38,7 +36,6 @@
 		};
 
 		animate();
-		stats = targetStats;
 	});
 </script>
 
@@ -261,7 +258,7 @@
 					{ emoji: '🏠', title: 'Home', desc: 'Quick overview of all your plants' },
 					{ emoji: '💧', title: 'Watering', desc: 'Never miss a watering schedule' },
 					{ emoji: '✏️', title: 'Management', desc: 'Full control over plant details' }
-				] as item}
+				] as item (item.title)}
 					<div class="overflow-hidden rounded-2xl border border-[#00ee57]/20 bg-white shadow-sm">
 						<div class="flex h-48 items-center justify-center bg-gradient-to-br from-[#00ee57]/10 to-[#00a343]/10 text-6xl">
 							{item.emoji}
@@ -287,17 +284,16 @@
 
 				<div class="mt-8 flex flex-col gap-4 sm:flex-row sm:justify-center">
 					<a
-						href="https://play.google.com/store/apps/details?id=com.watermeme.app"
+						href="https://play.google.com/store/apps/details?id=app.waterme.app"
 						class="inline-flex items-center justify-center gap-2 rounded-lg bg-[#061f12] px-8 py-4 font-semibold text-white transition hover:bg-[#061f12]/80"
 					>
 						<span>🤖</span> Get on Google Play
 					</a>
-					<a
-						href="#"
+					<div
 						class="inline-flex items-center justify-center gap-2 rounded-lg bg-[#061f12] px-8 py-4 font-semibold text-white transition hover:bg-[#061f12]/80"
 					>
 						<span>🍎</span> Coming to iOS
-					</a>
+					</div>
 				</div>
 			</div>
 		</div>
@@ -334,7 +330,7 @@
 						q: 'How do I get reminders?',
 						a: 'Enable push notifications in the app settings and we will send you timely reminders for each care task.'
 					}
-				] as faq}
+				] as faq (faq.q)}
 					<div class="rounded-lg border border-[#00ee57]/20 bg-white p-6">
 						<h3 class="font-semibold text-[#061f12]">{faq.q}</h3>
 						<p class="mt-2 text-[#4b6658]">{faq.a}</p>
@@ -368,18 +364,18 @@
 				<div>
 					<h4 class="font-semibold text-white">Legal</h4>
 					<ul class="mt-2 space-y-1">
-						<li><a href="/privacy" class="text-sm text-white/70 transition hover:text-white">Privacy</a></li>
-						<li><a href="/terms" class="text-sm text-white/70 transition hover:text-white">Terms</a></li>
-						<li><a href="/imprint" class="text-sm text-white/70 transition hover:text-white">Imprint</a></li>
+						<li><a href={resolve('/privacy')} class="text-sm text-white/70 transition hover:text-white">Privacy</a></li>
+						<li><a href={resolve('/terms')} class="text-sm text-white/70 transition hover:text-white">Terms</a></li>
+						<li><a href={resolve('/imprint')} class="text-sm text-white/70 transition hover:text-white">Imprint</a></li>
 					</ul>
 				</div>
 
 				<div>
 					<h4 class="font-semibold text-white">Connect</h4>
 					<ul class="mt-2 space-y-1">
-						<li><a href="#" class="text-sm text-white/70 transition hover:text-white">Twitter</a></li>
-						<li><a href="#" class="text-sm text-white/70 transition hover:text-white">Instagram</a></li>
-						<li><a href="#" class="text-sm text-white/70 transition hover:text-white">GitHub</a></li>
+						<li><a rel="external" target="_blank" href={TIKTOK_URL} class="text-sm text-white/70 transition hover:text-white">TikTok</a></li>
+						<li><a rel="external" target="_blank" href={INSTAGRAM_URL} class="text-sm text-white/70 transition hover:text-white">Instagram</a></li>
+						<li><a  rel="external" target="_blank" href={GITHUB_URL} class="text-sm text-white/70 transition hover:text-white">GitHub</a></li>
 					</ul>
 				</div>
 			</div>
