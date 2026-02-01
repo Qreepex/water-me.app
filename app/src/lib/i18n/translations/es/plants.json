@@ -104,5 +104,10 @@
 	"dueTomorrowStatus": "Vencido mañana",
 	"sprayEvery": "Rociar cada",
 	"lastSprayedStatus": "Última vez rociada",
-	"noConfig": "Sin configuración"
+	"noConfig": "Sin configuración",
+	"statusDaysOverdue": "%s días vencido",
+	"statusDueToday": "Vencido hoy",
+	"statusDueTomorrow": "Vencido mañana",
+	"statusDueInDays": "Vence en %s días"
 }
+

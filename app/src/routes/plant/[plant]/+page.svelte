@@ -76,10 +76,6 @@
 		return new Date(date).toLocaleDateString();
 	}
 
-	function backToPlants() {
-		goto(resolve('/'));
-	}
-
 	function editPlant() {
 		if (!plant) return;
 		goto(resolve(`/manage/${plant.id}`));
@@ -92,10 +88,7 @@
 </script>
 
 <PageHeader icon="🪴" title={plant?.name ?? 'plants.myPlants'} description={plant?.species}>
-	<div class="flex flex-col gap-2 sm:flex-row sm:items-center">
-		<Button variant="ghost" size="sm" text="common.back" icon="←" onclick={backToPlants} />
 		<Button variant="primary" size="sm" text="common.edit" icon="✏️" onclick={editPlant} />
-	</div>
 </PageHeader>
 
 <PageContent>

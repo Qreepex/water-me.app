@@ -104,5 +104,10 @@
 	"dueTomorrowStatus": "Morgen fällig",
 	"sprayEvery": "Sprühen alle",
 	"lastSprayedStatus": "Zuletzt besprüht",
-	"noConfig": "Keine Konfiguration festgelegt"
+	"noConfig": "Keine Konfiguration festgelegt",
+	"statusDaysOverdue": "%s Tage überfällig",
+	"statusDueToday": "Heute fällig",
+	"statusDueTomorrow": "Morgen fällig",
+	"statusDueInDays": "Fällig in %s Tagen"
 }
+

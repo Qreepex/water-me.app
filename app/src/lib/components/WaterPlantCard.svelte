@@ -10,8 +10,8 @@
 	interface Props {
 		plant: Plant;
 		status: 'overdue' | 'due-soon' | 'ok';
-		statusText: string;
-		statusIcon: string;
+		statusTextKey: { key: string; args?: string[] };
+		statusIcon: { emoji: string; color: string };
 		isWatering?: boolean;
 		isSelected?: boolean;
 		showNextWater?: boolean;
@@ -23,7 +23,7 @@
 	const {
 		plant,
 		status,
-		statusText,
+		statusTextKey,
 		statusIcon,
 		isWatering = false,
 		isSelected = false,
@@ -96,8 +96,8 @@
 
 			<!-- Status and Info -->
 			<div class="flex items-center gap-2">
-				<span class="text-lg">{statusIcon}</span>
-				<span class="text-xs font-medium text-[var(--text-light-main)]">{statusText}</span>
+				<span class="text-lg">{statusIcon.emoji}</span>
+				<span class="text-xs font-medium text-[var(--text-light-main)]">{$tStore(statusTextKey.key, statusTextKey.args)}</span>
 			</div>
 
 			<!-- Additional Info -->

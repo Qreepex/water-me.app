@@ -131,25 +131,30 @@ export function getPlantWaterStatus(plant: Plant): 'overdue' | 'due-soon' | 'ok'
 /**
  * Get status text for water page
  */
-export function getPlantStatusText(plant: Plant): string {
+export function getPlantStatusText(
+	plant: Plant
+): { key: string; args?: string[] } {
 	const daysUntil = getDaysUntilWater(plant);
 	if (daysUntil < 0)
-		return `${Math.abs(daysUntil)} ${Math.abs(daysUntil) === 1 ? 'day' : 'days'} overdue`;
-	if (daysUntil === 0) return 'Due today';
-	if (daysUntil === 1) return 'Due tomorrow';
-	return `Due in ${daysUntil} days`;
+		return { key: 'plants.statusDaysOverdue', args: [String(Math.abs(daysUntil))] };
+	if (daysUntil === 0) return { key: 'plants.statusDueToday' };
+	if (daysUntil === 1) return { key: 'plants.statusDueTomorrow' };
+	return { key: 'plants.statusDueInDays', args: [String(daysUntil)] };
 }
 
 /**
  * Get status icon for water page
  */
-export function getStatusIcon(status: 'overdue' | 'due-soon' | 'ok'): string {
+export function getStatusIcon(status: 'overdue' | 'due-soon' | 'ok'): {
+	emoji: string;
+	color: string;
+} {
 	switch (status) {
 		case 'overdue':
-			return '🚨';
+			return { emoji: '🚨', color: 'text-red-600' };
 		case 'due-soon':
-			return '⚠️';
+			return { emoji: '⚠️', color: 'text-yellow-600' };
 		default:
-			return '✅';
+			return { emoji: '✅', color: 'text-green-600' };
 	}
 }

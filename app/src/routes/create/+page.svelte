@@ -65,15 +65,7 @@
 	}
 </script>
 
-<PageHeader icon="🌱" title="plants.newPlant" description="plants.startAddingPlants">
-	<Button
-		variant="ghost"
-		size="sm"
-		text="common.back"
-		icon="←"
-		onclick={() => goto(resolve('/manage'))}
-	/>
-</PageHeader>
+<PageHeader icon="🌱" title="plants.newPlant" description="plants.startAddingPlants" />
 
 <PageContent>
 	{#if error}

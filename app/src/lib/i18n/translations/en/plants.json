@@ -114,5 +114,9 @@
 	"dueTomorrowStatus": "Due tomorrow",
 	"sprayEvery": "Spray every",
 	"lastSprayedStatus": "Last sprayed",
-	"noConfig": "No configuration set"
+	"noConfig": "No configuration set",
+	"statusDaysOverdue": "%s days overdue",
+	"statusDueToday": "Due today",
+	"statusDueTomorrow": "Due tomorrow",
+	"statusDueInDays": "Due in %s days"
 }

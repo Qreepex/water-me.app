@@ -162,7 +162,7 @@
 	{:else if store.plants.length === 0}
 		<!-- Empty State -->
 		<EmptyState icon="🪴" title="plants.noPlants" description="plants.startAddingPlants">
-			<Button variant="primary" onclick={() => goto(resolve('/manage/create'))} text="addPlant" />
+			<Button variant="primary" onclick={() => goto(resolve('/create'))} text="addPlant" />
 		</EmptyState>
 	{:else if getVisiblePlants().length === 0}
 		<EmptyState icon="✓" title="plants.allWatered" description="plants.allPlantsWatered" />
@@ -186,7 +186,7 @@
 							<WaterPlantCard
 								{plant}
 								status={getPlantWaterStatus(plant)}
-								statusText={getPlantStatusText(plant)}
+								statusTextKey={getPlantStatusText(plant)}
 								statusIcon={getStatusIcon(getPlantWaterStatus(plant))}
 								isWatering={isWatering(plant.id)}
 								isSelected={selectedForWateringId === plant.id}
@@ -217,7 +217,7 @@
 							<WaterPlantCard
 								{plant}
 								status={getPlantWaterStatus(plant)}
-								statusText={getPlantStatusText(plant)}
+								statusTextKey={getPlantStatusText(plant)}
 								statusIcon={getStatusIcon(getPlantWaterStatus(plant))}
 								isWatering={isWatering(plant.id)}
 								isSelected={selectedForWateringId === plant.id}

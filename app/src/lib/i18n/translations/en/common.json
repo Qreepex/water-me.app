@@ -23,6 +23,7 @@
 	"yes": "Yes",
 	"no": "No",
 	"refresh": "Refresh",
+	"refreshData": "Load current data",
 	"loadingPlants": "Loading your plants...",
 	"loadingPlantDetails": "Loading plant details...",
 	"errorLoadingPlants": "Error loading plants",

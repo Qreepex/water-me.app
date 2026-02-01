@@ -10,11 +10,11 @@
 
 	let showMenu = $state(false);
 
-	function isActive(path: '/' | '/water' | '/manage'): boolean {
+	function isActive(path: '/' | '/water' ): boolean {
 		return page.url.pathname === resolve(path) || page.url.pathname.startsWith(resolve(path) + '/');
 	}
 
-	function navigate(path: '/' | '/water' | '/manage'): void {
+	function navigate(path: '/' | '/water'): void {
 		showMenu = false;
 		goto(resolve(path));
 	}
@@ -71,7 +71,7 @@
 {#if showMenu}
 	<div class="pt-safe fixed inset-0 bottom-20 z-50 bg-white">
 		<div class="flex h-full flex-col overflow-hidden px-3 pt-2 md:px-10 md:pt-10 xl:px-32 xl:pt-14">
-			<BurgerMenu />
+			<BurgerMenu onClose={() => (showMenu = false)} />
 		</div>
 	</div>
 {/if}

@@ -11,7 +11,14 @@
 	import PageContent from './layout/PageContent.svelte';
 	import Card from './ui/Card.svelte';
 	import Button from './ui/Button.svelte';
+	import { goto } from '$app/navigation';
+	import { resolve } from '$app/paths';
 
+	interface Props {
+		onClose?: () => void;
+	}
+
+	const { onClose }: Props = $props();
 	const plantsStore = getPlantsStore();
 	let isRefreshing = $state(false);
 
@@ -40,7 +47,13 @@
 		} finally {
 			plantsStore.setLoading(false);
 			isRefreshing = false;
+			onClose?.();
 		}
+	}
+
+	function handleCreateClick() {
+		goto(resolve('/create'));
+		onClose?.();
 	}
 
 	const buildDate = new Date().toLocaleDateString();
@@ -54,9 +67,28 @@
 <PageContent>
 	<div class="overflow-y-auto">
 		<div class="space-y-6 py-6">
+			<!-- Create Plant -->
+		<Card rounded="2xl">
+				<div class="p-6">
+					<p class="mb-4 text-sm font-semibold text-[var(--text-light-main)]">
+						{$tStore('plants.createPlant')}
+					</p>
+					<Button
+						onclick={handleCreateClick}
+						disabled={isRefreshing}
+						class="w-full"
+						text="plants.createPlant"
+					></Button>
+				</div>
+			</Card>
+
+
 			<!-- Refresh Button Section -->
 			<Card rounded="2xl">
 				<div class="p-6">
+					<p class="mb-4 text-sm font-semibold text-[var(--text-light-main)]">
+						{$tStore('common.refreshData')}
+					</p>
 					<Button
 						onclick={handleRefresh}
 						disabled={isRefreshing}

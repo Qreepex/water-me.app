@@ -15,6 +15,7 @@
 	"yes": "Ja",
 	"no": "Nein",
 	"refresh": "Aktualisieren",
+	"refreshData": "Aktuelle Daten laden",
 	"loadingPlants": "Pflanzen werden geladen...",
 	"loadingPlantDetails": "Pflanzendetails werden geladen...",
 	"errorLoadingPlants": "Fehler beim Laden von Pflanzen",

@@ -15,6 +15,7 @@
 	"yes": "Sí",
 	"no": "No",
 	"refresh": "Actualizar",
+	"refreshData": "Cargar datos actuales",
 	"loadingPlants": "Cargando tus plantas...",
 	"loadingPlantDetails": "Cargando detalles de la planta...",
 	"errorLoadingPlants": "Error al cargar plantas",

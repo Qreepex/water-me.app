@@ -522,10 +522,13 @@
 		expandedSections[section] = !expandedSections[section];
 	}
 
-	function resetForm(): void {
+	function cancelForm(): void {
 		formData = initializeFormData();
 		originalFormData = JSON.parse(JSON.stringify(formData));
 		error = null;
+
+		cleanupUnappliedUploads();
+		goto(resolve(plant ? `/plant/${plant.id}` : '/'));
 	}
 </script>
 
@@ -533,9 +536,7 @@
 	icon="✏️"
 	title={plant?.name || $tStore('plants.editPlant')}
 	description={plant?.species || ''}
->
-	<Button variant="ghost" size="sm" text="common.back" icon="←" onclick={() => handleBackClick()} />
-</PageHeader>
+	/>
 
 <PageContent>
 	{#if loading}
@@ -811,8 +812,8 @@
 			<Button
 				variant="secondary"
 				size="md"
-				onclick={resetForm}
-				text="common.reset"
+				onclick={cancelForm}
+				text="common.cancel"
 				class="w-full cursor-pointer"
 			/>
 			<Button
