@@ -88,5 +88,7 @@
 	"existingPhotos": "Vorhandene Fotos:",
 	"noPhotosYet": "Noch keine Fotos",
 	"deletePhoto": "Foto löschen",
-	"deletePhotoConfirm": "Dieses Foto entfernen?"
+	"deletePhotoConfirm": "Dieses Foto entfernen?",
+	"noWateringConfig": "Kein Bewässerungsplan",
+	"configureWateringSchedule": "Bewässerungsplan einrichten"
 }

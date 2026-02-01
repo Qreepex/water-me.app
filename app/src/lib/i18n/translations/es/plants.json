@@ -88,5 +88,7 @@
 	"existingPhotos": "Fotos existentes:",
 	"noPhotosYet": "Sin fotos aún",
 	"deletePhoto": "Eliminar foto",
-	"deletePhotoConfirm": "¿Eliminar esta foto?"
+	"deletePhotoConfirm": "¿Eliminar esta foto?",
+	"noWateringConfig": "Sin Horario de Riego",
+	"configureWateringSchedule": "Configurar horario de riego"
 }

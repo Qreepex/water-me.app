@@ -113,22 +113,23 @@ export async function fetchData<P extends keyof paths, M extends HttpMethod = 'g
 				params: GetPathParams<P>;
 			}
 ): Promise<FetchResult<P, M>> {
-	const method = (options?.method ?? ('get' as M)) as HttpMethod;
-	const params = (options as { params?: GetPathParams<P> }).params;
+	const opts = options ?? {};
+	const method = (opts.method ?? ('get' as M)) as HttpMethod;
+	const params = (opts as { params?: GetPathParams<P> }).params;
 	const path = applyPathParams(apiPath, params);
 
 	try {
 		const reqInit: RequestInit = {
 			method: method.toUpperCase(),
-			...options.requestOptions
+			...(opts.requestOptions as Record<string, unknown>)
 		};
 
-		if (options.body !== undefined) {
+		if (opts.body !== undefined) {
 			(reqInit.headers as Record<string, string>) = {
 				...(reqInit.headers as Record<string, string>),
 				'Content-Type': 'application/json'
 			};
-			reqInit.body = JSON.stringify(options.body);
+			reqInit.body = JSON.stringify(opts.body);
 		}
 
 		const res = await fetchWithAuth(path, reqInit);

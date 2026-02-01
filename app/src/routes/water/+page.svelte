@@ -60,24 +60,31 @@
 				return;
 			}
 
-			const now = new Date().toISOString();
-			const updated = store.plants.map((p) => {
-				if (p.id === id && p.watering) {
-					return {
-						...p,
-						watering: {
-							...p.watering,
-							lastWatered: now
-						}
-					};
-				}
-				return p;
-			});
-			store.setPlants(updated);
-
-			// Clear selection and invalidate cache
+			// Clear selection and invalidate cache with confirmation
 			selectedForWateringId = null;
-			invalidateApiCache(['/api/plants']);
+			await invalidateApiCache(['/api/plants'], { waitForAck: true, timeoutMs: 500 });
+
+			// Reload plant data to ensure consistency
+			const plantsResponse = await fetchData('/api/plants', { method: 'get' });
+			if (plantsResponse.ok) {
+				store.setPlants(plantsResponse.data);
+			} else {
+				// Fallback: at least update locally
+				const now = new Date().toISOString();
+				const updated = store.plants.map((p) => {
+					if (p.id === id && p.watering) {
+						return {
+							...p,
+							watering: {
+								...p.watering,
+								lastWatered: now
+							}
+						};
+					}
+					return p;
+				});
+				store.setPlants(updated);
+			}
 
 			try {
 				await Haptics.notification({ type: NotificationType.Success });
@@ -97,8 +104,12 @@
 		}
 	}
 
+	function hasWateringConfig(plant: Plant): boolean {
+		return !!plant.watering?.intervalDays;
+	}
+
 	function getVisiblePlants() {
-		const visible = sortByWateringPriority(store.plants);
+		const visible = sortByWateringPriority(store.plants.filter(hasWateringConfig));
 		// Sort by due status - due plants first, then others
 		return visible.sort((a, b) => {
 			const statusA = getPlantWaterStatus(a);
@@ -120,6 +131,10 @@
 			const status = getPlantWaterStatus(p);
 			return status === 'ok';
 		});
+	}
+
+	function getPlantsWithoutConfig() {
+		return store.plants.filter((p) => !hasWateringConfig(p));
 	}
 
 	function getNextWaterDate(plant: Plant): Date {
@@ -211,6 +226,41 @@
 								showNextWater={true}
 								nextWaterDate={getNextWaterDate(plant)}
 							/>
+						{/each}
+					</List>
+				</div>
+			{/if}
+
+			<!-- Plants Without Config Section -->
+			{#if getPlantsWithoutConfig().length > 0}
+				<div>
+					<div class="mb-4 flex items-center gap-2">
+						<h2 class="text-xl font-bold text-[var(--text-light-main)]">
+							⚙️ {$tStore('plants.noWateringConfig')}
+						</h2>
+						<span
+							class="ml-auto rounded-full bg-[var(--status-warning)] px-3 py-1 text-sm font-semibold text-white"
+						>
+							{getPlantsWithoutConfig().length}
+						</span>
+					</div>
+					<List>
+						{#each getPlantsWithoutConfig() as plant (plant.id)}
+							<div
+								class="flex items-center justify-between rounded-lg bg-[var(--bg-surface)] p-4 text-sm"
+							>
+								<div class="flex-1">
+									<p class="font-semibold text-[var(--text-main)]">{plant.name}</p>
+									<p class="text-xs text-[var(--text-light-secondary)]">
+										{plant.species}
+									</p>
+								</div>
+								<Button
+									variant="secondary"
+									text="plants.configureWateringSchedule"
+									onclick={() => goto(resolve(`/manage/${plant.slug}`))}
+								/>
+							</div>
 						{/each}
 					</List>
 				</div>

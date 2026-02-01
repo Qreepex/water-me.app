@@ -100,5 +100,7 @@
 	"existingPhotos": "Existing photos:",
 	"noPhotosYet": "No photos yet",
 	"deletePhoto": "Delete photo",
-	"deletePhotoConfirm": "Remove this photo?"
+	"deletePhotoConfirm": "Remove this photo?",
+	"noWateringConfig": "No Watering Schedule",
+	"configureWateringSchedule": "Set up watering schedule"
 }
