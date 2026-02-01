@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { tStore } from '$lib/i18n';
 	import PageHeader from '$lib/components/layout/PageHeader.svelte';
 	import LoadingSpinner from '$lib/components/ui/LoadingSpinner.svelte';
 	import EmptyState from '$lib/components/ui/EmptyState.svelte';

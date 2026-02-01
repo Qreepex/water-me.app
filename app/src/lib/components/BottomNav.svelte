@@ -4,7 +4,6 @@
 	import { page } from '$app/state';
 	import Burger from '$lib/assets/Burger.svg.svelte';
 	import Can from '$lib/assets/Can.svg.svelte';
-	import Home from '$lib/assets/Home.svg.svelte';
 	import SunFlower from '$lib/assets/SunFlower.svg.svelte';
 	import { tStore } from '$lib/i18n';
 	import BurgerMenu from './BurgerMenu.svelte';

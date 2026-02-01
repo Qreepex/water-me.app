@@ -7,6 +7,7 @@
 	import { page } from '$app/stores';
 	import { fetchData } from '$lib/auth/fetch.svelte';
 	import { getImageObjectURL, revokeObjectURL } from '$lib/utils/imageCache';
+	import { invalidateApiCache } from '$lib/utils/cache';
 	import { tStore } from '$lib/i18n';
 	import type { FormData } from '$lib/types/forms';
 	import { createEmptyFormData } from '$lib/types/forms';
@@ -464,26 +465,10 @@
 
 			// Invalidate cache for this plant and the plants list BEFORE redirecting
 			const plantId = plant?.id ?? '';
-			if (navigator.serviceWorker?.controller && plantId) {
-				// Wait for cache invalidation using MessageChannel
-				await new Promise<void>((resolve) => {
-					const channel = new MessageChannel();
-					channel.port1.onmessage = () => {
-						console.log('✓ Cache invalidation confirmed by Service Worker');
-						resolve();
-					};
-					navigator.serviceWorker.controller!.postMessage(
-						{
-							type: 'INVALIDATE_CACHE',
-							urls: [`/api/plants/${plantId}`, '/api/plants']
-						},
-						[channel.port2]
-					);
-					// Fallback timeout in case service worker doesn't respond
-					setTimeout(() => {
-						console.warn('⏱️ Cache invalidation timeout - proceeding anyway');
-						resolve();
-					}, 100);
+			if (plantId) {
+				await invalidateApiCache([`/api/plants/${plantId}`, '/api/plants'], {
+					waitForAck: true,
+					timeoutMs: 100
 				});
 			}
 

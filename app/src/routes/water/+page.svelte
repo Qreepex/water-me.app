@@ -3,6 +3,7 @@
 	import { resolve } from '$app/paths';
 	import { fetchData } from '$lib/auth/fetch.svelte';
 	import { getPlantWaterStatus, getPlantStatusText, getStatusIcon } from '$lib/utils/plant';
+	import { invalidateApiCache } from '$lib/utils/cache';
 	import { sortByWateringPriority } from '$lib/utils/watering';
 	import WaterPlantCard from '$lib/components/WaterPlantCard.svelte';
 	import PageHeader from '$lib/components/layout/PageHeader.svelte';
@@ -20,23 +21,6 @@
 	const store = getPlantsStore();
 	let selectedForWateringId = $state<string | null>(null);
 	let wateringIds = $state<string[]>([]);
-	let dismissedIds = $state<string[]>([]);
-
-	function invalidateCache(): void {
-		if (typeof navigator !== 'undefined' && 'serviceWorker' in navigator) {
-			navigator.serviceWorker.controller?.postMessage({
-				type: 'INVALIDATE_CACHE',
-				urls: ['/api/plants']
-			});
-		}
-	}
-
-	function dismissPlant(id: string): void {
-		if (!dismissedIds.includes(id)) {
-			dismissedIds = [...dismissedIds, id];
-		}
-		selectedForWateringId = null;
-	}
 
 	function isWatering(id: string): boolean {
 		return wateringIds.includes(id);
@@ -91,7 +75,7 @@
 
 			// Clear selection and invalidate cache
 			selectedForWateringId = null;
-			invalidateCache();
+			invalidateApiCache(['/api/plants']);
 
 			try {
 				await Haptics.notification({ type: NotificationType.Success });
@@ -112,9 +96,7 @@
 	}
 
 	function getVisiblePlants() {
-		const visible = sortByWateringPriority(store.plants).filter(
-			(p) => !dismissedIds.includes(p.id)
-		);
+		const visible = sortByWateringPriority(store.plants);
 		// Sort by due status - due plants first, then others
 		return visible.sort((a, b) => {
 			const statusA = getPlantWaterStatus(a);
@@ -224,7 +206,6 @@
 							isSelected={selectedForWateringId === plant.id}
 							onWater={waterPlant}
 							onSelect={toggleWateringSelection}
-							onSkip={dismissPlant}
 							showNextWater={true}
 							nextWaterDate={getNextWaterDate(plant)}
 						/>

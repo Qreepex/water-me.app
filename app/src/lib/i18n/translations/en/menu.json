@@ -15,5 +15,8 @@
 	"garden": "My Garden",
 	"water": "Watering",
 	"home": "Home",
-	"wateringDescription": "They deserve some water today!"
+	"wateringDescription": "They deserve some water today!",
+	"settings": "Settings",
+	"resources": "Resources",
+	"about": "About"
 }

@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
+	import { invalidateApiCache } from '$lib/utils/cache';
 	import { fetchData } from '$lib/auth/fetch.svelte';
 	import { tStore } from '$lib/i18n';
 	import PageHeader from '$lib/components/layout/PageHeader.svelte';
@@ -49,28 +50,10 @@
 			console.log('Created new plant:', newPlant);
 
 			// Invalidate cache so new plant appears in list and detail page
-			if (navigator.serviceWorker?.controller) {
-				// Wait for cache invalidation using MessageChannel
-				await new Promise<void>((resolve) => {
-					const channel = new MessageChannel();
-					channel.port1.onmessage = () => {
-						console.log('✓ Cache invalidation confirmed by Service Worker');
-						resolve();
-					};
-					navigator.serviceWorker.controller!.postMessage(
-						{
-							type: 'INVALIDATE_CACHE',
-							urls: ['/api/plants', `/api/plants/${newPlant.id}`]
-						},
-						[channel.port2]
-					);
-					// Fallback timeout in case service worker doesn't respond
-					setTimeout(() => {
-						console.warn('⏱️ Cache invalidation timeout - proceeding anyway');
-						resolve();
-					}, 200);
-				});
-			}
+			await invalidateApiCache(['/api/plants', `/api/plants/${newPlant.id}`], {
+				waitForAck: true,
+				timeoutMs: 200
+			});
 
 			// Navigate to edit page
 			goto(resolve(`/manage/${newPlant.id}`));

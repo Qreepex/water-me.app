@@ -47,9 +47,10 @@
 	<main class="pt-safe flex h-full flex-col overflow-hidden" style="overscroll-behavior-y: none;">
 		<Auth>
 			<!-- Bottom Navigation: only visible when authenticated (inside Auth slot) -->
-			<BottomNav />
 			<!-- Page content: flex-1 allows inner scrollable components -->
 			<div class="flex-1 overflow-hidden px-3 pt-2 md:px-10 md:pt-10 xl:px-32 xl:pt-14">
+				<BottomNav />
+
 				{@render children()}
 			</div>
 		</Auth>

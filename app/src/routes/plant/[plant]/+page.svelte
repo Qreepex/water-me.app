@@ -2,7 +2,6 @@
 	import { page } from '$app/stores';
 	import { goto } from '$app/navigation';
 	import { tStore } from '$lib/i18n';
-	import type { Plant } from '$lib/types/api';
 	import { getPlantsStore } from '$lib/stores/plants.svelte';
 	import { imageCacheStore } from '$lib/stores/imageCache.svelte';
 	import PageHeader from '$lib/components/layout/PageHeader.svelte';
@@ -13,6 +12,7 @@
 	import Alert from '$lib/components/ui/Message.svelte';
 	import { daysAgo } from '$lib/utils/plant';
 	import { resolve } from '$app/paths';
+	import { SvelteMap, SvelteSet } from 'svelte/reactivity';
 
 	const store = getPlantsStore();
 	const plantId = $derived($page.params.plant ?? '');
@@ -31,14 +31,14 @@
 	$effect(() => {
 		if (!plant) return;
 
-		const ids = new Set<string>();
+		const ids = new SvelteSet<string>();
 		(plant.photoIds ?? []).forEach((id) => id && ids.add(id));
 		(plant.growthHistory ?? []).forEach((entry) => entry.photoId && ids.add(entry.photoId));
 
 		const idList = Array.from(ids);
 		const remoteUrls = ((plant as unknown as { photoUrls?: string[] })?.photoUrls ??
 			[]) as string[];
-		const idToRemote = new Map<string, string>();
+		const idToRemote = new SvelteMap<string, string>();
 		(plant.photoIds ?? []).forEach((id, index) => {
 			const url = remoteUrls[index];
 			if (id && url) idToRemote.set(id, url);

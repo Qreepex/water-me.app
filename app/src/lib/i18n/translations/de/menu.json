@@ -11,5 +11,8 @@
 	"pushNotifications": "Push-Benachrichtigungen (Debug)",
 	"garden": "Mein Garten",
 	"water": "Gießen",
-	"home": "Startseite"
+	"home": "Startseite",
+	"settings": "Einstellungen",
+	"resources": "Ressourcen",
+	"about": "Über"
 }

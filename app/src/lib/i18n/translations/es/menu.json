@@ -8,5 +8,11 @@
 	"impressum": "Aviso Legal",
 	"build": "Compilación",
 	"version": "Versión",
-	"pushNotifications": "Notificaciones Push (Debug)"
+	"pushNotifications": "Notificaciones Push (Debug)",
+	"settings": "Configuración",
+	"resources": "Recursos",
+	"about": "Acerca de",
+	"garden": "Mi Jardín",
+	"water": "Riego",
+	"home": "Inicio"
 }
