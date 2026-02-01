@@ -39,20 +39,19 @@ func main() {
 
 	// Configure S3 bucket CORS for browser uploads
 	// This allows the frontend to make direct PUT requests to S3
-	s3AllowedOrigins := []string{
+	allowedOrigins := []string{
 		"https://localhost",
 		"http://localhost",
-		"*", // Allows all origins; restrict in production
+		"https://app.water-me.app", // Allows all origins; restrict in production
+		"https://water-me.app",
+		"https://my.water-me.app",
 	}
-	if err := s3svc.SetupCORS(ctx, s3AllowedOrigins); err != nil {
+	if err := s3svc.SetupCORS(ctx, allowedOrigins); err != nil {
 		log.Printf("warning: failed to setup S3 CORS: %v", err)
 	} else {
 		log.Println("S3 bucket CORS configured successfully")
 	}
 
-	allowedOrigins := []string{
-		"*",
-	}
 	cors := handlers.CORS(
 		handlers.AllowedOrigins(allowedOrigins),
 		handlers.AllowedHeaders([]string{"Authorization", "Content-Type", "*"}),
