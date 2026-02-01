@@ -35,7 +35,7 @@ func getRealIP(r *http.Request) string {
 func PlantHandler(router *mux.Router, database *services.MongoDB, s3 *services.S3Service) {
 	// Create rate limiter once
 	rateLimiter := services.NewRateLimiter()
-	
+
 	// Apply rate limiting to all routes
 	router.Use(func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -192,16 +192,16 @@ func createPlant(w http.ResponseWriter, r *http.Request, db *services.MongoDB) {
 		util.ServerError(w, err)
 		return
 	}
-	
+
 	// Check plant limit
 	if validation.ValidatePlantLimit(len(existingPlants)) {
 		util.BadRequest(w, "Plant limit exceeded", map[string]interface{}{
-			"limit": validation.MaxPlantsPerUser,
+			"limit":   validation.MaxPlantsPerUser,
 			"current": len(existingPlants),
 		})
 		return
 	}
-	
+
 	plant := createPlantFromRequest(req, userID, existingPlants)
 	createdPlant, err := db.CreatePlant(r.Context(), plant)
 	if err != nil {

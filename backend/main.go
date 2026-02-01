@@ -5,10 +5,11 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"time"
+
 	"plants-backend/middlewares"
 	"plants-backend/routes"
 	"plants-backend/services"
-	"time"
 
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"

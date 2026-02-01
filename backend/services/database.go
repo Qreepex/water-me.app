@@ -352,6 +352,7 @@ func (m *MongoDB) DeleteNotificationConfig(ctx context.Context, userID string) (
 
 	return result.DeletedCount > 0, nil
 }
+
 // CountActiveUsers returns the count of unique users who have plants
 func (m *MongoDB) CountActiveUsers(ctx context.Context) (int64, error) {
 	collection := m.GetCollection(constants.MongoDBCollections.Plants)

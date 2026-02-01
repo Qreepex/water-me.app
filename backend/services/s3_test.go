@@ -74,7 +74,12 @@ func TestBucketSizeLimit(t *testing.T) {
 	fileData := bytes.Repeat([]byte("a"), int(fileSize))
 
 	// Attempt to upload the 3MB file using the presign URL
-	req, err := http.NewRequestWithContext(ctx, http.MethodPut, presignURL, bytes.NewReader(fileData))
+	req, err := http.NewRequestWithContext(
+		ctx,
+		http.MethodPut,
+		presignURL,
+		bytes.NewReader(fileData),
+	)
 	if err != nil {
 		t.Fatalf("Failed to create HTTP request: %v", err)
 	}
@@ -98,11 +103,19 @@ func TestBucketSizeLimit(t *testing.T) {
 
 	// Verify that the upload was rejected (should be 403 Forbidden or 400 Bad Request)
 	if resp.StatusCode >= 200 && resp.StatusCode < 300 {
-		t.Errorf("Expected upload to be rejected, but got status %d. Response: %s", resp.StatusCode, string(body))
+		t.Errorf(
+			"Expected upload to be rejected, but got status %d. Response: %s",
+			resp.StatusCode,
+			string(body),
+		)
 	}
 
 	if resp.StatusCode != http.StatusForbidden && resp.StatusCode != http.StatusBadRequest {
-		t.Logf("Upload rejected with status %d (expected 403 or 400): %s", resp.StatusCode, string(body))
+		t.Logf(
+			"Upload rejected with status %d (expected 403 or 400): %s",
+			resp.StatusCode,
+			string(body),
+		)
 	}
 
 	t.Logf("Upload correctly rejected by bucket policy. Status: %d", resp.StatusCode)
@@ -143,7 +156,12 @@ func TestValidUploadSize(t *testing.T) {
 	fileData := bytes.Repeat([]byte("b"), int(fileSize))
 
 	// Upload the file
-	req, err := http.NewRequestWithContext(ctx, http.MethodPut, presignURL, bytes.NewReader(fileData))
+	req, err := http.NewRequestWithContext(
+		ctx,
+		http.MethodPut,
+		presignURL,
+		bytes.NewReader(fileData),
+	)
 	if err != nil {
 		t.Fatalf("Failed to create HTTP request: %v", err)
 	}
@@ -163,7 +181,11 @@ func TestValidUploadSize(t *testing.T) {
 	// Verify upload was accepted (2xx status)
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		body, _ := io.ReadAll(resp.Body)
-		t.Errorf("Expected upload to succeed, but got status %d. Response: %s", resp.StatusCode, string(body))
+		t.Errorf(
+			"Expected upload to succeed, but got status %d. Response: %s",
+			resp.StatusCode,
+			string(body),
+		)
 	} else {
 		t.Logf("Upload successful. Status: %d", resp.StatusCode)
 	}

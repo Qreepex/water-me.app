@@ -14,9 +14,9 @@ type RateLimiter struct {
 }
 
 type userLimiter struct {
-	count      int
-	lastReset  time.Time
-	requestsIP int
+	count       int
+	lastReset   time.Time
+	requestsIP  int
 	lastResetIP time.Time
 }
 
@@ -41,7 +41,8 @@ func NewRateLimiter() *RateLimiter {
 			now := time.Now()
 			for key, limiter := range rl.limiter {
 				// Remove entries that haven't been used in 10 minutes
-				if now.Sub(limiter.lastReset) > 10*time.Minute && now.Sub(limiter.lastResetIP) > 10*time.Minute {
+				if now.Sub(limiter.lastReset) > 10*time.Minute &&
+					now.Sub(limiter.lastResetIP) > 10*time.Minute {
 					delete(rl.limiter, key)
 				}
 			}
