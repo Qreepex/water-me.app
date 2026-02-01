@@ -1,0 +1,81 @@
+{
+	"nav": {
+		"features": "Features",
+		"stats": "Stats",
+		"download": "Download",
+		"open_app": "Open App"
+	},
+	"hero": {
+		"title": "Take Care of Your Plants Effortlessly",
+		"subtitle": "Never forget to water your plants again. Get smart reminders and track your plant's growth.",
+		"cta_primary": "Download Now",
+		"cta_secondary": "Try Web App",
+		"trust_badge": "Trusted by plant lovers worldwide"
+	},
+	"features": {
+		"watering": {
+			"title": "Smart Watering Reminders",
+			"description": "Get personalized reminders based on your plant's watering schedule"
+		},
+		"multicare": {
+			"title": "Multi-Care Tracking",
+			"description": "Track watering, fertilizing, and other care routines all in one place"
+		},
+		"growth": {
+			"title": "Growth Tracking",
+			"description": "Monitor your plant's growth with photos and measurements over time"
+		},
+		"history": {
+			"title": "Care History",
+			"description": "Keep detailed notes about every action taken with your plants"
+		},
+		"notifications": {
+			"title": "Push Notifications",
+			"description": "Stay updated with timely notifications on your mobile device"
+		},
+		"multilang": {
+			"title": "Multi-Language Support",
+			"description": "Use the app in your preferred language"
+		}
+	},
+	"stats": {
+		"title": "Join Our Growing Community",
+		"users": "Active Users",
+		"plants": "Plants Tracked",
+		"reminders": "Reminders Sent"
+	},
+	"screenshots": {
+		"title": "Experience the App",
+		"subtitle": "Beautiful and intuitive interface for managing your plants"
+	},
+	"download": {
+		"title": "Get Started Today",
+		"subtitle": "Download Water Me and start taking better care of your plants",
+		"googleplay": "Download on Google Play",
+		"appstore": "Coming Soon on App Store"
+	},
+	"faq": {
+		"title": "Frequently Asked Questions",
+		"q1": "How do I add a new plant?",
+		"a1": "Simply tap the '+' button and fill in your plant's details. You can add species, location, and watering preferences.",
+		"q2": "Can I set custom watering schedules?",
+		"a2": "Yes! Each plant has its own customizable watering schedule. You can adjust it anytime based on your plant's needs.",
+		"q3": "Will I miss watering reminders?",
+		"a3": "Our app sends push notifications to your device. Make sure notifications are enabled in your phone settings.",
+		"q4": "How is my data stored?",
+		"a4": "Your data is securely stored in our encrypted database. We use Firebase Authentication for secure access.",
+		"q5": "Can I share my plants with family?",
+		"a5": "Currently, each user has their own garden. We're working on multi-user features for the future!",
+		"q6": "Is the app free?",
+		"a6": "Yes! Water Me is completely free to download and use."
+	},
+	"footer": {
+		"product": "Product",
+		"legal": "Legal",
+		"connect": "Connect",
+		"privacy": "Privacy Policy",
+		"terms": "Terms & Conditions",
+		"imprint": "Imprint",
+		"copyright": "© 2024 Water Me. All rights reserved."
+	}
+}

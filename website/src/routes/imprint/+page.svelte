@@ -54,13 +54,19 @@
 				<div class="mt-4 space-y-2">
 					<p>
 						<strong>Email:</strong><br />
-						<a href="mailto:info@water-me.app" class="text-[#00ee57] transition hover:text-[#00a343]">
+						<a
+							href="mailto:info@water-me.app"
+							class="text-[#00ee57] transition hover:text-[#00a343]"
+						>
 							info@water-me.app
 						</a>
 					</p>
 					<p>
 						<strong>Support:</strong><br />
-						<a href="mailto:support@water-me.app" class="text-[#00ee57] transition hover:text-[#00a343]">
+						<a
+							href="mailto:support@water-me.app"
+							class="text-[#00ee57] transition hover:text-[#00a343]"
+						>
 							support@water-me.app
 						</a>
 					</p>
@@ -84,40 +90,46 @@
 			<div>
 				<h2 class="text-3xl font-semibold text-[#061f12]">Disclaimer</h2>
 				<p>
-					The information contained on the Water Me website and application is for general informational purposes
-					only. We assume no responsibility for errors or omissions in the contents on the Service.
+					The information contained on the Water Me website and application is for general
+					informational purposes only. We assume no responsibility for errors or omissions in the
+					contents on the Service.
 				</p>
 				<p>
-					In no event shall Water Me, nor any of its officers, directors, and employees, be held liable for anything
-					arising out of or in any way connected with your use of this Service.
+					In no event shall Water Me, nor any of its officers, directors, and employees, be held
+					liable for anything arising out of or in any way connected with your use of this Service.
 				</p>
 			</div>
 
 			<div>
 				<h2 class="text-3xl font-semibold text-[#061f12]">Liability for Links</h2>
 				<p>
-					The Service may contain links to external websites and resources. Water Me is not responsible for the
-					availability of these external sites and does not endorse and is not responsible or liable for any content,
-					advertising, products, or other materials on or available from such sites.
+					The Service may contain links to external websites and resources. Water Me is not
+					responsible for the availability of these external sites and does not endorse and is not
+					responsible or liable for any content, advertising, products, or other materials on or
+					available from such sites.
 				</p>
 			</div>
 
 			<div>
 				<h2 class="text-3xl font-semibold text-[#061f12]">Copyright & Intellectual Property</h2>
 				<p>
-					All content included in the Service, such as text, graphics, logos, images, audio clips, digital downloads,
-					and data compilations, are the property of Water Me or its content suppliers and is protected by international
-					copyright laws.
+					All content included in the Service, such as text, graphics, logos, images, audio clips,
+					digital downloads, and data compilations, are the property of Water Me or its content
+					suppliers and is protected by international copyright laws.
 				</p>
 			</div>
 
 			<div>
 				<h2 class="text-3xl font-semibold text-[#061f12]">Data Protection Officer</h2>
 				<p>
-					For questions regarding data protection and privacy, please contact our data protection officer at:
+					For questions regarding data protection and privacy, please contact our data protection
+					officer at:
 				</p>
 				<p>
-					<a href="mailto:privacy@water-me.app" class="text-[#00ee57] transition hover:text-[#00a343]">
+					<a
+						href="mailto:privacy@water-me.app"
+						class="text-[#00ee57] transition hover:text-[#00a343]"
+					>
 						privacy@water-me.app
 					</a>
 				</p>
@@ -126,8 +138,9 @@
 			<div>
 				<h2 class="text-3xl font-semibold text-[#061f12]">Dispute Resolution</h2>
 				<p>
-					The laws of Germany shall govern these terms and conditions. Any disputes arising under these terms and
-					conditions shall be subject to the exclusive jurisdiction of the courts in Berlin, Germany.
+					The laws of Germany shall govern these terms and conditions. Any disputes arising under
+					these terms and conditions shall be subject to the exclusive jurisdiction of the courts in
+					Berlin, Germany.
 				</p>
 			</div>
 		</div>

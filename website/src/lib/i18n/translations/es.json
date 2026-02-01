@@ -1,0 +1,81 @@
+{
+	"nav": {
+		"features": "Características",
+		"stats": "Estadísticas",
+		"download": "Descargar",
+		"open_app": "Abrir App"
+	},
+	"hero": {
+		"title": "Cuida tus plantas sin esfuerzo",
+		"subtitle": "Nunca olvides regar tus plantas de nuevo. Obtén recordatorios inteligentes y rastrea el crecimiento de tu planta.",
+		"cta_primary": "Descargar ahora",
+		"cta_secondary": "Probar Web App",
+		"trust_badge": "Confiado por amantes de las plantas en todo el mundo"
+	},
+	"features": {
+		"watering": {
+			"title": "Recordatorios Inteligentes de Riego",
+			"description": "Obtén recordatorios personalizados basados en el horario de riego de tu planta"
+		},
+		"multicare": {
+			"title": "Seguimiento Multi-Cuidado",
+			"description": "Rastrea el riego, fertilización y otras rutinas de cuidado en un solo lugar"
+		},
+		"growth": {
+			"title": "Seguimiento del Crecimiento",
+			"description": "Monitorea el crecimiento de tu planta con fotos y medidas a lo largo del tiempo"
+		},
+		"history": {
+			"title": "Historial de Cuidados",
+			"description": "Mantén notas detalladas sobre cada acción realizada con tus plantas"
+		},
+		"notifications": {
+			"title": "Notificaciones Push",
+			"description": "Manténte actualizado con notificaciones oportunas en tu dispositivo móvil"
+		},
+		"multilang": {
+			"title": "Soporte Multilingüe",
+			"description": "Usa la aplicación en tu idioma preferido"
+		}
+	},
+	"stats": {
+		"title": "Únete a Nuestra Comunidad en Crecimiento",
+		"users": "Usuarios Activos",
+		"plants": "Plantas Rastreadas",
+		"reminders": "Recordatorios Enviados"
+	},
+	"screenshots": {
+		"title": "Experimenta la Aplicación",
+		"subtitle": "Interfaz hermosa e intuitiva para gestionar tus plantas"
+	},
+	"download": {
+		"title": "Comienza Hoy",
+		"subtitle": "Descarga Water Me y comienza a cuidar mejor tus plantas",
+		"googleplay": "Descargar en Google Play",
+		"appstore": "Próximamente en la App Store"
+	},
+	"faq": {
+		"title": "Preguntas Frecuentes",
+		"q1": "¿Cómo agrego una nueva planta?",
+		"a1": "Simplemente toca el botón '+' y completa los detalles de tu planta. Puedes agregar especie, ubicación y preferencias de riego.",
+		"q2": "¿Puedo establecer horarios de riego personalizados?",
+		"a2": "¡Sí! Cada planta tiene su propio horario de riego personalizable. Puedes ajustarlo en cualquier momento según las necesidades de tu planta.",
+		"q3": "¿Me perderé los recordatorios de riego?",
+		"a3": "Nuestra aplicación envía notificaciones push a tu dispositivo. Asegúrate de que las notificaciones estén habilitadas en la configuración de tu teléfono.",
+		"q4": "¿Cómo se almacenan mis datos?",
+		"a4": "Tus datos se almacenan de forma segura en nuestra base de datos cifrada. Utilizamos Firebase Authentication para un acceso seguro.",
+		"q5": "¿Puedo compartir mis plantas con la familia?",
+		"a5": "Actualmente, cada usuario tiene su propio jardín. ¡Estamos trabajando en características multiusuario para el futuro!",
+		"q6": "¿Es la aplicación gratuita?",
+		"a6": "¡Sí! Water Me es completamente gratuito para descargar y usar."
+	},
+	"footer": {
+		"product": "Producto",
+		"legal": "Legal",
+		"connect": "Conectar",
+		"privacy": "Política de Privacidad",
+		"terms": "Términos y Condiciones",
+		"imprint": "Aviso Legal",
+		"copyright": "© 2024 Water Me. Todos los derechos reservados."
+	}
+}

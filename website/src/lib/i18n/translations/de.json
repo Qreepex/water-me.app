@@ -1,0 +1,81 @@
+{
+	"nav": {
+		"features": "Funktionen",
+		"stats": "Statistiken",
+		"download": "Download",
+		"open_app": "App öffnen"
+	},
+	"hero": {
+		"title": "Kümmere dich mühelos um deine Pflanzen",
+		"subtitle": "Vergiss nie wieder, deine Pflanzen zu gießen. Erhalte intelligente Erinnerungen und verfolge das Wachstum deiner Pflanze.",
+		"cta_primary": "Jetzt herunterladen",
+		"cta_secondary": "Web-App testen",
+		"trust_badge": "Vertraut von Pflanzenliebhabern weltweit"
+	},
+	"features": {
+		"watering": {
+			"title": "Intelligente Gießerinnerungen",
+			"description": "Erhalte personalisierte Erinnerungen basierend auf dem Gießplan deiner Pflanze"
+		},
+		"multicare": {
+			"title": "Multi-Pflege-Verfolgung",
+			"description": "Verfolge Gießen, Düngen und andere Pflegemaßnahmen an einem Ort"
+		},
+		"growth": {
+			"title": "Wachstumsverfolgung",
+			"description": "Überwache das Wachstum deiner Pflanze mit Fotos und Messungen im Zeitverlauf"
+		},
+		"history": {
+			"title": "Pflegehistorie",
+			"description": "Halte detaillierte Notizen über jede Maßnahme mit deinen Pflanzen fest"
+		},
+		"notifications": {
+			"title": "Push-Benachrichtigungen",
+			"description": "Bleibe mit zeitnahen Benachrichtigungen auf deinem Mobilgerät auf dem Laufenden"
+		},
+		"multilang": {
+			"title": "Mehrsprachige Unterstützung",
+			"description": "Verwende die App in deiner bevorzugten Sprache"
+		}
+	},
+	"stats": {
+		"title": "Tritt unserer wachsenden Community bei",
+		"users": "Aktive Benutzer",
+		"plants": "Nachverfolgete Pflanzen",
+		"reminders": "Gesendete Erinnerungen"
+	},
+	"screenshots": {
+		"title": "Erlebe die App",
+		"subtitle": "Schöne und intuitive Schnittstelle zur Verwaltung deiner Pflanzen"
+	},
+	"download": {
+		"title": "Beginne heute",
+		"subtitle": "Laden Sie Water Me herunter und beginnen Sie, besser auf Ihre Pflanzen aufzupassen",
+		"googleplay": "Im Google Play Store herunterladen",
+		"appstore": "Bald im App Store verfügbar"
+	},
+	"faq": {
+		"title": "Häufig gestellte Fragen",
+		"q1": "Wie füge ich eine neue Pflanze hinzu?",
+		"a1": "Tippe einfach auf die '+' Schaltfläche und fülle die Details deiner Pflanze aus. Du kannst Art, Standort und Gießpräferenzen hinzufügen.",
+		"q2": "Kann ich benutzerdefinierte Gießpläne festlegen?",
+		"a2": "Ja! Jede Pflanze hat ihren eigenen anpassbaren Gießplan. Du kannst ihn jederzeit basierend auf den Bedürfnissen deiner Pflanze anpassen.",
+		"q3": "Werde ich Gießerinnerungen verpassen?",
+		"a3": "Unsere App sendet Push-Benachrichtigungen an dein Gerät. Stelle sicher, dass Benachrichtigungen in den Einstellungen deines Telefons aktiviert sind.",
+		"q4": "Wie werden meine Daten gespeichert?",
+		"a4": "Deine Daten werden sicher in unserer verschlüsselten Datenbank gespeichert. Wir verwenden Firebase Authentication für sicheren Zugriff.",
+		"q5": "Kann ich meine Pflanzen mit Familie teilen?",
+		"a5": "Derzeit hat jeder Benutzer seinen eigenen Garten. Wir arbeiten an Multi-User-Funktionen für die Zukunft!",
+		"q6": "Ist die App kostenlos?",
+		"a6": "Ja! Water Me ist völlig kostenlos zum Herunterladen und Verwenden."
+	},
+	"footer": {
+		"product": "Produkt",
+		"legal": "Rechtliches",
+		"connect": "Verbinden",
+		"privacy": "Datenschutzrichtlinie",
+		"terms": "Geschäftsbedingungen",
+		"imprint": "Impressum",
+		"copyright": "© 2024 Water Me. Alle Rechte vorbehalten."
+	}
+}

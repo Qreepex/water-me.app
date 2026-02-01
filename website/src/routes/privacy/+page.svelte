@@ -4,7 +4,10 @@
 
 <svelte:head>
 	<title>Privacy Policy - Water Me</title>
-	<meta name="description" content="Privacy policy for Water Me app. Learn how we protect your data." />
+	<meta
+		name="description"
+		content="Privacy policy for Water Me app. Learn how we protect your data."
+	/>
 	<meta property="og:title" content="Privacy Policy - Water Me" />
 	<meta
 		property="og:description"
@@ -34,35 +37,41 @@
 		<div class="prose prose-sm mt-12 max-w-none text-[#4b6658]">
 			<h2 class="text-3xl font-semibold text-[#061f12]">1. Introduction</h2>
 			<p>
-				Water Me ("we", "us", "our" or "Company") operates the Water Me mobile application (the "Service").
+				Water Me ("we", "us", "our" or "Company") operates the Water Me mobile application (the
+				"Service").
 			</p>
 			<p>
-				This page informs you of our policies regarding the collection, use, and disclosure of personal data
-				when you use our Service and the choices you have associated with that data.
+				This page informs you of our policies regarding the collection, use, and disclosure of
+				personal data when you use our Service and the choices you have associated with that data.
 			</p>
 
 			<h2 class="text-3xl font-semibold text-[#061f12]">2. Information Collection and Use</h2>
-			<p>We collect several different types of information for various purposes to provide and improve our Service to you.</p>
+			<p>
+				We collect several different types of information for various purposes to provide and
+				improve our Service to you.
+			</p>
 
 			<h3 class="text-2xl font-semibold text-[#061f12]">Types of Data Collected:</h3>
 			<ul class="list-inside list-disc space-y-2">
 				<li>
-					<strong>Personal Data:</strong> When you create an account, we may collect information such as your email address
-					and authentication credentials.
+					<strong>Personal Data:</strong> When you create an account, we may collect information such
+					as your email address and authentication credentials.
 				</li>
 				<li>
-					<strong>Plant Data:</strong> Information about your plants, including names, species, care schedules, watering frequency,
-					and photos.
+					<strong>Plant Data:</strong> Information about your plants, including names, species, care schedules,
+					watering frequency, and photos.
 				</li>
 				<li>
-					<strong>Usage Data:</strong> Information about how you interact with the app, including feature usage and timestamps.
+					<strong>Usage Data:</strong> Information about how you interact with the app, including feature
+					usage and timestamps.
 				</li>
 				<li>
-					<strong>Device Information:</strong> Information about your device such as device type, operating system version,
-					and unique device identifiers.
+					<strong>Device Information:</strong> Information about your device such as device type, operating
+					system version, and unique device identifiers.
 				</li>
 				<li>
-					<strong>Location Data:</strong> We do not collect precise location data without your explicit consent.
+					<strong>Location Data:</strong> We do not collect precise location data without your explicit
+					consent.
 				</li>
 			</ul>
 
@@ -79,15 +88,17 @@
 
 			<h2 class="text-3xl font-semibold text-[#061f12]">4. Security of Data</h2>
 			<p>
-				The security of your data is important to us but remember that no method of transmission over the Internet
-				or method of electronic storage is 100% secure. While we strive to use commercially acceptable means to
-				protect your Personal Data, we cannot guarantee its absolute security.
+				The security of your data is important to us but remember that no method of transmission
+				over the Internet or method of electronic storage is 100% secure. While we strive to use
+				commercially acceptable means to protect your Personal Data, we cannot guarantee its
+				absolute security.
 			</p>
 
 			<h2 class="text-3xl font-semibold text-[#061f12]">5. Changes to This Privacy Policy</h2>
 			<p>
-				We may update our Privacy Policy from time to time. We will notify you of any changes by posting the new
-				Privacy Policy on this page and updating the "effective date" at the top of this Privacy Policy.
+				We may update our Privacy Policy from time to time. We will notify you of any changes by
+				posting the new Privacy Policy on this page and updating the "effective date" at the top of
+				this Privacy Policy.
 			</p>
 
 			<h2 class="text-3xl font-semibold text-[#061f12]">6. Contact Us</h2>
