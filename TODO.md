@@ -26,9 +26,10 @@
 - [X] Water View mit Plant List
 - [ ] Dark Mode aktivierbar machen
 - [ ] Gucken ob Handy online ist und nur dann bearbeiten/gießen erlauben
-- [ ] Real content on website
-- [ ] Use Stats Endpoints in Website
-- [ ] Legal Pages
+- [X] Real content on website
+- [X] Use Stats Endpoints in Website
+- [X] Legal Pages
+- [X] Legal Links funktionieren auf Webapp nicht
 
 ## Future
 

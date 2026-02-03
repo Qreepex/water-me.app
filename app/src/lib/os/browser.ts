@@ -1,5 +1,10 @@
+import { Capacitor } from '@capacitor/core';
 import { DefaultSystemBrowserOptions, InAppBrowser } from '@capacitor/inappbrowser';
 
 export async function openExternalLink(url: string): Promise<void> {
-	await InAppBrowser.openInSystemBrowser({ url, options: DefaultSystemBrowserOptions });
+	if (Capacitor.isNativePlatform()) {
+		await InAppBrowser.openInSystemBrowser({ url, options: DefaultSystemBrowserOptions });
+	} else {
+		window.open(url, '_blank', 'noopener');
+	}
 }
