@@ -4,7 +4,7 @@ import (
 	"regexp"
 	"strings"
 
-	"plants-backend/types"
+	"github.com/qreepex/water-me-app/backend/types"
 )
 
 type notificationConstraints struct {

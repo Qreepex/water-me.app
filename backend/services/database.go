@@ -4,8 +4,8 @@ import (
 	"context"
 	"time"
 
-	"plants-backend/constants"
-	"plants-backend/types"
+	"github.com/qreepex/water-me-app/backend/constants"
+	"github.com/qreepex/water-me-app/backend/types"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"

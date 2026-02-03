@@ -6,7 +6,7 @@ import (
 	"log"
 	"os"
 
-	"plants-backend/services"
+	"github.com/qreepex/water-me-app/backend/services"
 
 	_ "github.com/joho/godotenv/autoload"
 )

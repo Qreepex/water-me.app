@@ -9,10 +9,10 @@ import (
 	"strings"
 	"time"
 
-	"plants-backend/services"
-	"plants-backend/types"
-	"plants-backend/util"
-	"plants-backend/validation"
+	"github.com/qreepex/water-me-app/backend/services"
+	"github.com/qreepex/water-me-app/backend/types"
+	"github.com/qreepex/water-me-app/backend/util"
+	"github.com/qreepex/water-me-app/backend/validation"
 
 	"github.com/gorilla/mux"
 )

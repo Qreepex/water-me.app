@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"plants-backend/util"
+	"github.com/qreepex/water-me-app/backend/util"
 
 	"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/crypto/bcrypt"

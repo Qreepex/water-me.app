@@ -1,4 +1,4 @@
-module plants-backend
+module github.com/qreepex/water-me-app/backend
 
 go 1.24.0
 

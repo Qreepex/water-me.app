@@ -3,8 +3,8 @@ package routes
 import (
 	"net/http"
 
-	"plants-backend/constants"
-	"plants-backend/services"
+	"github.com/qreepex/water-me-app/backend/constants"
+	"github.com/qreepex/water-me-app/backend/services"
 
 	"github.com/gorilla/mux"
 )

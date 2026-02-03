@@ -3,9 +3,9 @@ package routes
 import (
 	"net/http"
 
-	"plants-backend/constants"
-	"plants-backend/services"
-	"plants-backend/util"
+	"github.com/qreepex/water-me-app/backend/constants"
+	"github.com/qreepex/water-me-app/backend/services"
+	"github.com/qreepex/water-me-app/backend/util"
 
 	"github.com/gorilla/mux"
 )

@@ -7,12 +7,11 @@ import (
 	"os"
 	"time"
 
-	"plants-backend/middlewares"
-	"plants-backend/routes"
-	"plants-backend/services"
-
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
+	"github.com/qreepex/water-me-app/backend/middlewares"
+	"github.com/qreepex/water-me-app/backend/routes"
+	"github.com/qreepex/water-me-app/backend/services"
 
 	_ "github.com/joho/godotenv/autoload"
 )

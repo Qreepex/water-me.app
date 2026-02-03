@@ -5,7 +5,7 @@ import (
 	"strings"
 	"time"
 
-	"plants-backend/types"
+	"github.com/qreepex/water-me-app/backend/types"
 )
 
 type validationConstraints struct {

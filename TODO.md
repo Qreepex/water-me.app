@@ -38,3 +38,5 @@
 - [ ] calendar view for plant care tasks
 - [ ] Füge eine Art Flags hinzu, dass eine Pflanze Repotting zb braucht. Dann soll man damit Tasks planen können, dass man zb in einer Woche pflanze xy umtopfen möchte und soll dann an dem tag dran erinnert werden oder kann das verschieben usw
 - [ ] Log out button
+- [ ] Delete Account Button
+- [ ] Delete Plants

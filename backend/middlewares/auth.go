@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"strings"
 
-	"plants-backend/constants"
-	"plants-backend/services"
+	"github.com/qreepex/water-me-app/backend/constants"
+	"github.com/qreepex/water-me-app/backend/services"
 )
 
 type ctxKey string

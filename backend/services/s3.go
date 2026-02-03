@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"plants-backend/constants"
+	"github.com/qreepex/water-me-app/backend/constants"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
@@ -60,7 +60,7 @@ func NewS3Service(ctx context.Context) (*S3Service, error) {
 		Presigner: s3.NewPresignClient(client, s3.WithPresignExpires(1*time.Hour)),
 		Bucket:    bucket,
 		URLExpire: 1 * time.Hour,
-		PublicURL: os.Getenv("S3_PUBLIC_URL"),
+		// PublicURL: os.Getenv("S3_PUBLIC_URL"),
 	}, nil
 }
 

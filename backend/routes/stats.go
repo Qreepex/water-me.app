@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"time"
 
-	"plants-backend/services"
+	"github.com/qreepex/water-me-app/backend/services"
 
 	"github.com/gorilla/mux"
 )
