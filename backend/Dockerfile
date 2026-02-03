@@ -19,7 +19,7 @@ COPY --from=builder /app/app /app
 
 COPY --from=alpine:latest /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 
-LABEL org.opencontainers.image.source="https://github.com/qreepex/plants"
+LABEL org.opencontainers.image.source="https://github.com/qreepex/water-me-app"
 
 ENTRYPOINT ["/app"]
 
