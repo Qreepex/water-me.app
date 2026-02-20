@@ -5,14 +5,21 @@
 	"waterPlants": "Pflanzen gießen",
 	"website": "Webseite",
 	"privacyPolicy": "Datenschutzrichtlinie",
+	"impressum": "Impressum",
 	"imprint": "Impressum",
 	"build": "Build",
 	"version": "Version",
 	"pushNotifications": "Push-Benachrichtigungen (Debug)",
+	"sourceCode": "Quellcode",
+	"backToPlants": "Zurück zu den Pflanzen",
 	"garden": "Mein Garten",
 	"water": "Gießen",
 	"home": "Startseite",
+	"wateringDescription": "Sie verdienen heute etwas Wasser!",
 	"settings": "Einstellungen",
 	"resources": "Ressourcen",
-	"about": "Über"
+	"about": "Über",
+	"notificationsEnabled": "Benachrichtigungen aktiviert",
+	"permissionDenied": "Berechtigung verweigert oder Registrierung fehlgeschlagen",
+	"notificationError": "Fehler beim Aktivieren von Benachrichtigungen"
 }

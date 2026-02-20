@@ -22,6 +22,14 @@
 	"cancel": "Cancelar",
 	"confirm": "Confirmar",
 	"watering": "Regando…",
+	"allPlantsWatered": "¡Todas tus plantas están regadas! ¡Buen trabajo!",
+	"sunlight": {
+		"Full Sun": "Sol pleno",
+		"Indirect Sun": "Luz indirecta",
+		"Partial Shade": "Sombra parcial",
+		"Partial to Full Shade": "Sombra parcial a completa",
+		"Full Shade": "Sombra completa"
+	},
 	"searchPlants": "Buscar por nombre, especie o ubicación...",
 	"toxic": "Tóxica",
 	"notToxic": "No tóxica",
@@ -83,6 +91,7 @@
 	"soil": "Suelo",
 	"seasonality": "Estacionalidad",
 	"metadata": "Metadatos",
+	"metadataTitle": "Avisos y notas",
 	"addImages": "Agregar imágenes",
 	"newUploads": "Nuevas cargas:",
 	"existingPhotos": "Fotos existentes:",
@@ -108,5 +117,6 @@
 	"statusDaysOverdue": "%s días vencido",
 	"statusDueToday": "Vencido hoy",
 	"statusDueTomorrow": "Vencido mañana",
-	"statusDueInDays": "Vence en %s días"
+	"statusDueInDays": "Vence en %s días",
+	"allWatered": "Todas regadas"
 }

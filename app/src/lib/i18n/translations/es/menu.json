@@ -5,14 +5,21 @@
 	"waterPlants": "Regar Plantas",
 	"website": "Sitio Web",
 	"privacyPolicy": "Política de Privacidad",
+	"impressum": "Aviso legal",
 	"imprint": "Aviso Legal",
 	"build": "Compilación",
 	"version": "Versión",
 	"pushNotifications": "Notificaciones Push (Debug)",
+	"sourceCode": "Código fuente",
+	"backToPlants": "Volver a Plantas",
 	"settings": "Configuración",
 	"resources": "Recursos",
 	"about": "Acerca de",
 	"garden": "Mi Jardín",
 	"water": "Riego",
-	"home": "Inicio"
+	"home": "Inicio",
+	"wateringDescription": "¡Hoy se merecen un poco de agua!",
+	"notificationsEnabled": "Notificaciones habilitadas",
+	"permissionDenied": "Permiso denegado o registro fallido",
+	"notificationError": "Error al habilitar las notificaciones"
 }
