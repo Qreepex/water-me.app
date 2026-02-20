@@ -6,7 +6,7 @@ A plant management app with a Go backend API and a SvelteKit mobile app built wi
 
 ```
 plants/
-├── backend/         Go REST API with MongoDB
+├── backend/         Go REST API + Notification Service with MongoDB
 ├── app/            SvelteKit + Capacitor mobile app
 ```
 
@@ -108,7 +108,6 @@ npm run dev          # Development server
 npm run build        # Production build
 npm run format       # Format with Prettier
 npm run lint         # Lint with ESLint
-npm run check        # Type check with svelte-check
 ```
 
 ### Architecture

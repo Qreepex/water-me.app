@@ -162,22 +162,22 @@ type Plant struct {
 	Species string `json:"species" bson:"species"`
 	IsToxic bool   `json:"isToxic" bson:"isToxic"`
 
-	Sunlight            *SunlightRequirement `json:"sunlight,omitempty"  bson:"sunlight,omitempty"`
-	PreferedTemperature float64              `json:"preferedTemperature" bson:"preferedTemperature"`
-	Location            *Location            `json:"location,omitempty"  bson:"location,omitempty"`
+	Sunlight            *SunlightRequirement `json:"sunlight"  bson:"sunlight,omitempty"`
+	PreferedTemperature *float64             `json:"preferedTemperature" bson:"preferedTemperature,omitempty"`
+	Location            *Location            `json:"location"  bson:"location,omitempty"`
 
-	Watering    *WateringConfig      `json:"watering,omitempty"    bson:"watering,omitempty"`
-	Fertilizing *FertilizerConfig    `json:"fertilizing,omitempty" bson:"fertilizing,omitempty"`
-	Humidity    *HumidityConfig      `json:"humidity,omitempty"    bson:"humidity,omitempty"`
-	Soil        *SoilConfig          `json:"soil,omitempty"        bson:"soil,omitempty"`
-	Seasonality *SeasonalAdjustments `json:"seasonality,omitempty" bson:"seasonality,omitempty"`
+	Watering    *WateringConfig      `json:"watering"    bson:"watering,omitempty"`
+	Fertilizing *FertilizerConfig    `json:"fertilizing" bson:"fertilizing,omitempty"`
+	Humidity    *HumidityConfig      `json:"humidity"    bson:"humidity,omitempty"`
+	Soil        *SoilConfig          `json:"soil"        bson:"soil,omitempty"`
+	Seasonality *SeasonalAdjustments `json:"seasonality" bson:"seasonality,omitempty"`
 
-	PestHistory   []PestInfection `json:"pestHistory"         bson:"pestHistory"`
-	Flags         []PlantFlag     `json:"flags"               bson:"flags"`
-	Notes         []string        `json:"notes"               bson:"notes"`
-	PhotoIDs      []string        `json:"photoIds"            bson:"photoIds"`
-	PhotoURLs     []string        `json:"photoUrls,omitempty" bson:"-"`
-	GrowthHistory []GrowthLog     `json:"growthHistory"       bson:"growthHistory"`
+	PestHistory   []PestInfection `json:"pestHistory"         bson:"pestHistory,omitempty"`
+	Flags         []PlantFlag     `json:"flags"               bson:"flags,omitempty"`
+	Notes         []string        `json:"notes"               bson:"notes,omitempty"`
+	PhotoIDs      []string        `json:"photoIds"            bson:"photoIds,omitempty"`
+	PhotoURLs     []string        `json:"photoUrls" bson:"-"`
+	GrowthHistory []GrowthLog     `json:"growthHistory"       bson:"growthHistory,omitempty"`
 
 	CreatedAt time.Time `json:"createdAt" bson:"createdAt"`
 	UpdatedAt time.Time `json:"updatedAt" bson:"updatedAt"`
@@ -189,7 +189,7 @@ type CreatePlantRequest struct {
 	Species             string               `json:"species,omitempty"`
 	IsToxic             bool                 `json:"isToxic"`
 	Sunlight            *SunlightRequirement `json:"sunlight,omitempty"`
-	PreferedTemperature float64              `json:"preferedTemperature"`
+	PreferedTemperature *float64             `json:"preferedTemperature,omitempty"`
 	Location            *Location            `json:"location,omitempty"`
 	Watering            *WateringConfig      `json:"watering,omitempty"`
 	Fertilizing         *FertilizerConfig    `json:"fertilizing,omitempty"`

@@ -385,10 +385,6 @@ components:
 
     WateringConfig:
       type: object
-      required:
-        - intervalDays
-        - method
-        - waterType
       properties:
         intervalDays:
           type: integer
@@ -406,11 +402,6 @@ components:
 
     HumidityConfig:
       type: object
-      required:
-        - requiresMisting
-        - mistingIntervalDays
-        - requiresHumidifier
-        - targetHumidityPct
       properties:
         requiresMisting:
           type: boolean
@@ -436,12 +427,6 @@ components:
 
     FertilizerConfig:
       type: object
-      required:
-        - type
-        - intervalDays
-        - npkRatio
-        - concentrationPercent
-        - activeInWinter
       properties:
         type:
           $ref: "#/components/schemas/FertilizerType"
@@ -470,10 +455,6 @@ components:
 
     SoilConfig:
       type: object
-      required:
-        - type
-        - components
-        - repottingCycle
       properties:
         type:
           type: string
@@ -495,10 +476,6 @@ components:
 
     SeasonalAdjustments:
       type: object
-      required:
-        - winterRestPeriod
-        - winterWaterFactor
-        - minTempCelsius
       properties:
         winterRestPeriod:
           type: boolean
@@ -587,11 +564,19 @@ components:
         - name
         - species
         - isToxic
+        - sunlight
         - preferedTemperature
+        - location
+        - watering
+        - fertilizing
+        - humidity
+        - soil
+        - seasonality
         - pestHistory
         - flags
         - notes
         - photoIds
+        - photoUrls
         - growthHistory
         - createdAt
         - updatedAt
@@ -632,13 +617,21 @@ components:
             - $ref: "#/components/schemas/WateringConfig"
           nullable: true
         fertilizing:
-          $ref: "#/components/schemas/FertilizerConfig"
+          allOf:
+            - $ref: "#/components/schemas/FertilizerConfig"
+          nullable: true
         humidity:
-          $ref: "#/components/schemas/HumidityConfig"
+          allOf:
+            - $ref: "#/components/schemas/HumidityConfig"
+          nullable: true
         soil:
-          $ref: "#/components/schemas/SoilConfig"
+          allOf:
+            - $ref: "#/components/schemas/SoilConfig"
+          nullable: true
         seasonality:
-          $ref: "#/components/schemas/SeasonalAdjustments"
+          allOf:
+            - $ref: "#/components/schemas/SeasonalAdjustments"
+          nullable: true
         pestHistory:
           type: array
           items:
@@ -652,6 +645,10 @@ components:
           items:
             type: string
         photoIds:
+          type: array
+          items:
+            type: string
+        photoUrls:
           type: array
           items:
             type: string
@@ -670,13 +667,6 @@ components:
       type: object
       required:
         - name
-        - isToxic
-        - preferedTemperature
-        - pestHistory
-        - flags
-        - notes
-        - photoIds
-        - growthHistory
       properties:
         name:
           type: string

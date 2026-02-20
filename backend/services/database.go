@@ -66,6 +66,7 @@ func (m *MongoDB) UpdatePlant(
 	}
 
 	updateDoc := bson.M{}
+	unsetDoc := bson.M{}
 
 	if update.Name != nil {
 		updateDoc["name"] = *update.Name
@@ -83,47 +84,99 @@ func (m *MongoDB) UpdatePlant(
 		updateDoc["preferedTemperature"] = *update.PreferedTemperature
 	}
 	if update.Location != nil {
-		updateDoc["location"] = *update.Location
+		if isEmptyLocation(*update.Location) {
+			unsetDoc["location"] = ""
+		} else {
+			updateDoc["location"] = *update.Location
+		}
 	}
 	if update.Watering != nil {
-		updateDoc["watering"] = *update.Watering
+		if isEmptyWatering(*update.Watering) {
+			unsetDoc["watering"] = ""
+		} else {
+			updateDoc["watering"] = *update.Watering
+		}
 	}
 	if update.Fertilizing != nil {
-		updateDoc["fertilizing"] = *update.Fertilizing
+		if isEmptyFertilizing(*update.Fertilizing) {
+			unsetDoc["fertilizing"] = ""
+		} else {
+			updateDoc["fertilizing"] = *update.Fertilizing
+		}
 	}
 	if update.Humidity != nil {
-		updateDoc["humidity"] = *update.Humidity
+		if isEmptyHumidity(*update.Humidity) {
+			unsetDoc["humidity"] = ""
+		} else {
+			updateDoc["humidity"] = *update.Humidity
+		}
 	}
 	if update.Soil != nil {
-		updateDoc["soil"] = *update.Soil
+		if isEmptySoil(*update.Soil) {
+			unsetDoc["soil"] = ""
+		} else {
+			updateDoc["soil"] = *update.Soil
+		}
 	}
 	if update.Seasonality != nil {
-		updateDoc["seasonality"] = *update.Seasonality
+		if isEmptySeasonality(*update.Seasonality) {
+			unsetDoc["seasonality"] = ""
+		} else {
+			updateDoc["seasonality"] = *update.Seasonality
+		}
 	}
 	if update.PestHistory != nil {
-		updateDoc["pestHistory"] = *update.PestHistory
+		if len(*update.PestHistory) == 0 {
+			unsetDoc["pestHistory"] = ""
+		} else {
+			updateDoc["pestHistory"] = *update.PestHistory
+		}
 	}
 	if update.Flags != nil {
-		updateDoc["flags"] = *update.Flags
+		if len(*update.Flags) == 0 {
+			unsetDoc["flags"] = ""
+		} else {
+			updateDoc["flags"] = *update.Flags
+		}
 	}
 	if update.Notes != nil {
-		updateDoc["notes"] = *update.Notes
+		if len(*update.Notes) == 0 {
+			unsetDoc["notes"] = ""
+		} else {
+			updateDoc["notes"] = *update.Notes
+		}
 	}
 	if update.PhotoIDs != nil {
-		updateDoc["photoIds"] = *update.PhotoIDs
+		if len(*update.PhotoIDs) == 0 {
+			unsetDoc["photoIds"] = ""
+		} else {
+			updateDoc["photoIds"] = *update.PhotoIDs
+		}
 	}
 	if update.GrowthHistory != nil {
-		updateDoc["growthHistory"] = *update.GrowthHistory
+		if len(*update.GrowthHistory) == 0 {
+			unsetDoc["growthHistory"] = ""
+		} else {
+			updateDoc["growthHistory"] = *update.GrowthHistory
+		}
 	}
 
 	// Always update the updatedAt timestamp
 	updateDoc["updatedAt"] = time.Now()
 
+	updateOps := bson.M{}
+	if len(updateDoc) > 0 {
+		updateOps["$set"] = updateDoc
+	}
+	if len(unsetDoc) > 0 {
+		updateOps["$unset"] = unsetDoc
+	}
+
 	opts := options.FindOneAndUpdate().SetReturnDocument(options.After)
 	result := collection.FindOneAndUpdate(
 		ctx,
 		bson.M{"_id": objectID, "userId": userID},
-		bson.M{"$set": updateDoc},
+		updateOps,
 		opts,
 	)
 
@@ -136,6 +189,39 @@ func (m *MongoDB) UpdatePlant(
 	}
 
 	return &plant, true, nil
+}
+
+func isEmptyLocation(loc types.Location) bool {
+	return loc.Room == "" && loc.Position == "" && !loc.IsOutdoors
+}
+
+func isEmptyWatering(w types.WateringConfig) bool {
+	return w.IntervalDays == 0 && w.Method == "" && w.WaterType == "" && w.LastWatered == nil
+}
+
+func isEmptyFertilizing(f types.FertilizerConfig) bool {
+	return f.Type == "" &&
+		f.IntervalDays == 0 &&
+		f.NPKRatio == "" &&
+		f.ConcentrationPercent == 0 &&
+		f.LastFertilized == nil &&
+		!f.ActiveInWinter
+}
+
+func isEmptyHumidity(h types.HumidityConfig) bool {
+	return !h.RequiresMisting &&
+		h.MistingIntervalDays == 0 &&
+		h.LastMisted == nil &&
+		!h.RequiresHumidifier &&
+		h.TargetHumidityPct == 0
+}
+
+func isEmptySoil(s types.SoilConfig) bool {
+	return s.Type == "" && len(s.Components) == 0 && s.LastRepotted == nil && s.RepottingCycle == 0
+}
+
+func isEmptySeasonality(s types.SeasonalAdjustments) bool {
+	return !s.WinterRestPeriod && s.WinterWaterFactor == 0 && s.MinTempCelsius == 0
 }
 
 func (m *MongoDB) DeletePlant(ctx context.Context, id string, userID string) (bool, error) {

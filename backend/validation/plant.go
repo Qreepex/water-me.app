@@ -136,15 +136,17 @@ func ValidateCreatePlantRequest(req types.CreatePlantRequest) []types.Validation
 		)
 	}
 
-	if req.PreferedTemperature < constraints.temperatureMin ||
-		req.PreferedTemperature > constraints.temperatureMax {
-		errors = append(
-			errors,
-			types.ValidationError{
-				Field:   "preferedTemperature",
-				Message: "PreferredTemperature must be between -50 and 100",
-			},
-		)
+	if req.PreferedTemperature != nil {
+		if *req.PreferedTemperature < constraints.temperatureMin ||
+			*req.PreferedTemperature > constraints.temperatureMax {
+			errors = append(
+				errors,
+				types.ValidationError{
+					Field:   "preferedTemperature",
+					Message: "PreferredTemperature must be between -50 and 100",
+				},
+			)
+		}
 	}
 
 	// Location validation

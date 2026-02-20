@@ -112,6 +112,7 @@ func getPlants(
 	}
 	// Enrich with signed photo URLs
 	for i := range plants {
+		normalizePlantResponse(&plants[i])
 		plants[i].PhotoURLs = resolvePhotoURLs(r.Context(), s3, plants[i].PhotoIDs, userID)
 	}
 	util.RespondJSON(w, http.StatusOK, plants)
@@ -140,6 +141,7 @@ func getPlantBySlug(
 		util.NotFound(w)
 		return
 	}
+	normalizePlantResponse(plant)
 	plant.PhotoURLs = resolvePhotoURLs(r.Context(), s3, plant.PhotoIDs, userID)
 	util.RespondJSON(w, http.StatusOK, plant)
 }
@@ -167,6 +169,7 @@ func getPlant(
 		util.NotFound(w)
 		return
 	}
+	normalizePlantResponse(plant)
 	plant.PhotoURLs = resolvePhotoURLs(r.Context(), s3, plant.PhotoIDs, userID)
 	util.RespondJSON(w, http.StatusOK, plant)
 }
@@ -208,6 +211,7 @@ func createPlant(w http.ResponseWriter, r *http.Request, db *services.MongoDB) {
 		util.ServerError(w, err)
 		return
 	}
+	normalizePlantResponse(createdPlant)
 	util.RespondJSON(w, http.StatusCreated, createdPlant)
 }
 
@@ -242,6 +246,7 @@ func updatePlant(
 		util.NotFound(w)
 		return
 	}
+	normalizePlantResponse(plant)
 	plant.PhotoURLs = resolvePhotoURLs(r.Context(), s3, plant.PhotoIDs, userID)
 	util.RespondJSON(w, http.StatusOK, plant)
 }
@@ -375,7 +380,84 @@ func createPlantFromRequest(
 		CreatedAt:           now,
 		UpdatedAt:           now,
 	}
+
+	if plant.Watering == nil {
+		plant.Watering = &types.WateringConfig{}
+	}
+	plant.Watering.LastWatered = &now
+
+	if plant.Fertilizing == nil {
+		plant.Fertilizing = &types.FertilizerConfig{}
+	}
+	plant.Fertilizing.LastFertilized = &now
+
+	if plant.Location != nil && isEmptyLocation(*plant.Location) {
+		plant.Location = nil
+	}
+
+	if plant.Humidity != nil && isEmptyHumidity(*plant.Humidity) {
+		plant.Humidity = nil
+	}
+
+	if plant.Soil != nil && isEmptySoil(*plant.Soil) {
+		plant.Soil = nil
+	}
+
+	if plant.Seasonality != nil && isEmptySeasonality(*plant.Seasonality) {
+		plant.Seasonality = nil
+	}
+
 	return plant
+}
+
+func normalizePlantResponse(plant *types.Plant) {
+	if plant == nil {
+		return
+	}
+
+	if plant.PestHistory == nil {
+		plant.PestHistory = []types.PestInfection{}
+	}
+
+	if plant.Flags == nil {
+		plant.Flags = []types.PlantFlag{}
+	}
+
+	if plant.Notes == nil {
+		plant.Notes = []string{}
+	}
+
+	if plant.PhotoIDs == nil {
+		plant.PhotoIDs = []string{}
+	}
+
+	if plant.GrowthHistory == nil {
+		plant.GrowthHistory = []types.GrowthLog{}
+	}
+
+	if plant.PhotoURLs == nil {
+		plant.PhotoURLs = []string{}
+	}
+}
+
+func isEmptyLocation(loc types.Location) bool {
+	return loc.Room == "" && loc.Position == "" && !loc.IsOutdoors
+}
+
+func isEmptyHumidity(h types.HumidityConfig) bool {
+	return !h.RequiresMisting &&
+		h.MistingIntervalDays == 0 &&
+		h.LastMisted == nil &&
+		!h.RequiresHumidifier &&
+		h.TargetHumidityPct == 0
+}
+
+func isEmptySoil(s types.SoilConfig) bool {
+	return s.Type == "" && len(s.Components) == 0 && s.LastRepotted == nil && s.RepottingCycle == 0
+}
+
+func isEmptySeasonality(s types.SeasonalAdjustments) bool {
+	return !s.WinterRestPeriod && s.WinterWaterFactor == 0 && s.MinTempCelsius == 0
 }
 
 // resolvePhotoURLs presigns GET URLs for user's images

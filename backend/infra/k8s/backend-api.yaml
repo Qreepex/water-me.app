@@ -26,7 +26,7 @@ spec:
                       - database
       containers:
         - name: backend-api
-          image: ghcr.io/qreepex/plants-backend-api:0.0.6
+          image: ghcr.io/qreepex/plants-backend-api:0.1.1
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8080
