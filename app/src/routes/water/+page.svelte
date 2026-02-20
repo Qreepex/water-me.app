@@ -162,7 +162,7 @@
 	{:else if store.plants.length === 0}
 		<!-- Empty State -->
 		<EmptyState icon="🪴" title="plants.noPlants" description="plants.startAddingPlants">
-			<Button variant="primary" onclick={() => goto(resolve('/create'))} text="plants.addPlant" />
+			<Button variant="primary" onclick={() => goto(resolve('/manage/new'))} text="plants.addPlant" />
 		</EmptyState>
 	{:else if getVisiblePlants().length === 0}
 		<EmptyState icon="✓" title="plants.allWatered" description="plants.allPlantsWatered" />

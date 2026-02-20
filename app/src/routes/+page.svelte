@@ -28,7 +28,7 @@
 		<Alert type="error" title="common.errorLoadingPlants" description={store.error} />
 	{:else if store.plants.length === 0}
 			<EmptyState icon="🪴" title="plants.noPlants" description="plants.startAddingPlants">
-			<Button variant="primary" onclick={() => goto(resolve('/create'))} text="plants.addPlant" />
+			<Button variant="primary" onclick={() => goto(resolve('/manage/new'))} text="plants.addPlant" />
 		</EmptyState>
 	{:else}
 		<!-- Scrollable Plant List -->

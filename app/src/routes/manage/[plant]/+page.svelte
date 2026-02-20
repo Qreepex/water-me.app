@@ -2,9 +2,8 @@
 	import { onMount, onDestroy } from 'svelte';
 	import type { Plant } from '$lib/types/api';
 	import { SunlightRequirement, WateringMethod, WaterType, FertilizerType } from '$lib/types/api';
-	import { goto } from '$app/navigation';
+	import { goto, beforeNavigate } from '$app/navigation';
 	import { resolve } from '$app/paths';
-	import { page } from '$app/stores';
 	import { fetchData } from '$lib/auth/fetch.svelte';
 	import { getImageObjectURL, revokeObjectURL } from '$lib/utils/imageCache';
 	import { invalidateApiCache } from '$lib/utils/cache';
@@ -26,13 +25,18 @@
 	import LoadingSpinner from '$lib/components/ui/LoadingSpinner.svelte';
 	import Alert from '$lib/components/ui/Message.svelte';
 	import Scrollable from '$lib/components/layout/Scrollable.svelte';
+	import { page } from '$app/state';
 
 	const plantsStore = getPlantsStore();
+	const initialPlantId = page.params.plant ?? '';
+	const initialIsNewPlant = initialPlantId === 'new';
 	let plant = $state<Plant | null>(null);
-	let loading = $state(true);
+	let loading = $state(!initialIsNewPlant);
 	let error = $state<string | null>(null);
 	let success = $state<string | null>(null);
 	let submitting = $state(false);
+	let isNewPlant = $state(initialIsNewPlant);
+	let suppressLeaveWarning = $state(false);
 	let newNote = $state('');
 	let soilComponentInput = $state('');
 
@@ -68,9 +72,54 @@
 	let formData = $state<FormData>(createEmptyFormData());
 	let originalFormData = $state<FormData>(createEmptyFormData());
 
+	function hasUnsavedChanges(): boolean {
+		return (
+			JSON.stringify(formData) !== JSON.stringify(originalFormData) ||
+			uploadedPhotoKeys.length > 0 ||
+			removedPhotoIds.length > 0 ||
+			photos.length > 0
+		);
+	}
+
+	function handleBeforeUnload(event: BeforeUnloadEvent): void {
+		if (suppressLeaveWarning || submitting || !hasUnsavedChanges()) return;
+		event.preventDefault();
+		event.returnValue = '';
+	}
+
 	onMount(async () => {
+		window.addEventListener('beforeunload', handleBeforeUnload);
+
+		beforeNavigate((navigation) => {
+			if (suppressLeaveWarning || submitting || !hasUnsavedChanges()) return;
+
+			if (navigation.willUnload) {
+				return;
+			}
+
+			const leave = confirm(
+				$tStore('common.unsavedChanges') ||
+					'You have unsaved changes. Are you sure you want to leave?'
+			);
+			if (!leave) {
+				navigation.cancel();
+				return;
+			}
+
+			suppressLeaveWarning = true;
+		});
+
 		try {
-			const plantId = $page.params.plant ?? '';
+			const plantId = page.params.plant ?? '';
+			isNewPlant = plantId === 'new';
+
+			if (isNewPlant) {
+				plant = null;
+				formData = createEmptyFormData();
+				originalFormData = JSON.parse(JSON.stringify(formData));
+				return;
+			}
+
 			const response = await fetchData('/api/plants/{id}', {
 				params: { id: plantId }
 			});
@@ -107,6 +156,7 @@
 	}
 
 	onDestroy(() => {
+		window.removeEventListener('beforeunload', handleBeforeUnload);
 		previewUrls.forEach((u) => revokeObjectURL(u));
 		photos.forEach((p) => p.previewUrl && URL.revokeObjectURL(p.previewUrl));
 		// Clean up any unapplied uploads when leaving the page
@@ -340,6 +390,93 @@
 			);
 			const allPhotoIds = [...existingPhotoIds, ...uploadedPhotoKeys];
 
+			if (isNewPlant) {
+				const createPayload = {
+					name: formData.name,
+					species: formData.species,
+					isToxic: formData.isToxic,
+					sunlight: formData.sunlight,
+					preferedTemperature: formData.preferedTemperature,
+					photoIds: allPhotoIds,
+					location: {
+						room: formData.room,
+						position: formData.position,
+						isOutdoors: formData.isOutdoors
+					},
+					watering: {
+						intervalDays: formData.wateringIntervalDays,
+						method: formData.wateringMethod,
+						waterType: formData.waterType
+					},
+					fertilizing: {
+						type: formData.fertilizingType,
+						intervalDays: formData.fertilizingIntervalDays,
+						npkRatio: formData.npkRatio,
+						concentrationPercent: formData.concentrationPercent,
+						activeInWinter: formData.activeInWinter
+					},
+					humidity: {
+						targetHumidityPct: formData.targetHumidity,
+						requiresMisting: formData.requiresMisting,
+						mistingIntervalDays: formData.mistingIntervalDays,
+						requiresHumidifier: formData.requiresHumidifier
+					},
+					soil: {
+						type: formData.soilType,
+						repottingCycle: formData.repottingCycle,
+						components: formData.soilComponents
+					},
+					seasonality: {
+						winterRestPeriod: formData.winterRestPeriod,
+						winterWaterFactor: formData.winterWaterFactor,
+						minTempCelsius: formData.minTempCelsius
+					},
+					flags: formData.flags,
+					notes: formData.notes,
+					pestHistory: [],
+					growthHistory: []
+				};
+
+				const createRes = await fetchData('/api/plants', {
+					method: 'post' as const,
+					body: createPayload
+				});
+
+				if (!createRes.ok) {
+					throw new Error(createRes.error?.message || 'Failed to create plant');
+				}
+
+				if (!createRes.data?.id) {
+					throw new Error('Failed to create plant');
+				}
+
+				const createdPlant = createRes.data;
+				plant = createdPlant;
+				isNewPlant = false;
+				success = 'Plant created successfully!';
+
+				const currentPlants = plantsStore.plants;
+				currentPlants.push(createdPlant);
+				plantsStore.setPlants([...currentPlants]);
+
+				uploadedPhotoKeys = [];
+				uploadTimestamps = {};
+				removedPhotoIds = [];
+				photos = [];
+
+				formData = initializeFormData();
+				originalFormData = JSON.parse(JSON.stringify(formData));
+
+				await invalidateApiCache(['/api/plants', `/api/plants/${createdPlant.id}`], {
+					waitForAck: true,
+					timeoutMs: 100
+				});
+
+				suppressLeaveWarning = true;
+				await goto(resolve(`/plant/${createdPlant.id}`));
+				return;
+			}
+
 			// Helper to check if value changed
 			const hasChanged = (key: keyof FormData): boolean => {
 				return JSON.stringify(formData[key]) !== JSON.stringify(originalFormData[key]);
@@ -484,7 +621,8 @@
 				});
 			}
 
-			goto(resolve(plant ? `/plant/${plant.id}` : '/'));
+			suppressLeaveWarning = true;
+			await goto(resolve(plant ? `/plant/${plant.id}` : '/'));
 		} catch (err) {
 			error = err instanceof Error ? err.message : 'Unknown error';
 		} finally {
@@ -526,6 +664,15 @@
 	}
 
 	function handleBackClick(): void {
+		if (hasUnsavedChanges()) {
+			const leave = confirm(
+				$tStore('common.unsavedChanges') ||
+					'You have unsaved changes. Are you sure you want to leave?'
+			);
+			if (!leave) return;
+		}
+
+		suppressLeaveWarning = true;
 		cleanupUnappliedUploads();
 		goto(resolve(plant ? `/plant/${plant.id}` : '/'));
 	}
@@ -535,10 +682,19 @@
 	}
 
 	function cancelForm(): void {
+		if (hasUnsavedChanges()) {
+			const leave = confirm(
+				$tStore('common.unsavedChanges') ||
+					'You have unsaved changes. Are you sure you want to leave?'
+			);
+			if (!leave) return;
+		}
+
 		formData = initializeFormData();
 		originalFormData = JSON.parse(JSON.stringify(formData));
 		error = null;
 
+		suppressLeaveWarning = true;
 		cleanupUnappliedUploads();
 		goto(resolve(plant ? `/plant/${plant.id}` : '/'));
 	}
@@ -546,14 +702,14 @@
 
 <PageHeader
 	icon="✏️"
-	title={plant?.name || $tStore('plants.editPlant')}
+	title={plant?.name || (isNewPlant ? $tStore('plants.newPlant') : $tStore('plants.editPlant'))}
 	description={plant?.species || ''}
 />
 
 <PageContent>
 	{#if loading}
 		<LoadingSpinner message="common.loadingPlantDetails" icon="🌱" />
-	{:else if !plant}
+	{:else if !plant && !isNewPlant}
 		<div class="flex flex-col items-center justify-center gap-6 py-12">
 			<p class="text-lg text-red-600">{error || $tStore('common.plantNotFound')}</p>
 			<Button variant="secondary" onclick={() => handleBackClick()} text="common.back" />

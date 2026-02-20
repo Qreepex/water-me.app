@@ -51,8 +51,8 @@
 		}
 	}
 
-	function handleCreateClick() {
-		goto(resolve('/create'));
+	async function handleCreateClick() {
+		await goto(resolve('/manage/new'));
 		onClose?.();
 	}
 
