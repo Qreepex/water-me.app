@@ -69,6 +69,81 @@ paths:
         "500":
           $ref: "#/components/responses/InternalError"
 
+  /api/plants/{id}/moisture:
+    post:
+      tags:
+        - Plants
+      summary: Record a soil moisture measurement
+      description: >-
+        Appends a moisture reading to the plant's history. If no scale is
+        provided the plant's configured scale is used.
+      operationId: addMoistureLog
+      parameters:
+        - $ref: "#/components/parameters/PlantId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - value
+              properties:
+                value:
+                  type: number
+                  format: double
+                  example: 5
+                scale:
+                  $ref: "#/components/schemas/MoistureScale"
+                date:
+                  type: string
+                  format: date-time
+                note:
+                  type: string
+                  maxLength: 200
+      responses:
+        "201":
+          description: Measurement recorded
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Plant"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /api/plants/{id}/moisture/{logId}:
+    delete:
+      tags:
+        - Plants
+      summary: Delete a soil moisture measurement
+      operationId: deleteMoistureLog
+      parameters:
+        - $ref: "#/components/parameters/PlantId"
+        - name: logId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Measurement deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Plant"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
   /api/plants/slug/{slug}:
     get:
       tags:
@@ -118,6 +193,16 @@ paths:
                   type: array
                   items:
                     type: string
+                moistures:
+                  type: object
+                  additionalProperties:
+                    type: number
+                    format: double
+                  description: >-
+                    Optional moisture values measured while watering, keyed by
+                    plant ID.
+                moistureScale:
+                  $ref: "#/components/schemas/MoistureScale"
                   minItems: 1
                   description: Array of plant IDs to mark as watered
                   example:
@@ -399,6 +484,116 @@ components:
           type: string
           format: date-time
           nullable: true
+        mode:
+          allOf:
+            - $ref: "#/components/schemas/WateringPlanMode"
+          nullable: true
+          description: >-
+            Scheduling strategy. "Manual" uses intervalDays, "Moisture" derives
+            the schedule from the recorded soil moisture measurements.
+        idealMoisture:
+          type: number
+          format: double
+          nullable: true
+          description: >-
+            Moisture value the plant is happiest at. Watering is recommended
+            when the measurement drops to this value or below.
+          example: 5
+        moistureScale:
+          allOf:
+            - $ref: "#/components/schemas/MoistureScale"
+          nullable: true
+
+    WateringPlanMode:
+      type: string
+      enum:
+        - Manual
+        - Moisture
+      description: How the next watering date is determined.
+
+    MoistureScale:
+      type: string
+      enum:
+        - Scale1To10
+        - Percent
+      description: Scale a moisture reading is expressed in.
+
+    MoistureLog:
+      type: object
+      required:
+        - id
+        - value
+        - scale
+        - date
+      properties:
+        id:
+          type: string
+        value:
+          type: number
+          format: double
+          example: 4
+        scale:
+          $ref: "#/components/schemas/MoistureScale"
+        date:
+          type: string
+          format: date-time
+        note:
+          type: string
+          maxLength: 200
+
+    WateringPlan:
+      type: object
+      description: >-
+        Server-computed watering schedule. Derived from the plant's
+        configuration and moisture history; never stored.
+      properties:
+        mode:
+          $ref: "#/components/schemas/WateringPlanMode"
+        wateringDueAt:
+          type: string
+          format: date-time
+          nullable: true
+        measurementDueAt:
+          type: string
+          format: date-time
+          nullable: true
+        status:
+          type: string
+          enum:
+            - ok
+            - due_soon
+            - water_now
+            - measure
+        idealMoisture:
+          type: number
+          format: double
+          nullable: true
+        moistureScale:
+          allOf:
+            - $ref: "#/components/schemas/MoistureScale"
+          nullable: true
+        currentMoisture:
+          type: number
+          format: double
+          nullable: true
+        measuredAt:
+          type: string
+          format: date-time
+          nullable: true
+        decayPerDay:
+          type: number
+          format: double
+          nullable: true
+          description: Estimated drying speed in scale units per day.
+        estimatedFullMoisture:
+          type: number
+          format: double
+          nullable: true
+          description: Estimated moisture right after watering.
+        needsFirstMeasurement:
+          type: boolean
+        sampleCount:
+          type: integer
 
     HumidityConfig:
       type: object
@@ -568,11 +763,13 @@ components:
         - preferedTemperature
         - location
         - watering
+        - wateringPlan
         - fertilizing
         - humidity
         - soil
         - seasonality
         - pestHistory
+        - moistureLogs
         - flags
         - notes
         - photoIds
@@ -616,6 +813,11 @@ components:
           allOf:
             - $ref: "#/components/schemas/WateringConfig"
           nullable: true
+        wateringPlan:
+          allOf:
+            - $ref: "#/components/schemas/WateringPlan"
+          nullable: true
+          description: Read-only computed schedule.
         fertilizing:
           allOf:
             - $ref: "#/components/schemas/FertilizerConfig"
@@ -636,6 +838,10 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/PestInfection"
+        moistureLogs:
+          type: array
+          items:
+            $ref: "#/components/schemas/MoistureLog"
         flags:
           type: array
           items:
@@ -718,6 +924,10 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/PestInfection"
+        moistureLogs:
+          type: array
+          items:
+            $ref: "#/components/schemas/MoistureLog"
         flags:
           type: array
           items:
@@ -772,6 +982,10 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/PestInfection"
+        moistureLogs:
+          type: array
+          items:
+            $ref: "#/components/schemas/MoistureLog"
         flags:
           type: array
           items:
@@ -942,6 +1156,15 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/ValidationError"
+
+  parameters:
+    PlantId:
+      name: id
+      in: path
+      required: true
+      description: Plant ID (24-char ObjectID hex) or slug
+      schema:
+        type: string
 
   responses:
     Unauthorized:
