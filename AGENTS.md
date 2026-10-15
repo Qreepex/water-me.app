@@ -442,13 +442,43 @@ workflow; `.github/` is effectively empty (all agent guidance lives in this file
 
 ---
 
-## 9. Known inconsistencies / gotchas
+## 9. Git workflow: feature branches & commits
+
+**All work must happen on a feature branch — never commit directly to `main`.**
+
+- **Start from an up-to-date `main`:** `git fetch origin && git switch main && git pull`
+  before branching.
+- **One branch per feature / fix / chore**, named by type + short slug, e.g.
+  `feat/notification-config-ui`, `fix/water-view-scroll`, `chore/dedupe-ratelimiter`.
+  (This repo's existing remote branch `app` predates this convention — prefer
+  `feat/…` going forward.)
+- **Commit incrementally as you build the feature.** Make several small, logical,
+  self-contained commits that each reflect a meaningful step of progress
+  (e.g. backend model → service → route, then OpenAPI regen, then the UI, then i18n),
+  rather than one giant squashed commit at the end. This preserves reviewable history
+  and lets work be inspected or reverted step by step.
+- **Commit messages use Conventional Commits**: `type(scope): summary`
+  (`feat`, `fix`, `refactor`, `docs`, `chore`, `test`, `style`), imperative and
+  lowercase, e.g. `feat(api): add repotting reminder endpoint`,
+  `fix(app): clear image cache after watering`. Keep the subject ≤ ~72 chars; put the
+  body in the commit message when more context is needed.
+- **Before committing**: run the formatters/linters/tests for the area you changed
+  (§11/§12). Do not commit generated build output (`www/`, `app/.svelte-kit`, `bin/`).
+- **Never commit secrets** (`secret/`, `.env`, k8s `secrets.yaml`) — they are
+  gitignored; keep them that way.
+- **Push the branch and open a PR** (`git push -u origin <branch>`). Do not force-push
+  `main` or branches you don't own. If the base branch moved, prefer `git rebase` on
+  your own branch over merge commits, but never rewrite shared history.
+
+---
+
+## 10. Known inconsistencies / gotchas
 
 Read these before you "fix" something that looks wrong:
 
 1. **The old `.github/copilot-instructions.md` has been removed** and its unique
    content folded into this file (see [§8 Conventions](#8-conventions-must-follow)
-   and [§10 Development workflow](#10-development-workflow)). It was
+   and [§11 Development workflow](#11-development-workflow)). It was
    partly stale — it said `go run .` at the backend root, referenced
    `backend/validation.ts`, "CORS wildcard `*`", and a different component tree.
    None of that is accurate; use this file and the code.
@@ -489,23 +519,30 @@ Read these before you "fix" something that looks wrong:
 
 ---
 
-## 10. Development workflow
+## 11. Development workflow
 
-1. **Update the API contract first**: edit `backend/openapi.yaml` when adding or
+1. **Create a feature branch** (see §9) before making any changes — never work on
+   `main`.
+2. **Update the API contract first**: edit `backend/openapi.yaml` when adding or
    changing endpoints.
-2. **Regenerate types**: run the `openapi-typescript` command (§5.4) so
+3. **Regenerate types**: run the `openapi-typescript` command (§5.4) so
    `app/src/lib/types/api.ts` stays in sync.
-3. **Backend changes**: implement in `types/` → `validation/` → `services/` →
+4. **Backend changes**: implement in `types/` → `validation/` → `services/` →
    `routes/`, then register the route in `routes/routes.go`.
-4. **Frontend changes**: call the API through the typed client `fetchData`
+5. **Frontend changes**: call the API through the typed client `fetchData`
    (`src/lib/auth/fetch.svelte.ts`) — never raw `fetch` for API calls.
-5. **Verify**: backend `go test ./routes -v` / `go vet ./...`; app
+6. **Commit as you go** (§9) — small, conventional commits per logical step.
+7. **Verify**: backend `go test ./routes -v` / `go vet ./...`; app
    `npm run check && npm run lint`; website `npm run check && npm run lint`. For
    manual API testing see `backend/README.md`.
+8. **Push the branch and open a PR**; do not merge to `main` from the agent.
 
 ---
 
-## 11. Recipe: adding a feature end-to-end
+## 12. Recipe: adding a feature end-to-end
+
+> Applies once you are on a feature branch (§9). Commit after each numbered step
+> where it makes sense, so progress is visible in history.
 
 **New plant field / care type**
 1. `backend/types/plants.go` — add struct/field (+ enum if needed).
@@ -531,7 +568,7 @@ Set `prerender = false; ssr = false;` if it's dynamic.
 
 ---
 
-## 12. Backlog
+## 13. Backlog
 
 See **`TODO.md`** for the live backlog (Fixes / Features / Future) — it is maintained
 and is the best signal of what to build next (notification config UI, delete
