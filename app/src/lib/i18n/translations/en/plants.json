@@ -240,5 +240,7 @@
 	"statusMoistureDueSoon": "Soil is drying out – water soon",
 	"statusMeasure": "Needs a new measurement",
 	"statusMoistureOk": "Moisture is fine",
-	"moisturePlanActive": "Moisture-based plan active"
+	"moisturePlanActive": "Moisture-based plan active",
+	"notEnoughDataYet": "Need another reading",
+	"measurementStaleHint": "Watered since then – this value is outdated"
 }

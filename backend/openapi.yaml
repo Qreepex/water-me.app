@@ -601,6 +601,11 @@ components:
           description: Estimated moisture right after watering.
         needsFirstMeasurement:
           type: boolean
+        wateredSinceLastMeasurement:
+          type: boolean
+          description: >-
+            The plant was watered after the newest reading, so currentMoisture is
+            stale: drying restarted from saturation at that moment.
         sampleCount:
           type: integer
 

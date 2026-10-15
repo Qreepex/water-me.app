@@ -19,7 +19,7 @@
 	import type { MoistureLog } from '$lib/types/api';
 	import { MoistureScale } from '$lib/types/api';
 	import { formatMoisture, getMoistureBounds, getPlan } from '$lib/utils/plant';
-	import { formatPastTimestamp } from '$lib/utils/timestamp.svelte';
+	import { formatPastTimestamp, formatFutureTimestamp } from '$lib/utils/timestamp.svelte';
 	import { SvelteDate } from 'svelte/reactivity';
 
 	const store = getPlantsStore();
@@ -115,6 +115,11 @@
 									{formatPastTimestamp(new Date(plan.measuredAt))}
 								</p>
 							{/if}
+							{#if plan?.wateredSinceLastMeasurement}
+								<p class="mt-1 text-xs text-warn">
+									{$tStore('plants.measurementStaleHint')}
+								</p>
+							{/if}
 						</div>
 						{#if ideal !== null}
 							<Chip
@@ -165,17 +170,21 @@
 							<div class="rounded-xl bg-canvas p-3">
 								<dt class="text-xs text-ink-soft">{$tStore('plants.nextWatering')}</dt>
 								<dd class="font-semibold text-ink">
-									{plan.wateringDueAt
-										? new SvelteDate(plan.wateringDueAt).toLocaleDateString()
-										: '—'}
+									{#if plan.wateringDueAt}
+										{formatFutureTimestamp(new SvelteDate(plan.wateringDueAt))}
+									{:else}
+										{$tStore('plants.notEnoughDataYet')}
+									{/if}
 								</dd>
 							</div>
 							<div class="rounded-xl bg-canvas p-3">
 								<dt class="text-xs text-ink-soft">{$tStore('plants.nextMeasurement')}</dt>
 								<dd class="font-semibold text-ink">
-									{plan.measurementDueAt
-										? new SvelteDate(plan.measurementDueAt).toLocaleDateString()
-										: '—'}
+									{#if plan.measurementDueAt}
+										{formatFutureTimestamp(new SvelteDate(plan.measurementDueAt))}
+									{:else}
+										—
+									{/if}
 								</dd>
 							</div>
 						</dl>

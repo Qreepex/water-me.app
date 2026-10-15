@@ -268,6 +268,8 @@ export interface components {
 			 */
 			estimatedFullMoisture?: number | null;
 			needsFirstMeasurement?: boolean;
+			/** @description The plant was watered after the newest reading, so currentMoisture is stale: drying restarted from saturation at that moment. */
+			wateredSinceLastMeasurement?: boolean;
 			sampleCount?: number;
 		};
 		HumidityConfig: {

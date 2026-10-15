@@ -238,5 +238,8 @@
 	"statusMoistureDueSoon": "La tierra se seca: riega pronto",
 	"statusMeasure": "Necesita una medición nueva",
 	"statusMoistureOk": "La humedad está bien",
-	"moisturePlanActive": "Plan según humedad activo"
+	"moisturePlanActive": "Plan según humedad activo",
+	"notEnoughDataYet": "Falta otra medición",
+	"measurementStaleHint": "Regada desde entonces: este valor está desactualizado",
+	"nextWatering": "Próximo riego"
 }

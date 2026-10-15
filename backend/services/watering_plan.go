@@ -22,10 +22,19 @@ import (
 const (
 	// Until we have a trend we simply ask for the next value after this many days.
 	defaultMeasurementIntervalDays = 2.0
-	// Never ask for a measurement more often than once per day ...
+	// Never ask for a measurement more often than once per day. Soil moisture
+	// changes on a scale of days, so anything faster just measures noise and
+	// produces a meaningless drying rate.
 	minMeasurementIntervalDays = 1.0
 	// ... and at most once a week.
 	maxMeasurementIntervalDays = 7.0
+	// A drying rate can only be derived from readings far enough apart to be
+	// meaningful. Two values taken minutes apart would imply an absurd rate
+	// (several scale points per day), so such spans are ignored entirely.
+	minTrendSpanDays = 0.125
+	// The first reading after a watering establishes the start of the drying
+	// curve (saturation). Wait this long before asking for the next one.
+	firstMeasurementIntervalDays = 3.0
 	// A rise of at least this fraction of the full scale is treated as a
 	// watering event (the user watered the plant => new drying cycle).
 	wateringEventRiseRatio = 0.15
@@ -83,6 +92,11 @@ type moistureCycle struct {
 // It returns ok=false when the cycle cannot produce a meaningful trend.
 func (c moistureCycle) slopePerDay() (float64, bool) {
 	if len(c.samples) < 2 {
+		return 0, false
+	}
+	// Readings taken minutes apart carry no information about a per-day rate.
+	span := c.samples[len(c.samples)-1].at.Sub(c.samples[0].at).Hours() / 24.0
+	if span < minTrendSpanDays {
 		return 0, false
 	}
 	base := c.samples[0].at
@@ -222,7 +236,7 @@ func computeMoisturePlan(plant types.Plant, now time.Time) *types.WateringPlan {
 	}
 
 	if watering.IdealMoisture == nil {
-		// Misconfigured: we cannot compute anything useful yet.
+		// Misconfigured: without a target there is nothing to compute.
 		plan.NeedsFirstMeasurement = true
 		plan.Status = types.PlanStatusMeasure
 		plan.MeasurementDueAt = &now
@@ -247,6 +261,7 @@ func computeMoisturePlan(plant types.Plant, now time.Time) *types.WateringPlan {
 	plan.SampleCount = len(samples)
 
 	if len(samples) == 0 {
+		// Nothing recorded yet: ask for the first value now.
 		plan.NeedsFirstMeasurement = true
 		plan.MeasurementDueAt = &now
 		plan.Status = types.PlanStatusMeasure
@@ -256,45 +271,89 @@ func computeMoisturePlan(plant types.Plant, now time.Time) *types.WateringPlan {
 	latest := samples[len(samples)-1]
 	plan.CurrentMoisture = &latest.raw
 	plan.MeasuredAt = &latest.at
-	estimatedFull := denormalizeMoisture(maxSampleValue(samples), scale)
-	plan.EstimatedFullMoisture = &estimatedFull
 
-	decay := estimateDecayPerDay(samples)
-	if decay != nil {
-		perDay := denormalizeDelta(*decay, scale)
-		plan.DecayPerDay = &perDay
+	// Readings after a watering start a fresh drying cycle, so only the most
+	// recent cycle is used to describe how this plant currently dries out.
+	cycles := buildCycles(samples)
+	cycle := cycles[len(cycles)-1].samples
+
+	wateredSinceLastReading := watering.LastWatered != nil &&
+		watering.LastWatered.After(latest.at)
+
+	fit := fitMoistureLine(cycle, scale)
+	fit.ideal = ideal
+
+	// A single reading per cycle carries no trend: the next value is what makes
+	// the drying rate measurable.
+	hasTrend := fit.ok && len(cycle) >= 2
+	plan.NeedsFirstMeasurement = !hasTrend
+
+	if hasTrend {
+		// Report the drying speed in the plant's own scale units per day.
+		decay := denormalizeDelta(fit.decayPerDay, scale)
+		plan.DecayPerDay = &decay
+
+		// The line's value at the cycle start is the best estimate of how wet
+		// the soil was right after watering, independent of when the user
+		// actually got around to measuring.
+		full := fit.intercept
+		if full < 0 {
+			full = 0
+		}
+		if full > 1 {
+			full = 1
+		}
+		estimatedFull := denormalizeMoisture(full, scale)
+		plan.EstimatedFullMoisture = &estimatedFull
+	} else {
+		estimatedFull := denormalizeMoisture(maxSampleValue(cycle), scale)
+		plan.EstimatedFullMoisture = &estimatedFull
 	}
 
-	// Predict when the soil reaches the ideal value again.
-	if watering.LastWatered != nil && latest.at.Before(*watering.LastWatered) {
-		// Watered after the last measurement: restart from the estimated
-		// saturation value right after watering.
-		if decay != nil {
-			full := maxSampleValue(samples)
-			days := daysUntilValue(full, ideal, *decay)
-			due := watering.LastWatered.Add(durationDays(days))
-			plan.WateringDueAt = &due
+	// A watering after the newest reading makes that reading stale: drying
+	// restarts from saturation at the watering moment.
+	plan.WateredSinceLastMeasurement = wateredSinceLastReading
+
+	// When the plant was watered after the last reading, drying restarts from
+	// saturation at that moment rather than continuing the old line.
+	from := latest.at
+	daysToIdeal := 0.0
+	if hasTrend {
+		if wateredSinceLastReading {
+			from = *watering.LastWatered
+			daysToIdeal = daysUntilValue(fit.intercept, ideal, fit.decayPerDay)
+		} else {
+			daysToIdeal = daysUntilValue(fit.fractionAt(latest.at), ideal, fit.decayPerDay)
 		}
-	} else if latest.value <= ideal {
+	}
+
+	plan.MeasurementDueAt = nextMeasurementAt(from, daysToIdeal, hasTrend)
+
+	if !hasTrend {
+		// Wait for the next reading; until it arrives we cannot predict when
+		// this plant needs water. The status stays "ok" so the app does not ask
+		// for a new measurement before the interval has actually elapsed.
+		plan.Status = types.PlanStatusOK
+		return plan
+	}
+
+	if wateredSinceLastReading {
+		days := daysUntilValue(fit.intercept, ideal, fit.decayPerDay)
+		due := watering.LastWatered.Add(durationDays(days))
+		plan.WateringDueAt = &due
+	} else if fit.fractionAt(latest.at) <= ideal {
 		due := now
 		plan.WateringDueAt = &due
-	} else if decay != nil {
-		days := (latest.value - ideal) / *decay
+	} else {
+		days := (fit.fractionAt(latest.at) - ideal) / fit.decayPerDay
 		due := latest.at.Add(durationDays(days))
 		plan.WateringDueAt = &due
 	}
 
-	// Decide when the next measurement should be taken.
-	nextMeasurement := nextMeasurementAt(samples, plan.WateringDueAt, decay)
-	plan.MeasurementDueAt = nextMeasurement
-
 	switch {
-	case plan.WateringDueAt == nil:
-		// Not enough data to predict the watering: we need another value.
-		plan.Status = types.PlanStatusMeasure
 	case !now.Before(*plan.WateringDueAt):
 		plan.Status = types.PlanStatusWaterNow
-	case nextMeasurement != nil && !now.Before(*nextMeasurement):
+	case plan.MeasurementDueAt != nil && !now.Before(*plan.MeasurementDueAt):
 		plan.Status = types.PlanStatusMeasure
 	case plan.WateringDueAt.Sub(now) <= durationDays(dueSoonDays(*plan.WateringDueAt, now)):
 		plan.Status = types.PlanStatusDueSoon
@@ -344,59 +403,75 @@ func durationDays(days float64) time.Duration {
 	return time.Duration(days * 24 * float64(time.Hour))
 }
 
-// estimateDecayPerDay returns the median drying speed (normalized value per
-// day, positive) across all drying cycles. Returns nil when no trend exists.
-func estimateDecayPerDay(samples []moistureSample) *float64 {
-	cycles := buildCycles(samples)
-	slopes := make([]float64, 0, len(cycles))
-	for _, cycle := range cycles {
-		slope, ok := cycle.slopePerDay()
-		if !ok {
-			continue
-		}
-		if slope < 0 {
-			slopes = append(slopes, -slope)
-		}
+// nextMeasurementAt picks the next reminder date for a fresh reading.
+//
+// Soil moisture moves on the scale of days, so at least a day always passes
+// between two readings: anything faster measures noise and yields a meaningless
+// drying rate.
+func nextMeasurementAt(from time.Time, daysToIdeal float64, hasTrend bool) *time.Time {
+	var interval float64
+	switch {
+	case hasTrend:
+		// We know how long the soil still needs to dry: sample halfway there.
+		interval = daysToIdeal / 2.0
+	case daysToIdeal == 0:
+		// One reading so far: collect the next one while the soil is drying, so
+		// the two points span enough time to describe the curve.
+		interval = firstMeasurementIntervalDays
+	default:
+		interval = defaultMeasurementIntervalDays
 	}
-	if len(slopes) == 0 {
-		return nil
-	}
-	decay := median(slopes)
-	if decay <= 1e-6 {
-		return nil
-	}
-	return &decay
+
+	interval = clampFloat(interval, minMeasurementIntervalDays, maxMeasurementIntervalDays)
+	next := from.Add(durationDays(interval))
+	return &next
 }
 
-// nextMeasurementAt picks the next reminder date for a fresh reading.
-func nextMeasurementAt(
-	samples []moistureSample,
-	wateringDueAt *time.Time,
-	decay *float64,
-) *time.Time {
-	latest := samples[len(samples)-1]
+// moistureFit is a least-squares line through the current drying cycle.
+type moistureFit struct {
+	ok bool
+	// decayPerDay is the (positive) drying speed in 0..1 units per day.
+	decayPerDay float64
+	// intercept is the extrapolated moisture at the cycle start (0..1).
+	intercept float64
+	// slopePerDay is the raw (negative) slope, used for interpolation.
+	slopePerDay float64
+	// origin is the cycle start the line is anchored at.
+	origin time.Time
+	// ideal is the target moisture (0..1) of the plant.
+	ideal float64
+}
 
-	interval := defaultMeasurementIntervalDays
-	if decay != nil && wateringDueAt != nil {
-		daysUntilWatering := wateringDueAt.Sub(latest.at).Hours() / 24.0
-		if daysUntilWatering > 0 {
-			// Sample twice on the way down to the ideal value.
-			interval = daysUntilWatering / 2.0
-		} else {
-			interval = minMeasurementIntervalDays
-		}
-	}
-	interval = clampFloat(interval, minMeasurementIntervalDays, maxMeasurementIntervalDays)
+// fractionAt evaluates the fitted line at the given moment.
+func (f moistureFit) fractionAt(at time.Time) float64 {
+	days := at.Sub(f.origin).Hours() / 24.0
+	return f.intercept + f.slopePerDay*days
+}
 
-	next := latest.at.Add(durationDays(interval))
-	// Never ask later than the predicted watering moment.
-	if wateringDueAt != nil && next.After(*wateringDueAt) {
-		next = *wateringDueAt
+// fitMoistureLine fits the least-squares line through a drying cycle.
+// It returns ok=false when the cycle cannot produce a meaningful trend (fewer
+// than two readings, or a span too short for a per-day rate).
+func fitMoistureLine(cycle []moistureSample, scale types.MoistureScale) moistureFit {
+	if len(cycle) < 2 {
+		return moistureFit{}
 	}
-	// Readings are per day, so don't schedule before "tomorrow".
-	earliest := latest.at.Add(durationDays(minMeasurementIntervalDays))
-	if next.Before(earliest) {
-		next = earliest
+	slope, ok := moistureCycle{samples: cycle}.slopePerDay()
+	if !ok {
+		return moistureFit{}
 	}
-	return &next
+	origin := cycle[0].at
+	var sumY, sumX float64
+	for _, s := range cycle {
+		sumX += s.at.Sub(origin).Hours() / 24.0
+		sumY += s.value
+	}
+	n := float64(len(cycle))
+	intercept := sumY/n - slope*(sumX/n)
+	return moistureFit{
+		ok:          true,
+		decayPerDay: -slope,
+		slopePerDay: slope,
+		intercept:   intercept,
+		origin:      origin,
+	}
 }

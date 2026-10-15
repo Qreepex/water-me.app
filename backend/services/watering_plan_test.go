@@ -331,3 +331,98 @@ func TestNextMeasurementIsBounded(t *testing.T) {
 			days, minMeasurementIntervalDays, maxMeasurementIntervalDays)
 	}
 }
+
+// Regression: after the very first reading the app must not immediately ask for
+// another one. The next measurement has to be at least a day away, otherwise the
+// drying rate would be derived from readings minutes apart.
+func TestFirstMeasurementSchedulesNextAtLeastADayLater(t *testing.T) {
+	now := time.Date(2026, time.March, 10, 12, 0, 0, 0, time.UTC)
+	lastWatered := now
+	plant := types.Plant{
+		Watering: &types.WateringConfig{
+			Mode:          planMode(types.PlanModeMoisture),
+			IdealMoisture: tenScale(5),
+			MoistureScale: scalePtr(types.ScaleTen),
+			LastWatered:   &lastWatered,
+		},
+		MoistureLogs: []types.MoistureLog{
+			{ID: "1", Value: 6, Scale: types.ScaleTen, Date: now},
+		},
+	}
+
+	plan := ComputeWateringPlan(plant, now)
+	if plan == nil {
+		t.Fatal("expected a plan")
+	}
+	if plan.Status == types.PlanStatusMeasure {
+		t.Errorf("status = measure right after the first reading, want no prompt")
+	}
+	if plan.WateringDueAt != nil {
+		t.Errorf("wateringDueAt = %v, want nil (no trend yet)", plan.WateringDueAt)
+	}
+	if plan.MeasurementDueAt == nil {
+		t.Fatal("expected a next measurement date")
+	}
+	gap := plan.MeasurementDueAt.Sub(now)
+	if gap < 24*time.Hour {
+		t.Fatalf("next measurement in %v, want at least 24h", gap)
+	}
+}
+
+// Regression: readings taken far too close together must not produce a drying
+// rate, no matter how large the drop between them.
+func TestReadingsMinutesApartDoNotProduceDecay(t *testing.T) {
+	now := time.Date(2026, time.March, 10, 12, 0, 0, 0, time.UTC)
+	for _, gap := range []time.Duration{0, time.Second, time.Minute, time.Hour} {
+		lastWatered := now
+		plant := types.Plant{
+			Watering: &types.WateringConfig{
+				Mode:          planMode(types.PlanModeMoisture),
+				IdealMoisture: tenScale(5),
+				MoistureScale: scalePtr(types.ScaleTen),
+				LastWatered:   &lastWatered,
+			},
+			MoistureLogs: []types.MoistureLog{
+				{ID: "1", Value: 8, Scale: types.ScaleTen, Date: now.Add(-gap)},
+				{ID: "2", Value: 4, Scale: types.ScaleTen, Date: now},
+			},
+		}
+
+		plan := ComputeWateringPlan(plant, now)
+		if plan.DecayPerDay != nil {
+			t.Errorf("gap %v: decayPerDay = %v, want nil", gap, *plan.DecayPerDay)
+		}
+		if plan.Status == types.PlanStatusWaterNow {
+			t.Errorf("gap %v: plant reported as due although no rate is known", gap)
+		}
+		if plan.MeasurementDueAt == nil || plan.MeasurementDueAt.Sub(now) < 24*time.Hour {
+			t.Errorf("gap %v: next measurement not at least 24h away", gap)
+		}
+	}
+}
+
+// A measurement due date must never be in the past for a freshly measured plant.
+func TestMeasurementDueAtIsInTheFutureAfterMeasuring(t *testing.T) {
+	now := time.Date(2026, time.March, 10, 12, 0, 0, 0, time.UTC)
+	lastWatered := daysAgo(now, 0.5)
+	plant := types.Plant{
+		Watering: &types.WateringConfig{
+			Mode:          planMode(types.PlanModeMoisture),
+			IdealMoisture: tenScale(4),
+			MoistureScale: scalePtr(types.ScaleTen),
+			LastWatered:   &lastWatered,
+		},
+		MoistureLogs: []types.MoistureLog{
+			{ID: "1", Value: 9, Scale: types.ScaleTen, Date: daysAgo(now, 2)},
+			{ID: "2", Value: 8, Scale: types.ScaleTen, Date: now},
+		},
+	}
+
+	plan := ComputeWateringPlan(plant, now)
+	if plan.MeasurementDueAt == nil {
+		t.Fatal("expected a next measurement date")
+	}
+	if !plan.MeasurementDueAt.After(now) {
+		t.Fatalf("measurementDueAt = %v, want in the future", plan.MeasurementDueAt)
+	}
+}

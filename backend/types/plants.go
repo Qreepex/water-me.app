@@ -182,6 +182,10 @@ type WateringPlan struct {
 
 	// NeedsFirstMeasurement is true while the plant has no usable reading yet.
 	NeedsFirstMeasurement bool `json:"needsFirstMeasurement,omitempty"`
+	// WateredSinceLastMeasurement is true when the plant was watered after the
+	// newest reading, so CurrentMoisture is stale: the soil has since been
+	// refilled and drying restarted from saturation.
+	WateredSinceLastMeasurement bool `json:"wateredSinceLastMeasurement,omitempty"`
 	// SampleCount is the number of measurement points used for the model.
 	SampleCount int `json:"sampleCount"`
 }

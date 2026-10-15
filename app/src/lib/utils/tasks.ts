@@ -71,6 +71,9 @@ export function buildTaskList(plants: Plant[], now = Date.now()): TaskList {
 			: null;
 
 		const waterNow = plan.status === 'water_now';
+		// A measurement is only due once the schedule actually says so. The
+		// server keeps at least a day between readings, so this must not trigger
+		// just because a plant is still collecting its first values.
 		const measureNow = plan.status === 'measure' || (measureIn !== null && measureIn <= 0);
 
 		if (waterNow) {

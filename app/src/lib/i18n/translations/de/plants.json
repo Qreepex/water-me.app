@@ -238,5 +238,8 @@
 	"statusMoistureDueSoon": "Erde trocknet aus – bald gießen",
 	"statusMeasure": "Braucht einen neuen Messwert",
 	"statusMoistureOk": "Feuchtigkeit passt",
-	"moisturePlanActive": "Gießplan nach Feuchtigkeit aktiv"
+	"moisturePlanActive": "Gießplan nach Feuchtigkeit aktiv",
+	"notEnoughDataYet": "Braucht einen weiteren Messwert",
+	"measurementStaleHint": "Seitdem gegossen – dieser Wert ist veraltet",
+	"nextWatering": "Nächste Bewässerung"
 }
