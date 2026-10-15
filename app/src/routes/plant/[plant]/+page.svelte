@@ -18,19 +18,32 @@
 	import { getPlantsStore } from '$lib/stores/plants.svelte';
 	import { getWateringStore } from '$lib/stores/watering.svelte';
 	import type { Plant } from '$lib/types/api';
-	import { getPlantStatusText, getPlantWaterStatus, getWateringProgress } from '$lib/utils/plant';
+	import {
+		formatMoisture,
+		getPlan,
+		getPlantStatusText,
+		getPlantWaterStatus,
+		getWateringMode,
+		getWateringProgress,
+		hasWateringConfig as plantHasWateringConfig
+	} from '$lib/utils/plant';
 	import { formatFutureTimestamp, formatPastTimestamp } from '$lib/utils/timestamp.svelte';
 	import { SvelteDate } from 'svelte/reactivity';
+	import MoistureLogSheet from '$lib/components/plants/MoistureLogSheet.svelte';
 
 	const store = getPlantsStore();
 	const watering = getWateringStore();
+
+	let measuring = $state(false);
 
 	const plantId = $derived(page.params.plant ?? '');
 	const plant = $derived(store.plants.find((p) => p.id === plantId || p.slug === plantId) ?? null);
 	const photoUrls = $derived(
 		(plant as unknown as { photoUrls?: string[] } | null)?.photoUrls ?? []
 	);
-	const hasWateringConfig = $derived(!!plant?.watering?.intervalDays);
+	const hasWateringConfig = $derived(plant ? plantHasWateringConfig(plant) : false);
+	const isMoisturePlan = $derived(plant ? getWateringMode(plant) === 'Moisture' : false);
+	const plan = $derived(plant ? getPlan(plant) : null);
 
 	// ---- Playful Tamagotchi-style mood derived from the watering schedule ----
 	const mood = $derived.by(
@@ -64,6 +77,7 @@
 	);
 
 	const nextWaterDate = $derived.by(() => {
+		if (plan?.wateringDueAt) return new SvelteDate(plan.wateringDueAt);
 		if (!plant?.watering?.lastWatered || !plant.watering.intervalDays) return null;
 		const next = new SvelteDate(plant.watering.lastWatered);
 		next.setDate(next.getDate() + plant.watering.intervalDays);
@@ -324,6 +338,55 @@
 					</Card>
 				{/if}
 
+				<!-- Moisture plan: current value, prediction, quick actions -->
+				{#if isMoisturePlan}
+					<Card padded>
+						<div class="flex items-start justify-between gap-3">
+							<div>
+								<p class="text-sm font-semibold text-ink-soft">
+									{$tStore('plants.currentMoisture')}
+								</p>
+								<p class="text-3xl font-bold text-ink">
+									{formatMoisture(plan?.currentMoisture ?? null, p.watering?.moistureScale)}
+								</p>
+								{#if plan?.measuredAt}
+									<p class="mt-0.5 text-xs text-ink-soft">
+										{$tStore('plants.lastMeasured')}:
+										{formatPastTimestamp(new SvelteDate(plan.measuredAt))}
+									</p>
+								{/if}
+							</div>
+							{#if p.watering?.idealMoisture !== undefined && p.watering?.idealMoisture !== null}
+								<Chip
+									tone="brand"
+									icon="ruler"
+									text={`${$tStore('plants.idealMoisture')}: ${formatMoisture(
+										p.watering.idealMoisture,
+										p.watering.moistureScale
+									)}`}
+								/>
+							{/if}
+						</div>
+
+						<div class="mt-4 flex flex-col gap-2">
+							<Button
+								variant="primary"
+								class="w-full"
+								icon="ruler"
+								text="plants.addMeasurement"
+								onclick={() => (measuring = true)}
+							/>
+							<Button
+								variant="ghost"
+								class="w-full"
+								icon="line-chart"
+								text="plants.moistureHistory"
+								onclick={() => goto(resolve(`/plant/${p.id}/moisture`))}
+							/>
+						</div>
+					</Card>
+				{/if}
+
 				<!-- Care overview (only set fields) -->
 				{#if careRows.length > 0}
 					<Card padded>
@@ -438,3 +501,7 @@
 		</Scrollable>
 	{/if}
 </PageContent>
+
+{#if measuring && plant}
+	<MoistureLogSheet {plant} onclose={() => (measuring = false)} />
+{/if}

@@ -3,7 +3,7 @@
 	import { resolve } from '$app/paths';
 	import { tStore } from '$lib/i18n';
 	import type { Plant } from '$lib/types/api';
-	import { getWateringStatus } from '$lib/utils/plant';
+	import { formatMoisture, getPlan, getWateringMode, getWateringStatus } from '$lib/utils/plant';
 	import { formatPastTimestamp } from '$lib/utils/timestamp.svelte';
 	import Chip from '../ui/Chip.svelte';
 	import Icon from '../ui/Icon.svelte';
@@ -30,7 +30,16 @@
 
 	const metaTiles = $derived.by((): MetaTile[] => {
 		const tiles: MetaTile[] = [];
-		if (plant.watering?.intervalDays) {
+		if (getWateringMode(plant) === 'Moisture') {
+			const ideal = plant.watering?.idealMoisture;
+			if (ideal !== undefined && ideal !== null) {
+				tiles.push({
+					icon: 'ruler',
+					text: `${$tStore('plants.idealMoisture')}: ${formatMoisture(ideal, plant.watering?.moistureScale)}`,
+					tone: 'brand'
+				});
+			}
+		} else if (plant.watering?.intervalDays) {
 			tiles.push({
 				icon: 'droplet',
 				text: `${$tStore('plants.every')} ${plant.watering.intervalDays} ${$tStore('plants.days')}`,
@@ -115,6 +124,19 @@
 					</p>
 				{/if}
 			</div>
+		{/if}
+
+		<!-- Moisture readout for moisture-based plants -->
+		{#if getWateringMode(plant) === 'Moisture'}
+			{@const plan = getPlan(plant)}
+			{#if plan?.currentMoisture !== undefined && plan?.currentMoisture !== null}
+				<p class="mb-3 text-xs text-ink-soft">
+					{$tStore('plants.currentMoisture')}:
+					<span class="font-semibold text-ink">
+						{formatMoisture(plan.currentMoisture, plant.watering?.moistureScale)}
+					</span>
+				</p>
+			{/if}
 		{/if}
 
 		<!-- Metadata Grid -->

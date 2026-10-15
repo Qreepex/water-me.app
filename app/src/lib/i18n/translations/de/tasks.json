@@ -1,0 +1,14 @@
+{
+	"title": "Heute",
+	"description": "Deine Pflanzen-Aufgaben für heute",
+	"waterSection": "Gießen",
+	"measureSection": "Messen",
+	"relaxedSection": "Nichts zu tun",
+	"allDone": "Alles erledigt für heute!",
+	"allDoneHint": "Deine Pflanzen sind zufrieden. Schau morgen wieder vorbei.",
+	"waterAllPlants": "Alle gießen (%s)",
+	"reasonMoistureLow": "Erde hat den Idealwert erreicht",
+	"reasonIntervalDue": "Gießintervall ist fällig",
+	"reasonFirstMeasurement": "Ersten Messwert eintragen",
+	"reasonMeasurementDue": "Neuer Messwert fällig"
+}
