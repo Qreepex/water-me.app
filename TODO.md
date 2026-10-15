@@ -52,3 +52,5 @@
 - [ ] Feuchtigkeitsmessungen rückwirkend mit Zeitstempel eintragen (Backfill UI)
 - [ ] Chart-Darstellung des Feuchtigkeitsverlaufs (aktuell nur Liste)
 - [ ] Sensor-/Home-Assistant-Integration für automatische Messwerte
+
+In the plant card shown in "my garden", only show essential information of a plant. Show the name and species, properly formatted next to each othe. Show last watered and next water date appealingly formatted. Other information doesnt need to be shown in the card for now.

@@ -9,6 +9,8 @@ code over older docs (`README.md`, `DESIGN.md`, `TODO.md`).
 > backlog) → this file → `backend/README.md` / `backend/openapi.yaml` → `DESIGN.md`
 > (design tokens).
 
+You don't have a local running version of this project, so you must reason about the code and its structure without executing it. You can read the code, analyze it, and provide guidance or explanations based on your understanding of the codebase.
+
 ---
 
 ## 1. What this project is (function level)
@@ -101,6 +103,7 @@ Tailwind 4 theme in **`app/src/routes/layout.css`** (and mirrored in
   `bg-danger|warn|info|ok`, `bg-brand/15` etc.
 
 **Rules:**
+
 - Never hardcode hex colors in components — use the semantic utilities so dark mode
   keeps working (`canvas`/`surface`/`ink`/`ink-soft`).
 - Status colors are centralized in **`app/src/lib/components/ui/tone.ts`**
@@ -407,7 +410,8 @@ docker build --build-arg COMPONENT=api -t ghcr.io/qreepex/plants-backend-api:dev
 ```
 
 k3s manifests in `backend/infra/k8s/`: namespace `water-me`; `backend-api` (2 replicas
-+ ClusterIP service + nginx ingress/TLS for `api.water-me.app`); `notification-worker`
+
+- ClusterIP service + nginx ingress/TLS for `api.water-me.app`); `notification-worker`
 (1 replica). Both mount a `firebase-secret` and read env from `water-me-secret` /
 `mongodb-secret` (gitignored). **There is currently no manifest for `cleanup-worker`.**
 Frontends deploy as static assets via Cloudflare (wrangler) — there is no CI
@@ -545,6 +549,7 @@ Read these before you "fix" something that looks wrong:
 > where it makes sense, so progress is visible in history.
 
 **New plant field / care type**
+
 1. `backend/types/plants.go` — add struct/field (+ enum if needed).
 2. `backend/validation/plant.go` — validate it.
 3. `backend/services/database.go` — persist/query it (and `isEmpty*` if optional).
