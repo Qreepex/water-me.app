@@ -1,14 +1,13 @@
 import { fetchData } from '$lib/auth/fetch.svelte';
 import { invalidateApiCache } from '$lib/utils/cache';
 import { t } from '$lib/i18n';
-import type { MoistureScale } from '$lib/types/api';
+import type { MoistureScale, MoistureReading } from '$lib/types/api';
 import { Haptics, NotificationType } from '@capacitor/haptics';
 import { getPlantsStore } from './plants.svelte';
 
 interface WaterOptions {
 	/** Optional moisture value measured right before watering, keyed by plant ID. */
-	moistures?: Record<string, number>;
-	scale?: MoistureScale;
+	moistures?: Record<string, MoistureReading>;
 }
 
 /**
@@ -50,7 +49,6 @@ export function createWateringStore() {
 			const body: Record<string, unknown> = { plantIds: targets };
 			if (options.moistures && Object.keys(options.moistures).length > 0) {
 				body.moistures = options.moistures;
-				body.moistureScale = options.scale ?? 'Scale1To10';
 			}
 
 			const response = await fetchData('/api/plants/water', {

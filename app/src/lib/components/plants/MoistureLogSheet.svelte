@@ -46,8 +46,7 @@
 	async function saveAndWater(): Promise<void> {
 		saving = true;
 		const ok = await watering.waterPlant(plant.id, {
-			moistures: { [plant.id]: value },
-			scale
+			moistures: { [plant.id]: { value, scale } }
 		});
 		saving = false;
 		if (ok) onclose();

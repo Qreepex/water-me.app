@@ -221,6 +221,14 @@ export interface components {
 		 * @enum {string}
 		 */
 		MoistureScale: MoistureScale;
+		MoistureReading: {
+			/**
+			 * Format: double
+			 * @example 4
+			 */
+			value: number;
+			scale?: components['schemas']['MoistureScale'];
+		};
 		MoistureLog: {
 			id: string;
 			/**
@@ -580,6 +588,7 @@ export interface components {
 }
 export type Location = components['schemas']['Location'];
 export type WateringConfig = components['schemas']['WateringConfig'];
+export type MoistureReading = components['schemas']['MoistureReading'];
 export type MoistureLog = components['schemas']['MoistureLog'];
 export type WateringPlan = components['schemas']['WateringPlan'];
 export type HumidityConfig = components['schemas']['HumidityConfig'];
@@ -759,11 +768,6 @@ export interface operations {
 		requestBody: {
 			content: {
 				'application/json': {
-					plantIds: string[];
-					/** @description Optional moisture values measured while watering, keyed by plant ID. */
-					moistures?: {
-						[key: string]: number;
-					};
 					/**
 					 * @description Array of plant IDs to mark as watered
 					 * @example [
@@ -771,7 +775,11 @@ export interface operations {
 					 *       "507f191e810c19729de860ea"
 					 *     ]
 					 */
-					moistureScale?: components['schemas']['MoistureScale'];
+					plantIds: string[];
+					/** @description Optional moisture values measured while watering, keyed by plant ID. */
+					moistures?: {
+						[key: string]: components['schemas']['MoistureReading'];
+					};
 				};
 			};
 		};

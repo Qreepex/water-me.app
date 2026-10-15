@@ -193,20 +193,17 @@ paths:
                   type: array
                   items:
                     type: string
-                moistures:
-                  type: object
-                  additionalProperties:
-                    type: number
-                    format: double
-                  description: >-
-                    Optional moisture values measured while watering, keyed by
-                    plant ID.
-                moistureScale:
-                  $ref: "#/components/schemas/MoistureScale"
                   minItems: 1
                   description: Array of plant IDs to mark as watered
                   example:
                     ["507f1f77bcf86cd799439011", "507f191e810c19729de860ea"]
+                moistures:
+                  type: object
+                  description: >-
+                    Optional moisture values measured while watering, keyed by
+                    plant ID.
+                  additionalProperties:
+                    $ref: "#/components/schemas/MoistureReading"
       responses:
         "200":
           description: Plants watered successfully
@@ -517,6 +514,18 @@ components:
         - Scale1To10
         - Percent
       description: Scale a moisture reading is expressed in.
+
+    MoistureReading:
+      type: object
+      required:
+        - value
+      properties:
+        value:
+          type: number
+          format: double
+          example: 4
+        scale:
+          $ref: "#/components/schemas/MoistureScale"
 
     MoistureLog:
       type: object

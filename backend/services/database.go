@@ -393,8 +393,7 @@ func (m *MongoDB) WaterPlants(
 	ctx context.Context,
 	userID string,
 	plantIDs []string,
-	moistures map[string]float64,
-	scale types.MoistureScale,
+	moistures map[string]types.MoistureReading,
 ) (int64, error) {
 	collection := m.GetCollection(constants.MongoDBCollections.Plants)
 	if collection == nil {
@@ -420,15 +419,37 @@ func (m *MongoDB) WaterPlants(
 	}
 
 	now := time.Now()
+
+	// Fast path: no measurements to record -> single bulk update.
+	if len(moistures) == 0 {
+		objectIDs := make([]primitive.ObjectID, 0, len(targets))
+		for _, target := range targets {
+			objectIDs = append(objectIDs, target.objectID)
+		}
+		result, err := collection.UpdateMany(
+			ctx,
+			bson.M{"_id": bson.M{"$in": objectIDs}, "userId": userID},
+			bson.M{"$set": bson.M{"watering.lastWatered": now, "updatedAt": now}},
+		)
+		if err != nil {
+			return 0, err
+		}
+		return result.ModifiedCount, nil
+	}
+
 	var modified int64
 	for _, target := range targets {
 		update := bson.M{"$set": bson.M{"watering.lastWatered": now, "updatedAt": now}}
-		if value, ok := moistures[target.id]; ok {
+		if reading, ok := moistures[target.id]; ok {
+			logScale := reading.Scale
+			if logScale == "" {
+				logScale = types.ScaleTen
+			}
 			update["$push"] = bson.M{"moistureLogs": bson.M{
 				"$each": bson.A{types.MoistureLog{
 					ID:    primitive.NewObjectID().Hex(),
-					Value: value,
-					Scale: scale,
+					Value: reading.Value,
+					Scale: logScale,
 					Date:  now,
 					Note:  "measured while watering",
 				}},

@@ -130,6 +130,14 @@ type WateringConfig struct {
 	MoistureScale *MoistureScale `json:"moistureScale,omitempty" bson:"moistureScale,omitempty"`
 }
 
+// MoistureReading is a moisture value together with the scale it was taken in.
+// Used by the bulk watering request; the scale defaults to the plant's
+// configured scale when omitted.
+type MoistureReading struct {
+	Value float64       `json:"value"`
+	Scale MoistureScale `json:"scale,omitempty"`
+}
+
 // MoistureLog holds a single soil moisture measurement.
 type MoistureLog struct {
 	ID    string        `json:"id"    bson:"id"`

@@ -599,20 +599,12 @@ func ValidateMoistureLog(log types.MoistureLog) []types.ValidationError {
 	return validateMoistureLogs([]types.MoistureLog{log})
 }
 
-// ValidateMoistureValues validates the optional moisture readings attached to a
-// bulk watering request. Keys are plant IDs.
-func ValidateMoistureValues(values map[string]float64, scale types.MoistureScale) []types.ValidationError {
+// ValidateMoistureReadings validates the optional moisture readings attached to
+// a bulk watering request. Keys are plant IDs.
+func ValidateMoistureReadings(readings map[string]types.MoistureReading) []types.ValidationError {
 	errors := make([]types.ValidationError, 0)
 
-	if !isMoistureScale(scale) {
-		return []types.ValidationError{{
-			Field:   "moistureScale",
-			Message: "Moisture scale must be one of: Scale1To10, Percent",
-		}}
-	}
-
-	min, max := moistureScaleBounds(scale)
-	for plantID, value := range values {
+	for plantID, reading := range readings {
 		if strings.TrimSpace(plantID) == "" {
 			errors = append(errors, types.ValidationError{
 				Field:   "moistures",
@@ -620,9 +612,21 @@ func ValidateMoistureValues(values map[string]float64, scale types.MoistureScale
 			})
 			continue
 		}
-		if value < min || value > max {
+		scale := reading.Scale
+		if scale == "" {
+			scale = types.ScaleTen
+		}
+		if !isMoistureScale(scale) {
 			errors = append(errors, types.ValidationError{
-				Field: "moistures." + plantID,
+				Field:   "moistures." + plantID + ".scale",
+				Message: "Moisture scale must be one of: Scale1To10, Percent",
+			})
+			continue
+		}
+		min, max := moistureScaleBounds(scale)
+		if reading.Value < min || reading.Value > max {
+			errors = append(errors, types.ValidationError{
+				Field: "moistures." + plantID + ".value",
 				Message: fmt.Sprintf(
 					"Moisture value must be between %g and %g for the selected scale",
 					min,

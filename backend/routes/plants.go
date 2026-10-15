@@ -287,9 +287,7 @@ func waterPlants(w http.ResponseWriter, r *http.Request, db *services.MongoDB) {
 	var req struct {
 		PlantIDs []string `json:"plantIds"`
 		// Optional moisture values measured while watering, keyed by plant ID.
-		Moistures map[string]float64 `json:"moistures,omitempty"`
-		// Scale of the values in Moistures (defaults to Scale1To10).
-		MoistureScale types.MoistureScale `json:"moistureScale,omitempty"`
+		Moistures map[string]types.MoistureReading `json:"moistures,omitempty"`
 	}
 	if err := util.DecodeJSON(r, &req); err != nil {
 		util.BadRequest(w, err.Error(), nil)
@@ -300,19 +298,15 @@ func waterPlants(w http.ResponseWriter, r *http.Request, db *services.MongoDB) {
 		return
 	}
 
-	scale := req.MoistureScale
-	if scale == "" {
-		scale = types.ScaleTen
-	}
 	if len(req.Moistures) > 0 {
-		errors := validation.ValidateMoistureValues(req.Moistures, scale)
+		errors := validation.ValidateMoistureReadings(req.Moistures)
 		if len(errors) > 0 {
 			util.BadRequest(w, "Validation failed", errors)
 			return
 		}
 	}
 
-	_, err := db.WaterPlants(r.Context(), userID, req.PlantIDs, req.Moistures, scale)
+	_, err := db.WaterPlants(r.Context(), userID, req.PlantIDs, req.Moistures)
 	if err != nil {
 		util.ServerError(w, err)
 		return
