@@ -87,6 +87,26 @@ const (
 	HealthDormant   HealthStatus = "Dormant"
 )
 
+// WateringPlanMode describes how the next watering date is determined.
+type WateringPlanMode string
+
+const (
+	// PlanModeManual uses a fixed interval (watering.intervalDays).
+	PlanModeManual WateringPlanMode = "Manual"
+	// PlanModeMoisture derives the schedule from soil moisture measurements.
+	PlanModeMoisture WateringPlanMode = "Moisture"
+)
+
+// MoistureScale identifies the scale a moisture reading is expressed in.
+type MoistureScale string
+
+const (
+	// ScaleTen is the classic analog moisture meter scale (1 = dry, 10 = soaking wet).
+	ScaleTen MoistureScale = "Scale1To10"
+	// ScalePercent is a percentage of water content (0-100).
+	ScalePercent MoistureScale = "Percent"
+)
+
 // --- SUB-STRUCTURES ---
 
 type Location struct {
@@ -100,6 +120,70 @@ type WateringConfig struct {
 	Method       WateringMethod `json:"method"       bson:"method"`
 	WaterType    WaterType      `json:"waterType"    bson:"waterType"`
 	LastWatered  *time.Time     `json:"lastWatered"  bson:"lastWatered"`
+
+	// Mode selects the scheduling strategy. Empty means "Manual" (legacy plants).
+	Mode *WateringPlanMode `json:"mode,omitempty" bson:"mode,omitempty"`
+	// IdealMoisture is the moisture value the plant is happiest at. When the
+	// measured value drops to (or below) this, the plant should be watered.
+	IdealMoisture *float64 `json:"idealMoisture,omitempty" bson:"idealMoisture,omitempty"`
+	// MoistureScale is the scale IdealMoisture and all measurements are in.
+	MoistureScale *MoistureScale `json:"moistureScale,omitempty" bson:"moistureScale,omitempty"`
+}
+
+// MoistureReading is a moisture value together with the scale it was taken in.
+// Used by the bulk watering request; the scale defaults to the plant's
+// configured scale when omitted.
+type MoistureReading struct {
+	Value float64       `json:"value"`
+	Scale MoistureScale `json:"scale,omitempty"`
+}
+
+// MoistureLog holds a single soil moisture measurement.
+type MoistureLog struct {
+	ID    string        `json:"id"    bson:"id"`
+	Value float64       `json:"value" bson:"value"`
+	Scale MoistureScale `json:"scale" bson:"scale"`
+	Date  time.Time     `json:"date"  bson:"date"`
+	// Note is an optional free-text remark (e.g. "right after watering").
+	Note string `json:"note,omitempty" bson:"note,omitempty"`
+}
+
+// Watering plan status values (mirrored by the app).
+const (
+	PlanStatusOK       = "ok"
+	PlanStatusDueSoon  = "due_soon"
+	PlanStatusWaterNow = "water_now"
+	PlanStatusMeasure  = "measure"
+)
+
+// WateringPlan is the server-computed schedule for a plant. It is derived on
+// the fly (never persisted) so the algorithm can evolve without migrations.
+type WateringPlan struct {
+	Mode WateringPlanMode `json:"mode"`
+
+	// WateringDueAt is the predicted/derived moment the plant needs water.
+	WateringDueAt *time.Time `json:"wateringDueAt,omitempty"`
+	// MeasurementDueAt is when the next moisture reading is requested.
+	MeasurementDueAt *time.Time `json:"measurementDueAt,omitempty"`
+	// Status: ok | due_soon | water_now | measure
+	Status string `json:"status"`
+
+	// IdealMoisture and MoistureScale echo the configured target.
+	IdealMoisture *float64      `json:"idealMoisture,omitempty"`
+	MoistureScale MoistureScale `json:"moistureScale,omitempty"`
+
+	// CurrentMoisture is the most recent measurement (raw scale units).
+	CurrentMoisture *float64   `json:"currentMoisture,omitempty"`
+	MeasuredAt      *time.Time `json:"measuredAt,omitempty"`
+	// DecayPerDay is the estimated drying speed in raw scale units per day.
+	DecayPerDay *float64 `json:"decayPerDay,omitempty"`
+	// EstimatedFullMoisture is the moisture right after watering.
+	EstimatedFullMoisture *float64 `json:"estimatedFullMoisture,omitempty"`
+
+	// NeedsFirstMeasurement is true while the plant has no usable reading yet.
+	NeedsFirstMeasurement bool `json:"needsFirstMeasurement,omitempty"`
+	// SampleCount is the number of measurement points used for the model.
+	SampleCount int `json:"sampleCount"`
 }
 
 type HumidityConfig struct {
@@ -173,6 +257,8 @@ type Plant struct {
 	Seasonality *SeasonalAdjustments `json:"seasonality" bson:"seasonality,omitempty"`
 
 	PestHistory   []PestInfection `json:"pestHistory"         bson:"pestHistory,omitempty"`
+	MoistureLogs  []MoistureLog   `json:"moistureLogs"        bson:"moistureLogs,omitempty"`
+	WateringPlan  *WateringPlan   `json:"wateringPlan"        bson:"-"`
 	Flags         []PlantFlag     `json:"flags"               bson:"flags,omitempty"`
 	Notes         []string        `json:"notes"               bson:"notes,omitempty"`
 	PhotoIDs      []string        `json:"photoIds"            bson:"photoIds,omitempty"`
@@ -197,6 +283,7 @@ type CreatePlantRequest struct {
 	Soil                *SoilConfig          `json:"soil,omitempty"`
 	Seasonality         *SeasonalAdjustments `json:"seasonality,omitempty"`
 	PestHistory         []PestInfection      `json:"pestHistory"`
+	MoistureLogs        []MoistureLog        `json:"moistureLogs"`
 	Flags               []PlantFlag          `json:"flags"`
 	Notes               []string             `json:"notes"`
 	PhotoIDs            []string             `json:"photoIds"`
@@ -217,6 +304,7 @@ type UpdatePlantRequest struct {
 	Soil                *SoilConfig          `json:"soil,omitempty"`
 	Seasonality         *SeasonalAdjustments `json:"seasonality,omitempty"`
 	PestHistory         *[]PestInfection     `json:"pestHistory,omitempty"`
+	MoistureLogs        *[]MoistureLog       `json:"moistureLogs,omitempty"`
 	Flags               *[]PlantFlag         `json:"flags,omitempty"`
 	Notes               *[]string            `json:"notes,omitempty"`
 	PhotoIDs            *[]string            `json:"photoIds,omitempty"`

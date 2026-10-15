@@ -40,6 +40,9 @@ type NotificationConfig struct {
 	RemindFertilize bool     `json:"remindFertilize" bson:"remindFertilize"`
 	RemindRepotting bool     `json:"remindRepotting" bson:"remindRepotting"`
 	RemindMisting   bool     `json:"remindMisting"   bson:"remindMisting"`
+	// RemindMoisture asks the user for a new soil moisture measurement so the
+	// moisture-based watering plan can be recalculated.
+	RemindMoisture bool `json:"remindMoisture" bson:"remindMoisture"`
 
 	// Notification tracking
 	LastNotificationSentAt *time.Time `json:"lastNotificationSentAt,omitempty" bson:"lastNotificationSentAt,omitempty"`

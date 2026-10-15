@@ -13,7 +13,7 @@
 
 	const tabs = [
 		{ path: '/', icon: SunFlower, labelKey: 'menu.garden' },
-		{ path: '/water', icon: Can, labelKey: 'menu.water' }
+		{ path: '/water', icon: Can, labelKey: 'tasks.title' }
 	] as const satisfies readonly {
 		path: '/' | '/water';
 		icon: Component<{ isActive: boolean }>;

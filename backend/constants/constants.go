@@ -12,6 +12,9 @@ var MongoDBCollections = struct {
 
 const UserIdKey = "userID"
 
+// MaxMoistureLogsPerPlant caps the moisture history stored per plant.
+const MaxMoistureLogsPerPlant = 2000
+
 // Max allowed upload size (bytes)
 const MaxUploadBytes int64 = 2 * 1024 * 1024
 

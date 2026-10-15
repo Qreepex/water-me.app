@@ -1,0 +1,14 @@
+{
+	"title": "Today",
+	"description": "Your plant care tasks for today",
+	"waterSection": "Water",
+	"measureSection": "Measure",
+	"relaxedSection": "Nothing to do",
+	"allDone": "All done for today!",
+	"allDoneHint": "Your plants are happy. Check back tomorrow.",
+	"waterAllPlants": "Water all (%s)",
+	"reasonMoistureLow": "Soil reached the ideal value",
+	"reasonIntervalDue": "Watering interval is due",
+	"reasonFirstMeasurement": "Add the first measurement",
+	"reasonMeasurementDue": "New measurement due"
+}

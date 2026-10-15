@@ -1,6 +1,13 @@
 import type { IconName } from '$lib/components/ui/icons';
 import type { Plant } from '$lib/types/api';
-import { FertilizerType, SunlightRequirement, WateringMethod, WaterType } from '$lib/types/api';
+import {
+	FertilizerType,
+	MoistureScale,
+	SunlightRequirement,
+	WateringMethod,
+	WateringPlanMode,
+	WaterType
+} from '$lib/types/api';
 import type { FormData } from '$lib/types/forms';
 import { createEmptyFormData } from '$lib/types/forms';
 
@@ -34,9 +41,12 @@ export function initializeFormData(plant: Plant): FormData {
 		room: plant.location?.room ?? '',
 		position: plant.location?.position ?? '',
 		isOutdoors: plant.location?.isOutdoors ?? false,
+		wateringMode: plant.watering?.mode ?? WateringPlanMode.Manual,
 		wateringIntervalDays: plant.watering?.intervalDays ?? 7,
 		wateringMethod: plant.watering?.method ?? WateringMethod.Top,
 		waterType: plant.watering?.waterType ?? WaterType.Tap,
+		idealMoisture: plant.watering?.idealMoisture ?? 5,
+		moistureScale: plant.watering?.moistureScale ?? MoistureScale.Scale1To10,
 		fertilizingType: plant.fertilizing?.type ?? FertilizerType.Liquid,
 		fertilizingIntervalDays: plant.fertilizing?.intervalDays ?? 30,
 		npkRatio: plant.fertilizing?.npkRatio ?? '10:10:10',
@@ -75,9 +85,13 @@ export function buildFullPayload(formData: FormData): Record<string, unknown> {
 			isOutdoors: formData.isOutdoors
 		},
 		watering: {
-			intervalDays: formData.wateringIntervalDays,
+			mode: formData.wateringMode,
+			intervalDays:
+				formData.wateringMode === 'Moisture' ? undefined : formData.wateringIntervalDays,
 			method: formData.wateringMethod,
-			waterType: formData.waterType
+			waterType: formData.waterType,
+			idealMoisture: formData.wateringMode === 'Moisture' ? formData.idealMoisture : undefined,
+			moistureScale: formData.wateringMode === 'Moisture' ? formData.moistureScale : undefined
 		},
 		fertilizing: {
 			type: formData.fertilizingType,
@@ -151,14 +165,21 @@ export function buildCreatePayload(
 	}
 
 	if (
+		hasChanged(formData, initial, 'wateringMode') ||
 		hasChanged(formData, initial, 'wateringIntervalDays') ||
 		hasChanged(formData, initial, 'wateringMethod') ||
-		hasChanged(formData, initial, 'waterType')
+		hasChanged(formData, initial, 'waterType') ||
+		hasChanged(formData, initial, 'idealMoisture') ||
+		hasChanged(formData, initial, 'moistureScale')
 	) {
 		payload.watering = {
-			intervalDays: formData.wateringIntervalDays,
+			mode: formData.wateringMode,
+			intervalDays:
+				formData.wateringMode === 'Moisture' ? undefined : formData.wateringIntervalDays,
 			method: formData.wateringMethod,
 			waterType: formData.waterType,
+			idealMoisture: formData.wateringMode === 'Moisture' ? formData.idealMoisture : undefined,
+			moistureScale: formData.wateringMode === 'Moisture' ? formData.moistureScale : undefined,
 			lastWatered: now
 		};
 	}

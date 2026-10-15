@@ -20,6 +20,12 @@ FROM scratch
 
 COPY --from=builder /app/app /app
 
+# The notification worker loads message templates from the relative path
+# "messages", so they must ship in the image and the working directory must be
+# where they resolve (otherwise the worker exits on startup).
+COPY --from=builder /app/backend/messages /messages
+WORKDIR /
+
 COPY --from=alpine:latest /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 
 LABEL org.opencontainers.image.source="https://github.com/qreepex/water-me-app"

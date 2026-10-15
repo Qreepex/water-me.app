@@ -15,6 +15,7 @@
 - [X] Cache löschen nach Gießen
 - [X] Nach Create 1. manage speichern wird 404
 - [X] zuürck + edit buttons im plant view sind out of area
+- [ ] Wenn man auf eine Pflanze klickt, dann kommt man zu <https://my.water-me.app/plant/6a6a6d0f39a107ddfcee3805>, was ein HTTP 404 wirft. Das ist auf CF Workers als static gehostet
 
 ## Features
 
@@ -35,6 +36,8 @@
 - [ ] Frontend für Notification Configs
 - [ ] Endpoints nur für Historie bearbeiten usw
 - [ ] Fade von Scrollable ist nicht unten wenn Scrollbar nicht komplette Höhe ist
+- [X] Aus Feuchtigkeitmessungen soll ein Gießplan berechnet werden (manuell/automatisch)
+- [X] Tägliche Aufgabenliste (Pflanze gießen / Feuchtigkeit messen)
 - [ ] LastWatered/Fertizlited checken
 
 ## Future
@@ -46,3 +49,6 @@
 - [ ] Log out button
 - [ ] Delete Account Button
 - [ ] Delete Plants
+- [ ] Feuchtigkeitsmessungen rückwirkend mit Zeitstempel eintragen (Backfill UI)
+- [ ] Chart-Darstellung des Feuchtigkeitsverlaufs (aktuell nur Liste)
+- [ ] Sensor-/Home-Assistant-Integration für automatische Messwerte

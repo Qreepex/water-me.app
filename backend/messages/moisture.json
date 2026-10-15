@@ -1,0 +1,38 @@
+{
+  "single": [
+    {
+      "title": "Measure your soil moisture 📏",
+      "body": "Take a new reading for {plantName} to keep the watering plan on track"
+    },
+    {
+      "title": "Time to measure {plantName} 📏",
+      "body": "A new moisture value lets me calculate the next watering"
+    },
+    {
+      "title": "Moisture check 📏",
+      "body": "How dry is {plantName}? Add a fresh measurement"
+    },
+    {
+      "title": "{plantName} is waiting for a reading 📏",
+      "body": "Stick the meter in and add the value"
+    }
+  ],
+  "multiple": [
+    {
+      "title": "Measure {count} plants 📏",
+      "body": "{plantNames}"
+    },
+    {
+      "title": "Moisture readings due 📏",
+      "body": "New values for {plantNames} keep their watering plans accurate"
+    },
+    {
+      "title": "Time to measure! 📏",
+      "body": "{plantNames} and {remaining} more need a fresh moisture value"
+    },
+    {
+      "title": "Keep the plan accurate 📏",
+      "body": "{count} plants are waiting for a measurement"
+    }
+  ]
+}

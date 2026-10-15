@@ -6,3 +6,9 @@ node_modules/
 .sourcemaps
 dist/
 google-services.json
+
+# Generated build output (also ignored repo-wide; duplicated here so eslint /
+# prettier, which read this file, do not lint build artifacts)
+.svelte-kit/
+www/
+android/app/src/main/assets/public

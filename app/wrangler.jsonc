@@ -2,6 +2,11 @@
 	"name": "water-me-webapp",
 	"compatibility_date": "2026-01-17",
 	"assets": {
-		"directory": "www"
+		"directory": "www",
+		// Serve index.html for unmatched paths (e.g. /plant/<id>) so deep links
+		// work from the CDN. SvelteKit renders client-side (ssr = false) and
+		// adapter-static writes a 404.html fallback, but without this the assets
+		// layer answers a hard 404 before the SPA router ever runs.
+		"not_found_handling": "single-page-application"
 	}
 }

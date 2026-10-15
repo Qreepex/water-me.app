@@ -28,6 +28,48 @@ export interface paths {
 		patch?: never;
 		trace?: never;
 	};
+	'/api/plants/{id}/moisture': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				id: string;
+			};
+			cookie?: never;
+		};
+		get?: never;
+		put?: never;
+		/**
+		 * Record a soil moisture measurement
+		 * @description Appends a moisture reading to the plant's history. If no scale is provided the plant's configured scale is used.
+		 */
+		post: operations['addMoistureLog'];
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	'/api/plants/{id}/moisture/{logId}': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				id: string;
+				logId: string;
+			};
+			cookie?: never;
+		};
+		get?: never;
+		put?: never;
+		post?: never;
+		/** Delete a soil moisture measurement */
+		delete: operations['deleteMoistureLog'];
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
 	'/api/plants/slug/{slug}': {
 		parameters: {
 			query?: never;
@@ -154,46 +196,114 @@ export interface components {
 		};
 		WateringConfig: {
 			/** @example 7 */
-			intervalDays: number;
-			method: components['schemas']['WateringMethod'];
-			waterType: components['schemas']['WaterType'];
+			intervalDays?: number;
+			method?: components['schemas']['WateringMethod'];
+			waterType?: components['schemas']['WaterType'];
 			/** Format: date-time */
 			lastWatered?: string | null;
+			/** @description Scheduling strategy. "Manual" uses intervalDays, "Moisture" derives the schedule from the recorded soil moisture measurements. */
+			mode?: components['schemas']['WateringPlanMode'] | null;
+			/**
+			 * Format: double
+			 * @description Moisture value the plant is happiest at. Watering is recommended when the measurement drops to this value or below.
+			 * @example 5
+			 */
+			idealMoisture?: number | null;
+			moistureScale?: components['schemas']['MoistureScale'] | null;
+		};
+		/**
+		 * @description How the next watering date is determined.
+		 * @enum {string}
+		 */
+		WateringPlanMode: WateringPlanMode;
+		/**
+		 * @description Scale a moisture reading is expressed in.
+		 * @enum {string}
+		 */
+		MoistureScale: MoistureScale;
+		MoistureReading: {
+			/**
+			 * Format: double
+			 * @example 4
+			 */
+			value: number;
+			scale?: components['schemas']['MoistureScale'];
+		};
+		MoistureLog: {
+			id: string;
+			/**
+			 * Format: double
+			 * @example 4
+			 */
+			value: number;
+			scale: components['schemas']['MoistureScale'];
+			/** Format: date-time */
+			date: string;
+			note?: string;
+		};
+		/** @description Server-computed watering schedule. Derived from the plant's configuration and moisture history; never stored. */
+		WateringPlan: {
+			mode?: components['schemas']['WateringPlanMode'];
+			/** Format: date-time */
+			wateringDueAt?: string | null;
+			/** Format: date-time */
+			measurementDueAt?: string | null;
+			/** @enum {string} */
+			status?: WateringPlanStatus;
+			/** Format: double */
+			idealMoisture?: number | null;
+			moistureScale?: components['schemas']['MoistureScale'] | null;
+			/** Format: double */
+			currentMoisture?: number | null;
+			/** Format: date-time */
+			measuredAt?: string | null;
+			/**
+			 * Format: double
+			 * @description Estimated drying speed in scale units per day.
+			 */
+			decayPerDay?: number | null;
+			/**
+			 * Format: double
+			 * @description Estimated moisture right after watering.
+			 */
+			estimatedFullMoisture?: number | null;
+			needsFirstMeasurement?: boolean;
+			sampleCount?: number;
 		};
 		HumidityConfig: {
 			/** @example true */
-			requiresMisting: boolean;
+			requiresMisting?: boolean;
 			/** @example 2 */
-			mistingIntervalDays: number;
+			mistingIntervalDays?: number;
 			/** Format: date-time */
 			lastMisted?: string | null;
 			/** @example false */
-			requiresHumidifier: boolean;
+			requiresHumidifier?: boolean;
 			/**
 			 * Format: double
 			 * @example 60
 			 */
-			targetHumidityPct: number;
+			targetHumidityPct?: number;
 		};
 		FertilizerConfig: {
-			type: components['schemas']['FertilizerType'];
+			type?: components['schemas']['FertilizerType'];
 			/** @example 14 */
-			intervalDays: number;
+			intervalDays?: number;
 			/** @example 10:10:10 */
-			npkRatio: string;
+			npkRatio?: string;
 			/**
 			 * Format: double
 			 * @example 50
 			 */
-			concentrationPercent: number;
+			concentrationPercent?: number;
 			/** Format: date-time */
 			lastFertilized?: string | null;
 			/** @example false */
-			activeInWinter: boolean;
+			activeInWinter?: boolean;
 		};
 		SoilConfig: {
 			/** @example Well-draining */
-			type: string;
+			type?: string;
 			/**
 			 * @example [
 			 *       "Peat",
@@ -201,25 +311,25 @@ export interface components {
 			 *       "Bark"
 			 *     ]
 			 */
-			components: string[];
+			components?: string[];
 			/** Format: date-time */
 			lastRepotted?: string | null;
 			/** @example 2 */
-			repottingCycle: number;
+			repottingCycle?: number;
 		};
 		SeasonalAdjustments: {
 			/** @example true */
-			winterRestPeriod: boolean;
+			winterRestPeriod?: boolean;
 			/**
 			 * Format: double
 			 * @example 0.5
 			 */
-			winterWaterFactor: number;
+			winterWaterFactor?: number;
 			/**
 			 * Format: double
 			 * @example 15
 			 */
-			minTempCelsius: number;
+			minTempCelsius?: number;
 		};
 		PestInfection: {
 			id: string;
@@ -266,22 +376,26 @@ export interface components {
 			species: string;
 			/** @example true */
 			isToxic: boolean;
-			sunlight?: components['schemas']['SunlightRequirement'] | null;
+			sunlight: components['schemas']['SunlightRequirement'] | null;
 			/**
 			 * Format: double
 			 * @example 22
 			 */
 			preferedTemperature: number;
-			location?: components['schemas']['Location'] | null;
-			watering?: components['schemas']['WateringConfig'] | null;
-			fertilizing?: components['schemas']['FertilizerConfig'];
-			humidity?: components['schemas']['HumidityConfig'];
-			soil?: components['schemas']['SoilConfig'];
-			seasonality?: components['schemas']['SeasonalAdjustments'];
+			location: components['schemas']['Location'] | null;
+			watering: components['schemas']['WateringConfig'] | null;
+			/** @description Read-only computed schedule. */
+			wateringPlan: components['schemas']['WateringPlan'] | null;
+			fertilizing: components['schemas']['FertilizerConfig'] | null;
+			humidity: components['schemas']['HumidityConfig'] | null;
+			soil: components['schemas']['SoilConfig'] | null;
+			seasonality: components['schemas']['SeasonalAdjustments'] | null;
 			pestHistory: components['schemas']['PestInfection'][];
+			moistureLogs: components['schemas']['MoistureLog'][];
 			flags: components['schemas']['PlantFlag'][];
 			notes: string[];
 			photoIds: string[];
+			photoUrls: string[];
 			growthHistory: components['schemas']['GrowthLog'][];
 			/** Format: date-time */
 			createdAt: string;
@@ -294,24 +408,25 @@ export interface components {
 			/** @example Monstera deliciosa */
 			species?: string;
 			/** @example true */
-			isToxic: boolean;
+			isToxic?: boolean;
 			sunlight?: components['schemas']['SunlightRequirement'] | null;
 			/**
 			 * Format: double
 			 * @example 22
 			 */
-			preferedTemperature: number;
+			preferedTemperature?: number;
 			location?: components['schemas']['Location'] | null;
 			watering?: components['schemas']['WateringConfig'] | null;
 			fertilizing?: components['schemas']['FertilizerConfig'] | null;
 			humidity?: components['schemas']['HumidityConfig'] | null;
 			soil?: components['schemas']['SoilConfig'] | null;
 			seasonality?: components['schemas']['SeasonalAdjustments'] | null;
-			pestHistory: components['schemas']['PestInfection'][];
-			flags: components['schemas']['PlantFlag'][];
-			notes: string[];
-			photoIds: string[];
-			growthHistory: components['schemas']['GrowthLog'][];
+			pestHistory?: components['schemas']['PestInfection'][];
+			moistureLogs?: components['schemas']['MoistureLog'][];
+			flags?: components['schemas']['PlantFlag'][];
+			notes?: string[];
+			photoIds?: string[];
+			growthHistory?: components['schemas']['GrowthLog'][];
 		};
 		/** @description All fields are optional. Only provided fields will be updated. */
 		UpdatePlantRequest: {
@@ -328,6 +443,7 @@ export interface components {
 			soil?: components['schemas']['SoilConfig'];
 			seasonality?: components['schemas']['SeasonalAdjustments'];
 			pestHistory?: components['schemas']['PestInfection'][];
+			moistureLogs?: components['schemas']['MoistureLog'][];
 			flags?: components['schemas']['PlantFlag'][];
 			notes?: string[];
 			photoIds?: string[];
@@ -462,13 +578,19 @@ export interface components {
 			};
 		};
 	};
-	parameters: never;
+	parameters: {
+		/** @description Plant ID (24-char ObjectID hex) or slug */
+		PlantId: string;
+	};
 	requestBodies: never;
 	headers: never;
 	pathItems: never;
 }
 export type Location = components['schemas']['Location'];
 export type WateringConfig = components['schemas']['WateringConfig'];
+export type MoistureReading = components['schemas']['MoistureReading'];
+export type MoistureLog = components['schemas']['MoistureLog'];
+export type WateringPlan = components['schemas']['WateringPlan'];
 export type HumidityConfig = components['schemas']['HumidityConfig'];
 export type FertilizerConfig = components['schemas']['FertilizerConfig'];
 export type SoilConfig = components['schemas']['SoilConfig'];
@@ -487,6 +609,7 @@ export type ResponseUnauthorized = components['responses']['Unauthorized'];
 export type ResponseNotFound = components['responses']['NotFound'];
 export type ResponseValidationError = components['responses']['ValidationError'];
 export type ResponseInternalError = components['responses']['InternalError'];
+export type ParameterPlantId = components['parameters']['PlantId'];
 export type $defs = Record<string, never>;
 export interface operations {
 	getPlants: {
@@ -538,6 +661,74 @@ export interface operations {
 			500: components['responses']['InternalError'];
 		};
 	};
+	addMoistureLog: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				/** @description Plant ID (24-char ObjectID hex) or slug */
+				id: components['parameters']['PlantId'];
+			};
+			cookie?: never;
+		};
+		requestBody: {
+			content: {
+				'application/json': {
+					/**
+					 * Format: double
+					 * @example 5
+					 */
+					value: number;
+					scale?: components['schemas']['MoistureScale'];
+					/** Format: date-time */
+					date?: string;
+					note?: string;
+				};
+			};
+		};
+		responses: {
+			/** @description Measurement recorded */
+			201: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['Plant'];
+				};
+			};
+			400: components['responses']['ValidationError'];
+			401: components['responses']['Unauthorized'];
+			404: components['responses']['NotFound'];
+			500: components['responses']['InternalError'];
+		};
+	};
+	deleteMoistureLog: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				/** @description Plant ID (24-char ObjectID hex) or slug */
+				id: components['parameters']['PlantId'];
+				logId: string;
+			};
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Measurement deleted */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['Plant'];
+				};
+			};
+			401: components['responses']['Unauthorized'];
+			404: components['responses']['NotFound'];
+			500: components['responses']['InternalError'];
+		};
+	};
 	getPlantBySlug: {
 		parameters: {
 			query?: never;
@@ -585,6 +776,10 @@ export interface operations {
 					 *     ]
 					 */
 					plantIds: string[];
+					/** @description Optional moisture values measured while watering, keyed by plant ID. */
+					moistures?: {
+						[key: string]: components['schemas']['MoistureReading'];
+					};
 				};
 			};
 		};
@@ -807,4 +1002,18 @@ export enum HealthStatus {
 	Fair = 'Fair',
 	Poor = 'Poor',
 	Dormant = 'Dormant'
+}
+export enum WateringPlanMode {
+	Manual = 'Manual',
+	Moisture = 'Moisture'
+}
+export enum MoistureScale {
+	Scale1To10 = 'Scale1To10',
+	Percent = 'Percent'
+}
+export enum WateringPlanStatus {
+	ok = 'ok',
+	due_soon = 'due_soon',
+	water_now = 'water_now',
+	measure = 'measure'
 }

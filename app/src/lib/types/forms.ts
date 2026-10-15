@@ -2,8 +2,10 @@ import type {
 	PlantFlag,
 	SunlightRequirement,
 	WateringMethod,
+	WateringPlanMode,
 	WaterType,
-	FertilizerType
+	FertilizerType,
+	MoistureScale
 } from './api';
 import {
 	SunlightRequirement as SR,
@@ -11,6 +13,7 @@ import {
 	WaterType as WT,
 	FertilizerType as FT
 } from './api';
+import { WateringPlanMode as WPM, MoistureScale as MS } from './api';
 
 export interface FormData {
 	// Basic info
@@ -26,9 +29,12 @@ export interface FormData {
 	isOutdoors: boolean;
 
 	// Watering
+	wateringMode: WateringPlanMode;
 	wateringIntervalDays: number;
 	wateringMethod: WateringMethod;
 	waterType: WaterType;
+	idealMoisture: number;
+	moistureScale: MoistureScale;
 
 	// Fertilizing
 	fertilizingType: FertilizerType;
@@ -68,9 +74,12 @@ export function createEmptyFormData(sunlightDefault?: SunlightRequirement): Form
 		room: '',
 		position: '',
 		isOutdoors: false,
+		wateringMode: WPM.Manual,
 		wateringIntervalDays: 7,
 		wateringMethod: WM.Top,
 		waterType: WT.Tap,
+		idealMoisture: 5,
+		moistureScale: MS.Scale1To10,
 		fertilizingType: FT.Liquid,
 		fertilizingIntervalDays: 30,
 		npkRatio: '10:10:10',

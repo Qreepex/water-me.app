@@ -1,6 +1,6 @@
 import type { IconName } from '$lib/components/ui/icons';
 import type { Tone } from '$lib/components/ui/tone';
-import type { Plant } from '$lib/types/api';
+import type { Plant, WateringPlan } from '$lib/types/api';
 
 export type SortOption =
 	| 'name'
@@ -15,14 +15,70 @@ export type SortOption =
 	| 'speciesAsc'
 	| 'speciesDesc';
 
+/** Raw moisture values are 1 (dry) .. 10 (soaking wet). */
+export const MOISTURE_MIN = 1;
+export const MOISTURE_MAX = 10;
+/** Percentage scale bounds. */
+export const MOISTURE_PCT_MIN = 0;
+export const MOISTURE_PCT_MAX = 100;
+
+/** The plant's configured watering mode ("Manual" for legacy plants). */
+export function getWateringMode(plant: Plant): 'Manual' | 'Moisture' {
+	return plant.watering?.mode === 'Moisture' ? 'Moisture' : 'Manual';
+}
+
+export function hasWateringConfig(plant: Plant): boolean {
+	if (getWateringMode(plant) === 'Moisture') return true;
+	return !!plant.watering?.intervalDays;
+}
+
+/** Server-computed schedule, when present. */
+export function getPlan(plant: Plant): WateringPlan | null {
+	return plant.wateringPlan ?? null;
+}
+
+/** Is the plant due for watering (either mode)? */
+export function isDueForWatering(plant: Plant): boolean {
+	const plan = getPlan(plant);
+	if (plan) return plan.status === 'water_now' || plan.status === 'due_soon';
+	return getPlantWaterStatus(plant) !== 'ok';
+}
+
+/** Does the moisture-based plan ask for a new measurement? */
+export function needsMeasurement(plant: Plant): boolean {
+	return getPlan(plant)?.status === 'measure';
+}
+
+/** Scale bounds for the plant's configured moisture scale. */
+export function getMoistureBounds(plant: Plant): { min: number; max: number; step: number } {
+	if (plant.watering?.moistureScale === 'Percent') {
+		return { min: MOISTURE_PCT_MIN, max: MOISTURE_PCT_MAX, step: 1 };
+	}
+	return { min: MOISTURE_MIN, max: MOISTURE_MAX, step: 0.5 };
+}
+
 /**
  * Get watering status for a plant
  */
 export function getWateringStatus(
 	plant: Plant
 ): { text: string; tone: Tone; icon: IconName; args?: string[] } | null {
-	// Only show status if watering is configured
-	if (!plant.watering?.intervalDays) return null;
+	if (!hasWateringConfig(plant)) return null;
+
+	// Moisture plants prefer the server-computed plan when available.
+	const plan = getPlan(plant);
+	if (plan && getWateringMode(plant) === 'Moisture') {
+		switch (plan.status) {
+			case 'water_now':
+				return { text: 'plants.moistureWaterNowStatus', tone: 'danger', icon: 'alert-triangle' };
+			case 'due_soon':
+				return { text: 'plants.moistureDueSoonStatus', tone: 'warn', icon: 'droplet' };
+			case 'measure':
+				return { text: 'plants.moistureMeasureStatus', tone: 'info', icon: 'ruler' };
+			default:
+				return { text: 'plants.moistureOkStatus', tone: 'ok', icon: 'check-circle' };
+		}
+	}
 
 	const last = plant.watering?.lastWatered
 		? new Date(plant.watering.lastWatered).getTime()
@@ -109,9 +165,16 @@ export function sortPlants(plants: Plant[], sortBy: SortOption): Plant[] {
 }
 
 /**
- * Get days until water is needed
+ * Get days until water is needed. Prefers the server-computed plan and falls
+ * back to the fixed interval for legacy/manual plants.
  */
 export function getDaysUntilWater(plant: Plant): number {
+	const plan = getPlan(plant);
+	if (plan?.wateringDueAt) {
+		const due = new Date(plan.wateringDueAt).getTime();
+		return Math.floor((due - Date.now()) / (1000 * 60 * 60 * 24));
+	}
+
 	const lastWatered = plant.watering?.lastWatered
 		? new Date(plant.watering.lastWatered).getTime()
 		: 0;
@@ -124,6 +187,20 @@ export function getDaysUntilWater(plant: Plant): number {
  * Thirst level as 0..1 progress (0 = just watered, 1 = overdue), for progress bars.
  */
 export function getWateringProgress(plant: Plant): number {
+	// Moisture plans: progress from the estimated full value down to the ideal one.
+	const plan = getPlan(plant);
+	if (getWateringMode(plant) === 'Moisture' && plan) {
+		const current = plan.currentMoisture;
+		const ideal = plan.idealMoisture ?? plant.watering?.idealMoisture;
+		const full = plan.estimatedFullMoisture;
+		if (current === undefined || current === null) return 0;
+		if (ideal === undefined || ideal === null || full === undefined || full === null) {
+			return plan.status === 'water_now' ? 1 : 0;
+		}
+		if (full <= ideal) return current <= ideal ? 1 : 0;
+		return Math.min(1, Math.max(0, (full - current) / (full - ideal)));
+	}
+
 	const interval = plant.watering?.intervalDays ?? 0;
 	if (!interval) return 0;
 	const daysSince = Math.max(0, interval - getDaysUntilWater(plant));
@@ -134,6 +211,12 @@ export function getWateringProgress(plant: Plant): number {
  * Get watering status for water page
  */
 export function getPlantWaterStatus(plant: Plant): 'overdue' | 'due-soon' | 'ok' {
+	const plan = getPlan(plant);
+	if (plan) {
+		if (plan.status === 'water_now') return 'overdue';
+		if (plan.status === 'due_soon') return 'due-soon';
+		return 'ok';
+	}
 	const daysUntil = getDaysUntilWater(plant);
 	if (daysUntil <= 0) return 'overdue';
 	if (daysUntil <= 1) return 'due-soon';
@@ -144,6 +227,20 @@ export function getPlantWaterStatus(plant: Plant): 'overdue' | 'due-soon' | 'ok'
  * Get status text for water page
  */
 export function getPlantStatusText(plant: Plant): { key: string; args?: string[] } {
+	const plan = getPlan(plant);
+	if (plan && getWateringMode(plant) === 'Moisture') {
+		switch (plan.status) {
+			case 'water_now':
+				return { key: 'plants.statusMoistureWaterNow' };
+			case 'due_soon':
+				return { key: 'plants.statusMoistureDueSoon' };
+			case 'measure':
+				return { key: 'plants.statusMeasure' };
+			default:
+				return { key: 'plants.statusMoistureOk' };
+		}
+	}
+
 	const daysUntil = getDaysUntilWater(plant);
 	if (daysUntil < 0)
 		return { key: 'plants.statusDaysOverdue', args: [String(Math.abs(daysUntil))] };
@@ -167,4 +264,22 @@ export function getStatusVisual(status: 'overdue' | 'due-soon' | 'ok'): {
 		default:
 			return { icon: 'check-circle', tone: 'ok' };
 	}
+}
+
+/**
+ * Human-readable phase of the moisture curve, used for the plant detail page.
+ */
+export function getMoistureTrend(plant: Plant): 'rising' | 'falling' | 'flat' | null {
+	const plan = getPlan(plant);
+	if (!plan?.decayPerDay) return null;
+	if (plan.decayPerDay > 0.05) return 'falling';
+	if (plan.decayPerDay < -0.05) return 'rising';
+	return 'flat';
+}
+
+/** Format a moisture value with its scale for display. */
+export function formatMoisture(value: number | null | undefined, scale?: string | null): string {
+	if (value === undefined || value === null) return '—';
+	const rounded = Math.round(value * 10) / 10;
+	return scale === 'Percent' ? `${rounded}%` : `${rounded}/10`;
 }

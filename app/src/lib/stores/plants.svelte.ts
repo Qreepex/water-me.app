@@ -17,6 +17,13 @@ interface PlantsStore {
 	loadPlants(): Promise<void>;
 	/** Like loadPlants but keeps the current list visible (no loading spinner). */
 	reloadSilently(): Promise<void>;
+	/**
+	 * Drop cached API responses and reload silently. Used when the app resumes:
+	 * the service worker serves GET /api/* cache-first for 15 minutes, so without
+	 * invalidating first a refresh would just return the stale response and
+	 * changes made on another device would stay invisible.
+	 */
+	syncFromServer(): Promise<void>;
 	/** Invalidate API + image caches and reload everything. */
 	refresh(): Promise<void>;
 	reset(): void;
@@ -80,9 +87,13 @@ export function createPlantsStore(): PlantsStore {
 				// Keep showing stale data on silent reload failures.
 			}
 		},
+		async syncFromServer() {
+			await invalidateApiCache(['/api/plants'], { waitForAck: true, timeoutMs: 500 });
+			await this.reloadSilently();
+		},
 		async refresh() {
 			imageCacheStore.cleanup(0);
-			await invalidateApiCache(['/api/plants']);
+			await invalidateApiCache(['/api/plants'], { waitForAck: true, timeoutMs: 500 });
 			await this.loadPlants();
 		},
 		reset() {
