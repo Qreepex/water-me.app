@@ -498,3 +498,69 @@ func TestMeasurementDueAtIsInTheFutureAfterMeasuring(t *testing.T) {
 		t.Fatalf("measurementDueAt = %v, want in the future", plan.MeasurementDueAt)
 	}
 }
+
+// Regression: a single reading below the lower band edge must be reported as
+// watering-due immediately, even though no drying trend can be fitted from one
+// point. Previously such a plant surfaced as "all good".
+func TestReadingBelowBandIsDueWithoutTrend(t *testing.T) {
+	now := time.Date(2026, time.October, 15, 20, 54, 0, 0, time.UTC)
+	lastWatered := now.Add(-time.Minute)
+	plant := types.Plant{
+		Watering: &types.WateringConfig{
+			Mode:          planMode(types.PlanModeMoisture),
+			IdealMoisture: tenScale(6),
+			MoistureScale: scalePtr(types.ScaleTen),
+			LastWatered:   &lastWatered,
+		},
+		MoistureLogs: []types.MoistureLog{
+			{ID: "1", Value: 3, Scale: types.ScaleTen, Date: now.Add(-30 * time.Second)},
+		},
+	}
+
+	plan := ComputeWateringPlan(plant, now)
+	if plan.WaterBelow == nil || *plan.WaterBelow != 4 {
+		t.Fatalf("waterBelow = %v, want 4", plan.WaterBelow)
+	}
+	if plan.Status != types.PlanStatusWaterNow {
+		t.Fatalf("status = %q, want water_now (3 is below the band edge 4)", plan.Status)
+	}
+	if plan.WateringDueAt == nil || plan.WateringDueAt.After(now) {
+		t.Fatalf("wateringDueAt = %v, want <= now", plan.WateringDueAt)
+	}
+}
+
+// A reading inside the band is not due, and a reading taken after a watering
+// describes saturated soil so it must not trigger either.
+func TestReadingInsideBandIsNotDue(t *testing.T) {
+	now := time.Date(2026, time.October, 15, 20, 54, 0, 0, time.UTC)
+	inBand := types.Plant{
+		Watering: &types.WateringConfig{
+			Mode:          planMode(types.PlanModeMoisture),
+			IdealMoisture: tenScale(6),
+			MoistureScale: scalePtr(types.ScaleTen),
+		},
+		MoistureLogs: []types.MoistureLog{
+			{ID: "1", Value: 6, Scale: types.ScaleTen, Date: now.Add(-time.Minute)},
+		},
+	}
+	if got := ComputeWateringPlan(inBand, now).Status; got == types.PlanStatusWaterNow {
+		t.Errorf("reading 6 inside band 4..8: status = %q, want not water_now", got)
+	}
+
+	// Same dry reading, but the plant was watered afterwards.
+	lastWatered := now.Add(-10 * time.Second)
+	stale := types.Plant{
+		Watering: &types.WateringConfig{
+			Mode:          planMode(types.PlanModeMoisture),
+			IdealMoisture: tenScale(6),
+			MoistureScale: scalePtr(types.ScaleTen),
+			LastWatered:   &lastWatered,
+		},
+		MoistureLogs: []types.MoistureLog{
+			{ID: "1", Value: 3, Scale: types.ScaleTen, Date: now.Add(-time.Minute)},
+		},
+	}
+	if got := ComputeWateringPlan(stale, now).Status; got == types.PlanStatusWaterNow {
+		t.Errorf("reading predates the watering: status = %q, want not water_now", got)
+	}
+}

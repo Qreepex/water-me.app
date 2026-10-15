@@ -167,8 +167,21 @@ func computeMoisturePlan(plant types.Plant, now time.Time) *types.WateringPlan {
 	plan.WateredSinceLastMeasurement = watering.LastWatered != nil &&
 		watering.LastWatered.After(latest.at)
 
+	// ---- is the soil *already* too dry? ----
+	// This must be checked before (and independently of) the model: a single
+	// reading below the lower band edge is conclusive on its own. Waiting for a
+	// fitted trend would keep telling the user "all good" while the soil sits
+	// below the target.
+	// A reading taken right after watering is ignored here, because it describes
+	// saturated soil, not the current state.
+	readingIsCurrent := !plan.WateredSinceLastMeasurement
+	if readingIsCurrent && latest.value <= waterBelow {
+		due := now
+		plan.WateringDueAt = &due
+	}
+
 	// ---- when is the next watering due? ----
-	if model.cyclesUsed > 0 {
+	if plan.WateringDueAt == nil && model.cyclesUsed > 0 {
 		// A watering *resets* the soil to saturation, so drying restarts there.
 		// Without a recorded watering we simply continue the measured curve from
 		// the last reading.

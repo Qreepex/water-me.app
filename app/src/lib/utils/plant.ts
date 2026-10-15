@@ -39,6 +39,7 @@ export function getPlan(plant: Plant): WateringPlan | null {
 
 /** Is the plant due for watering (either mode)? */
 export function isDueForWatering(plant: Plant): boolean {
+	if (isReadingBelowBand(plant)) return true;
 	const plan = getPlan(plant);
 	if (plan) return plan.status === 'water_now' || plan.status === 'due_soon';
 	return getPlantWaterStatus(plant) !== 'ok';
@@ -64,6 +65,11 @@ export function getWateringStatus(
 	plant: Plant
 ): { text: string; tone: Tone; icon: IconName; args?: string[] } | null {
 	if (!hasWateringConfig(plant)) return null;
+
+	// A reading below the band is conclusive, even before a model exists.
+	if (isReadingBelowBand(plant)) {
+		return { text: 'plants.moistureWaterNowStatus', tone: 'danger', icon: 'alert-triangle' };
+	}
 
 	// Moisture plants prefer the server-computed plan when available.
 	const plan = getPlan(plant);
@@ -184,6 +190,26 @@ export function getDaysUntilWater(plant: Plant): number {
 }
 
 /**
+ * Is the newest reading itself already below the target band?
+ *
+ * The server reports this too, but the app checks independently: a single
+ * reading below the band is conclusive on its own and must never surface as
+ * "moisture is fine", regardless of whether a model has been fitted yet.
+ * A reading taken right after watering describes saturated soil and is ignored.
+ */
+export function isReadingBelowBand(plant: Plant): boolean {
+	const plan = getPlan(plant);
+	if (!plan) return false;
+	if (plan.wateredSinceLastMeasurement) return false;
+	const current = plan.currentMoisture;
+	const below = plan.waterBelow;
+	if (current === undefined || current === null || below === undefined || below === null) {
+		return false;
+	}
+	return current <= below;
+}
+
+/**
  * Thirst level as 0..1 progress (0 = just watered, 1 = overdue), for progress bars.
  */
 export function getWateringProgress(plant: Plant): number {
@@ -212,6 +238,7 @@ export function getWateringProgress(plant: Plant): number {
  * Get watering status for water page
  */
 export function getPlantWaterStatus(plant: Plant): 'overdue' | 'due-soon' | 'ok' {
+	if (isReadingBelowBand(plant)) return 'overdue';
 	const plan = getPlan(plant);
 	if (plan) {
 		if (plan.status === 'water_now') return 'overdue';

@@ -1,5 +1,11 @@
 import type { Plant } from '$lib/types/api';
-import { getMoistureBounds, getPlan, getWateringMode, hasWateringConfig } from './plant';
+import {
+	getMoistureBounds,
+	getPlan,
+	getWateringMode,
+	hasWateringConfig,
+	isReadingBelowBand
+} from './plant';
 
 export type TaskKind = 'water' | 'measure';
 
@@ -70,7 +76,9 @@ export function buildTaskList(plants: Plant[], now = Date.now()): TaskList {
 			? (new Date(plan.measurementDueAt).getTime() - now) / 86400000
 			: null;
 
-		const waterNow = plan.status === 'water_now';
+		// A reading already below the band is conclusive, even while the model is
+		// still calibrating and no due date exists yet.
+		const waterNow = plan.status === 'water_now' || isReadingBelowBand(plant);
 		// A measurement is only due once the schedule actually says so. The
 		// server keeps at least a day between readings, so this must not trigger
 		// just because a plant is still collecting its first values.
