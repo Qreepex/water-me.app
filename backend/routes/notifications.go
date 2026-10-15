@@ -190,6 +190,7 @@ func createDefaultConfig(userID string) types.NotificationConfig {
 		RemindFertilize: true,
 		RemindRepotting: true,
 		RemindMisting:   true,
+		RemindMoisture:  true,
 		UpdatedAt:       time.Now(),
 	}
 }

@@ -132,6 +132,13 @@ func (m *MongoDB) UpdatePlant(
 			updateDoc["pestHistory"] = *update.PestHistory
 		}
 	}
+	if update.MoistureLogs != nil {
+		if len(*update.MoistureLogs) == 0 {
+			unsetDoc["moistureLogs"] = ""
+		} else {
+			updateDoc["moistureLogs"] = *update.MoistureLogs
+		}
+	}
 	if update.Flags != nil {
 		if len(*update.Flags) == 0 {
 			unsetDoc["flags"] = ""
@@ -196,7 +203,13 @@ func isEmptyLocation(loc types.Location) bool {
 }
 
 func isEmptyWatering(w types.WateringConfig) bool {
-	return w.IntervalDays == 0 && w.Method == "" && w.WaterType == "" && w.LastWatered == nil
+	return w.IntervalDays == 0 &&
+		w.Method == "" &&
+		w.WaterType == "" &&
+		w.LastWatered == nil &&
+		w.Mode == nil &&
+		w.IdealMoisture == nil &&
+		w.MoistureScale == nil
 }
 
 func isEmptyFertilizing(f types.FertilizerConfig) bool {
@@ -222,6 +235,85 @@ func isEmptySoil(s types.SoilConfig) bool {
 
 func isEmptySeasonality(s types.SeasonalAdjustments) bool {
 	return !s.WinterRestPeriod && s.WinterWaterFactor == 0 && s.MinTempCelsius == 0
+}
+
+// AddMoistureLog appends a measurement to a plant and keeps the per-plant list
+// capped so the document cannot grow without bound.
+func (m *MongoDB) AddMoistureLog(
+	ctx context.Context,
+	id string,
+	userID string,
+	log types.MoistureLog,
+) (*types.Plant, bool, error) {
+	collection := m.GetCollection(constants.MongoDBCollections.Plants)
+	if collection == nil {
+		return nil, false, types.ErrNoDocuments
+	}
+
+	objectID, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		return nil, false, err
+	}
+
+	now := time.Now()
+	opts := options.FindOneAndUpdate().SetReturnDocument(options.After)
+	result := collection.FindOneAndUpdate(
+		ctx,
+		bson.M{"_id": objectID, "userId": userID},
+		bson.M{
+			"$push": bson.M{
+				"moistureLogs": bson.M{
+					"$each":  bson.A{log},
+					"$slice": -constants.MaxMoistureLogsPerPlant,
+				},
+			},
+			"$set": bson.M{"updatedAt": now},
+		},
+		opts,
+	)
+
+	var plant types.Plant
+	if err := result.Decode(&plant); err != nil {
+		if err.Error() == "mongo: no documents in result" {
+			return nil, false, nil
+		}
+		return nil, false, err
+	}
+	return &plant, true, nil
+}
+
+// DeleteMoistureLog removes a single measurement by id.
+func (m *MongoDB) DeleteMoistureLog(ctx context.Context, id string, userID string, logID string) (*types.Plant, bool, error) {
+	collection := m.GetCollection(constants.MongoDBCollections.Plants)
+	if collection == nil {
+		return nil, false, types.ErrNoDocuments
+	}
+
+	objectID, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		return nil, false, err
+	}
+
+	now := time.Now()
+	opts := options.FindOneAndUpdate().SetReturnDocument(options.After)
+	result := collection.FindOneAndUpdate(
+		ctx,
+		bson.M{"_id": objectID, "userId": userID},
+		bson.M{
+			"$pull": bson.M{"moistureLogs": bson.M{"id": logID}},
+			"$set":  bson.M{"updatedAt": now},
+		},
+		opts,
+	)
+
+	var plant types.Plant
+	if err := result.Decode(&plant); err != nil {
+		if err.Error() == "mongo: no documents in result" {
+			return nil, false, nil
+		}
+		return nil, false, err
+	}
+	return &plant, true, nil
 }
 
 func (m *MongoDB) DeletePlant(ctx context.Context, id string, userID string) (bool, error) {
@@ -292,49 +384,69 @@ func (m *MongoDB) GetPlant(
 	return &plant, nil
 }
 
+// WaterPlants marks the given plants as watered and optionally records the
+// moisture value(s) measured right before watering.
+//
+// moistures maps plant ID to the measured value; entries are optional so the
+// classic "just water" flow keeps working without a meter.
 func (m *MongoDB) WaterPlants(
 	ctx context.Context,
 	userID string,
 	plantIDs []string,
+	moistures map[string]float64,
+	scale types.MoistureScale,
 ) (int64, error) {
 	collection := m.GetCollection(constants.MongoDBCollections.Plants)
 	if collection == nil {
 		return 0, types.ErrNoDocuments
 	}
 
-	// Convert string IDs to ObjectIDs
-	objectIDs := make([]primitive.ObjectID, 0, len(plantIDs))
+	// Convert string IDs to ObjectIDs, keeping the pairing with the moisture map
+	type waterTarget struct {
+		id       string
+		objectID primitive.ObjectID
+	}
+	targets := make([]waterTarget, 0, len(plantIDs))
 	for _, id := range plantIDs {
 		objectID, err := primitive.ObjectIDFromHex(id)
 		if err != nil {
 			continue // Skip invalid IDs
 		}
-		objectIDs = append(objectIDs, objectID)
+		targets = append(targets, waterTarget{id: id, objectID: objectID})
 	}
 
-	if len(objectIDs) == 0 {
+	if len(targets) == 0 {
 		return 0, nil
 	}
 
 	now := time.Now()
-	result, err := collection.UpdateMany(
-		ctx,
-		bson.M{
-			"_id":    bson.M{"$in": objectIDs},
-			"userId": userID,
-		},
-		bson.M{
-			"$set": bson.M{
-				"watering.lastWatered": now,
-				"updatedAt":            now,
-			},
-		},
-	)
-	if err != nil {
-		return 0, err
+	var modified int64
+	for _, target := range targets {
+		update := bson.M{"$set": bson.M{"watering.lastWatered": now, "updatedAt": now}}
+		if value, ok := moistures[target.id]; ok {
+			update["$push"] = bson.M{"moistureLogs": bson.M{
+				"$each": bson.A{types.MoistureLog{
+					ID:    primitive.NewObjectID().Hex(),
+					Value: value,
+					Scale: scale,
+					Date:  now,
+					Note:  "measured while watering",
+				}},
+				"$slice": -constants.MaxMoistureLogsPerPlant,
+			}}
+		}
+		result, err := collection.UpdateOne(
+			ctx,
+			bson.M{"_id": target.objectID, "userId": userID},
+			update,
+		)
+		if err != nil {
+			return modified, err
+		}
+		modified += result.ModifiedCount
 	}
 
-	return result.ModifiedCount, nil
+	return modified, nil
 }
 
 // --- Uploads ---
@@ -515,6 +627,33 @@ func (m *MongoDB) GetPlantsNeedingWatering(ctx context.Context, limit int) ([]ty
 		return nil, err
 	}
 
+	return plants, nil
+}
+
+// GetMoisturePlants returns plants that use the moisture-based watering plan.
+// The actual schedule is derived in Go (see ComputeWateringPlan), so this is
+// only a cheap pre-filter.
+func (m *MongoDB) GetMoisturePlants(ctx context.Context, limit int) ([]types.Plant, error) {
+	collection := m.GetCollection(constants.MongoDBCollections.Plants)
+	if collection == nil {
+		return nil, types.ErrNoDocuments
+	}
+
+	opts := options.Find().SetLimit(int64(limit))
+	cursor, err := collection.Find(
+		ctx,
+		bson.M{"watering.mode": string(types.PlanModeMoisture)},
+		opts,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(ctx)
+
+	var plants []types.Plant
+	if err := cursor.All(ctx, &plants); err != nil {
+		return nil, err
+	}
 	return plants, nil
 }
 

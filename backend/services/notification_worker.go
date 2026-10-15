@@ -45,7 +45,7 @@ var (
 
 // LoadNotificationMessages loads messages from JSON files
 func LoadNotificationMessages(messageDir string) error {
-	types := []string{"watering", "fertilizing", "misting", "repotting"}
+	types := []string{"watering", "moisture", "fertilizing", "misting", "repotting"}
 
 	for _, msgType := range types {
 		filePath := filepath.Join(messageDir, msgType+".json")
@@ -78,6 +78,7 @@ func ProcessNotifications(
 
 	// Process each notification type
 	processWateringNotifications(ctx, db, firebase, plantsBatchSize, stats)
+	processMoistureNotifications(ctx, db, firebase, plantsBatchSize, stats)
 	processFertilizingNotifications(ctx, db, firebase, plantsBatchSize, stats)
 	processMistingNotifications(ctx, db, firebase, plantsBatchSize, stats)
 	processRepottingNotifications(ctx, db, firebase, plantsBatchSize, stats)
@@ -109,6 +110,61 @@ func processWateringNotifications(
 	userPlants := groupPlantsByUser(plants)
 	for userID, userPlantList := range userPlants {
 		sendNotificationsForUser(ctx, db, firebase, userID, userPlantList, "watering", stats)
+	}
+}
+
+// processMoistureNotifications reminds users whose plants use the moisture
+// based plan. Two things can be due: watering the plant, or taking a fresh
+// measurement so the plan can be recalculated.
+func processMoistureNotifications(
+	ctx context.Context,
+	db *MongoDB,
+	firebase *FirebaseService,
+	batchSize int,
+	stats *NotificationStats,
+) {
+	plants, err := db.GetMoisturePlants(ctx, batchSize)
+	if err != nil {
+		log.Printf("Error fetching moisture plants: %v", err)
+		return
+	}
+	if len(plants) == 0 {
+		return
+	}
+
+	now := time.Now()
+	toWater := make([]types.Plant, 0, len(plants))
+	toMeasure := make([]types.Plant, 0, len(plants))
+	for _, plant := range plants {
+		plan := ComputeWateringPlan(plant, now)
+		if plan == nil {
+			continue
+		}
+		switch plan.Status {
+		case types.PlanStatusWaterNow:
+			toWater = append(toWater, plant)
+		case types.PlanStatusMeasure:
+			// Only nudge for a measurement once it is actually due.
+			if plan.MeasurementDueAt == nil || !now.Before(*plan.MeasurementDueAt) {
+				toMeasure = append(toMeasure, plant)
+			}
+		}
+	}
+
+	stats.PlantsChecked += len(plants)
+
+	if len(toWater) > 0 {
+		log.Printf("Found %d moisture plants needing watering", len(toWater))
+		for userID, userPlants := range groupPlantsByUser(toWater) {
+			sendNotificationsForUser(ctx, db, firebase, userID, userPlants, "watering", stats)
+		}
+	}
+
+	if len(toMeasure) > 0 {
+		log.Printf("Found %d moisture plants needing a measurement", len(toMeasure))
+		for userID, userPlants := range groupPlantsByUser(toMeasure) {
+			sendNotificationsForUser(ctx, db, firebase, userID, userPlants, "moisture", stats)
+		}
 	}
 }
 
@@ -287,6 +343,8 @@ func isNotificationTypeEnabled(config *types.NotificationConfig, notificationTyp
 		return config.RemindFertilize
 	case "misting":
 		return config.RemindMisting
+	case "moisture":
+		return config.RemindMoisture
 	case "repotting":
 		return config.RemindRepotting
 	default:
@@ -476,6 +534,15 @@ func buildDefaultMessage(plants []types.Plant, notificationType string) (string,
 		} else {
 			title = fmt.Sprintf("%d plants might need repotting! 🪴", count)
 			body = "Check if your plants need fresh soil"
+		}
+
+	case "moisture":
+		if count == 1 {
+			title = "Measure your soil moisture 📏"
+			body = fmt.Sprintf("Take a new reading for %s", plants[0].Name)
+		} else {
+			title = fmt.Sprintf("Measure %d plants 📏", count)
+			body = "New readings keep the watering plan accurate"
 		}
 	}
 

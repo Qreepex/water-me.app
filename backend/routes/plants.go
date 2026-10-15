@@ -15,6 +15,7 @@ import (
 	"github.com/qreepex/water-me-app/backend/validation"
 
 	"github.com/gorilla/mux"
+	gonanoid "github.com/matoous/go-nanoid/v2"
 )
 
 // getRealIP extracts the real client IP, considering Cloudflare headers
@@ -61,6 +62,14 @@ func PlantHandler(router *mux.Router, database *services.MongoDB, s3 *services.S
 	router.HandleFunc("/api/plants/water", func(w http.ResponseWriter, r *http.Request) {
 		waterPlants(w, r, database)
 	}).Methods(http.MethodPost, http.MethodOptions)
+
+	router.HandleFunc("/api/plants/{id}/moisture", func(w http.ResponseWriter, r *http.Request) {
+		addMoistureLog(w, r, database, s3, mux.Vars(r)["id"])
+	}).Methods(http.MethodPost, http.MethodOptions)
+
+	router.HandleFunc("/api/plants/{id}/moisture/{logId}", func(w http.ResponseWriter, r *http.Request) {
+		deleteMoistureLog(w, r, database, s3, mux.Vars(r)["id"], mux.Vars(r)["logId"])
+	}).Methods(http.MethodDelete, http.MethodOptions)
 
 	router.HandleFunc("/api/plants/slug/{slug}", func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
@@ -277,6 +286,10 @@ func waterPlants(w http.ResponseWriter, r *http.Request, db *services.MongoDB) {
 	}
 	var req struct {
 		PlantIDs []string `json:"plantIds"`
+		// Optional moisture values measured while watering, keyed by plant ID.
+		Moistures map[string]float64 `json:"moistures,omitempty"`
+		// Scale of the values in Moistures (defaults to Scale1To10).
+		MoistureScale types.MoistureScale `json:"moistureScale,omitempty"`
 	}
 	if err := util.DecodeJSON(r, &req); err != nil {
 		util.BadRequest(w, err.Error(), nil)
@@ -286,12 +299,141 @@ func waterPlants(w http.ResponseWriter, r *http.Request, db *services.MongoDB) {
 		util.BadRequest(w, "At least one plant ID is required", nil)
 		return
 	}
-	_, err := db.WaterPlants(r.Context(), userID, req.PlantIDs)
+
+	scale := req.MoistureScale
+	if scale == "" {
+		scale = types.ScaleTen
+	}
+	if len(req.Moistures) > 0 {
+		errors := validation.ValidateMoistureValues(req.Moistures, scale)
+		if len(errors) > 0 {
+			util.BadRequest(w, "Validation failed", errors)
+			return
+		}
+	}
+
+	_, err := db.WaterPlants(r.Context(), userID, req.PlantIDs, req.Moistures, scale)
 	if err != nil {
 		util.ServerError(w, err)
 		return
 	}
 	util.RespondJSON(w, http.StatusOK, map[string]bool{"success": true})
+}
+
+// addMoistureLog records a single soil moisture measurement for a plant.
+func addMoistureLog(
+	w http.ResponseWriter,
+	r *http.Request,
+	db *services.MongoDB,
+	s3 *services.S3Service,
+	id string,
+) {
+	userID, ok := getUserID(r)
+	if !ok {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	var req struct {
+		Value float64             `json:"value"`
+		Scale types.MoistureScale `json:"scale,omitempty"`
+		Date  *time.Time          `json:"date,omitempty"`
+		Note  string              `json:"note,omitempty"`
+	}
+	if err := util.DecodeJSON(r, &req); err != nil {
+		util.BadRequest(w, err.Error(), nil)
+		return
+	}
+
+	// Fall back to the plant's configured scale when the client omits it.
+	plant, err := db.GetPlant(r.Context(), userID, id)
+	if err != nil {
+		util.ServerError(w, err)
+		return
+	}
+	if plant == nil {
+		util.NotFound(w)
+		return
+	}
+
+	scale := req.Scale
+	if scale == "" {
+		if plant.Watering != nil && plant.Watering.MoistureScale != nil {
+			scale = *plant.Watering.MoistureScale
+		} else {
+			scale = types.ScaleTen
+		}
+	}
+
+	date := time.Now()
+	if req.Date != nil {
+		date = *req.Date
+	}
+
+	logID, err := gonanoid.New()
+	if err != nil {
+		util.ServerError(w, err)
+		return
+	}
+	log := types.MoistureLog{
+		ID:    logID,
+		Value: req.Value,
+		Scale: scale,
+		Date:  date,
+		Note:  strings.TrimSpace(req.Note),
+	}
+
+	errors := validation.ValidateMoistureLog(log)
+	if len(errors) > 0 {
+		util.BadRequest(w, "Validation failed", errors)
+		return
+	}
+
+	updated, found, err := db.AddMoistureLog(r.Context(), id, userID, log)
+	if err != nil {
+		util.ServerError(w, err)
+		return
+	}
+	if !found {
+		util.NotFound(w)
+		return
+	}
+	normalizePlantResponse(updated)
+	updated.PhotoURLs = resolvePhotoURLs(r.Context(), s3, updated.PhotoIDs, userID)
+	util.RespondJSON(w, http.StatusCreated, updated)
+}
+
+// deleteMoistureLog removes a single measurement from a plant's history.
+func deleteMoistureLog(
+	w http.ResponseWriter,
+	r *http.Request,
+	db *services.MongoDB,
+	s3 *services.S3Service,
+	id string,
+	logID string,
+) {
+	userID, ok := getUserID(r)
+	if !ok {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+	if strings.TrimSpace(logID) == "" {
+		util.BadRequest(w, "logId is required", nil)
+		return
+	}
+
+	updated, found, err := db.DeleteMoistureLog(r.Context(), id, userID, logID)
+	if err != nil {
+		util.ServerError(w, err)
+		return
+	}
+	if !found {
+		util.NotFound(w)
+		return
+	}
+	normalizePlantResponse(updated)
+	updated.PhotoURLs = resolvePhotoURLs(r.Context(), s3, updated.PhotoIDs, userID)
+	util.RespondJSON(w, http.StatusOK, updated)
 }
 
 // slugify converts a string to a URL-friendly slug
@@ -373,6 +515,7 @@ func createPlantFromRequest(
 		Soil:                req.Soil,
 		Seasonality:         req.Seasonality,
 		PestHistory:         req.PestHistory,
+		MoistureLogs:        req.MoistureLogs,
 		Flags:               req.Flags,
 		Notes:               req.Notes,
 		PhotoIDs:            req.PhotoIDs,
@@ -434,6 +577,13 @@ func normalizePlantResponse(plant *types.Plant) {
 	if plant.GrowthHistory == nil {
 		plant.GrowthHistory = []types.GrowthLog{}
 	}
+
+	if plant.MoistureLogs == nil {
+		plant.MoistureLogs = []types.MoistureLog{}
+	}
+
+	// The schedule is derived, not stored (see services.ComputeWateringPlan).
+	plant.WateringPlan = services.ComputeWateringPlan(*plant, time.Now())
 
 	if plant.PhotoURLs == nil {
 		plant.PhotoURLs = []string{}

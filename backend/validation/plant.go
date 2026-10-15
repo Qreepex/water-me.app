@@ -1,6 +1,7 @@
 package validation
 
 import (
+	"fmt"
 	"strconv"
 	"strings"
 	"time"
@@ -51,6 +52,8 @@ type validationConstraints struct {
 	leafCountMin              int
 	leafCountMax              int
 	conditionMaxLength        int
+	moistureLogsMaxItems      int
+	moistureNoteMaxLength     int
 }
 
 var constraints = validationConstraints{
@@ -96,6 +99,8 @@ var constraints = validationConstraints{
 	leafCountMin:              0,
 	leafCountMax:              10000,
 	conditionMaxLength:        200,
+	moistureLogsMaxItems:      2000,
+	moistureNoteMaxLength:     200,
 }
 
 // ValidateCreatePlantRequest validates a CreatePlantRequest.
@@ -179,10 +184,8 @@ func ValidateCreatePlantRequest(req types.CreatePlantRequest) []types.Validation
 		errors = append(errors, validateSeasonalAdjustments(*req.Seasonality)...)
 	}
 
-	// Pest history validation
-	for i, pest := range req.PestHistory {
-		errors = append(errors, validatePestInfection(pest, i)...)
-	}
+	// Moisture history validation
+	errors = append(errors, validateMoistureLogs(req.MoistureLogs)...)
 
 	// Flags validation
 	for _, flag := range req.Flags {
@@ -367,6 +370,10 @@ func ValidateUpdatePlantRequest(req types.UpdatePlantRequest) []types.Validation
 		}
 	}
 
+	if req.MoistureLogs != nil {
+		errors = append(errors, validateMoistureLogs(*req.MoistureLogs)...)
+	}
+
 	if req.Flags != nil {
 		for _, flag := range *req.Flags {
 			if !IsPlantFlag(flag) {
@@ -505,15 +512,32 @@ func validateLocation(loc types.Location) []types.ValidationError {
 func validateWateringConfig(wc types.WateringConfig) []types.ValidationError {
 	errors := make([]types.ValidationError, 0)
 
-	if wc.IntervalDays < constraints.wateringIntervalMin ||
-		wc.IntervalDays > constraints.wateringIntervalMax {
-		errors = append(
-			errors,
-			types.ValidationError{
-				Field:   "watering.intervalDays",
-				Message: "Watering interval must be between 1 and 365 days",
-			},
-		)
+	mode := types.PlanModeManual
+	if wc.Mode != nil {
+		mode = *wc.Mode
+		if !isWateringPlanMode(mode) {
+			errors = append(
+				errors,
+				types.ValidationError{
+					Field:   "watering.mode",
+					Message: "Watering mode must be one of: Manual, Moisture",
+				},
+			)
+		}
+	}
+
+	// In moisture mode the interval is derived by the scheduler, so 0 is allowed.
+	if mode == types.PlanModeManual || wc.IntervalDays != 0 {
+		if wc.IntervalDays < constraints.wateringIntervalMin ||
+			wc.IntervalDays > constraints.wateringIntervalMax {
+			errors = append(
+				errors,
+				types.ValidationError{
+					Field:   "watering.intervalDays",
+					Message: "Watering interval must be between 1 and 365 days",
+				},
+			)
+		}
 	}
 
 	if !isWateringMethod(wc.Method) {
@@ -536,7 +560,145 @@ func validateWateringConfig(wc types.WateringConfig) []types.ValidationError {
 		)
 	}
 
+	if wc.MoistureScale != nil && !isMoistureScale(*wc.MoistureScale) {
+		errors = append(
+			errors,
+			types.ValidationError{
+				Field:   "watering.moistureScale",
+				Message: "Moisture scale must be one of: Scale1To10, Percent",
+			},
+		)
+	}
+
+	if wc.IdealMoisture != nil {
+		scale := types.ScaleTen
+		if wc.MoistureScale != nil {
+			scale = *wc.MoistureScale
+		}
+		min, max := moistureScaleBounds(scale)
+		if *wc.IdealMoisture < min || *wc.IdealMoisture > max {
+			errors = append(
+				errors,
+				types.ValidationError{
+					Field: "watering.idealMoisture",
+					Message: fmt.Sprintf(
+						"Ideal moisture must be between %g and %g for the selected scale",
+						min,
+						max,
+					),
+				},
+			)
+		}
+	}
+
 	return errors
+}
+
+// ValidateMoistureLog validates a single moisture measurement.
+func ValidateMoistureLog(log types.MoistureLog) []types.ValidationError {
+	return validateMoistureLogs([]types.MoistureLog{log})
+}
+
+// ValidateMoistureValues validates the optional moisture readings attached to a
+// bulk watering request. Keys are plant IDs.
+func ValidateMoistureValues(values map[string]float64, scale types.MoistureScale) []types.ValidationError {
+	errors := make([]types.ValidationError, 0)
+
+	if !isMoistureScale(scale) {
+		return []types.ValidationError{{
+			Field:   "moistureScale",
+			Message: "Moisture scale must be one of: Scale1To10, Percent",
+		}}
+	}
+
+	min, max := moistureScaleBounds(scale)
+	for plantID, value := range values {
+		if strings.TrimSpace(plantID) == "" {
+			errors = append(errors, types.ValidationError{
+				Field:   "moistures",
+				Message: "Plant IDs must be non-empty strings",
+			})
+			continue
+		}
+		if value < min || value > max {
+			errors = append(errors, types.ValidationError{
+				Field: "moistures." + plantID,
+				Message: fmt.Sprintf(
+					"Moisture value must be between %g and %g for the selected scale",
+					min,
+					max,
+				),
+			})
+		}
+	}
+
+	return errors
+}
+
+func validateMoistureLogs(logs []types.MoistureLog) []types.ValidationError {
+	errors := make([]types.ValidationError, 0)
+
+	if len(logs) > constraints.moistureLogsMaxItems {
+		errors = append(errors, types.ValidationError{
+			Field:   "moistureLogs",
+			Message: "MoistureLogs array must contain 2000 items or less",
+		})
+		return errors
+	}
+
+	for i, log := range logs {
+		prefix := "moistureLogs[" + strconv.Itoa(i) + "]"
+		if strings.TrimSpace(log.ID) == "" {
+			errors = append(errors, types.ValidationError{
+				Field:   prefix + ".id",
+				Message: "Moisture log ID must be a non-empty string",
+			})
+		}
+		scale := log.Scale
+		if scale == "" {
+			scale = types.ScaleTen
+		}
+		if !isMoistureScale(scale) {
+			errors = append(errors, types.ValidationError{
+				Field:   prefix + ".scale",
+				Message: "Moisture scale must be one of: Scale1To10, Percent",
+			})
+			continue
+		}
+		min, max := moistureScaleBounds(scale)
+		if log.Value < min || log.Value > max {
+			errors = append(errors, types.ValidationError{
+				Field: prefix + ".value",
+				Message: fmt.Sprintf(
+					"Moisture value must be between %g and %g for the selected scale",
+					min,
+					max,
+				),
+			})
+		}
+		if log.Date.IsZero() {
+			errors = append(errors, types.ValidationError{
+				Field:   prefix + ".date",
+				Message: "Moisture log date is required",
+			})
+		}
+		if len(strings.TrimSpace(log.Note)) > constraints.moistureNoteMaxLength {
+			errors = append(errors, types.ValidationError{
+				Field:   prefix + ".note",
+				Message: "Note must be 200 characters or less",
+			})
+		}
+	}
+
+	return errors
+}
+
+// moistureScaleBounds mirrors the scheduler's scale bounds for validation.
+func moistureScaleBounds(scale types.MoistureScale) (float64, float64) {
+	if scale == types.ScalePercent {
+		return 0, 100
+	}
+	return 1, 10
 }
 
 func validateFertilizerConfig(fc types.FertilizerConfig) []types.ValidationError {
@@ -848,6 +1010,24 @@ func IsPlantFlag(flag types.PlantFlag) bool {
 		types.FlagRemoveBrownLeaves,
 		types.FlagHighHumidity,
 		types.FlagSensitiveRoots:
+		return true
+	default:
+		return false
+	}
+}
+
+func isWateringPlanMode(mode types.WateringPlanMode) bool {
+	switch mode {
+	case types.PlanModeManual, types.PlanModeMoisture:
+		return true
+	default:
+		return false
+	}
+}
+
+func isMoistureScale(scale types.MoistureScale) bool {
+	switch scale {
+	case types.ScaleTen, types.ScalePercent:
 		return true
 	default:
 		return false
