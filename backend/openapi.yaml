@@ -509,6 +509,38 @@ components:
           allOf:
             - $ref: "#/components/schemas/MoistureScale"
           nullable: true
+        history:
+          type: array
+          description: Persisted waterings, oldest first. Drives the model.
+          items:
+            $ref: "#/components/schemas/WateringEvent"
+
+    WateringEvent:
+      type: object
+      required:
+        - id
+        - date
+      properties:
+        id:
+          type: string
+        date:
+          type: string
+          format: date-time
+        moistureAtWatering:
+          type: number
+          format: double
+          nullable: true
+          description: Estimated soil moisture just before watering.
+        moistureAfterWatering:
+          type: number
+          format: double
+          nullable: true
+          description: >-
+            Estimated moisture right after watering. Replaced by a real reading
+            taken within half an hour of watering.
+        predicted:
+          type: boolean
+          description: True while the values are model estimates, not observations.
 
     WateringPlanMode:
       type: string
@@ -627,6 +659,26 @@ components:
             stale: drying restarted from saturation at that moment.
         sampleCount:
           type: integer
+        cyclesUsed:
+          type: integer
+          description: How many drying cycles the model was fitted on.
+        confidence:
+          type: number
+          format: double
+          description: 0..1 estimate of how trustworthy the prediction is.
+        modelReady:
+          type: boolean
+          description: True once enough cycles exist to predict watering.
+        predictedMoisture:
+          type: number
+          format: double
+          nullable: true
+          description: Model estimate of the current moisture (no measurement needed).
+        driftCheckDueAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the next rare confirmation measurement is wanted.
 
     HumidityConfig:
       type: object

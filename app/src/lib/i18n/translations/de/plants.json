@@ -248,5 +248,12 @@
 	"moistureBandHint": "Wie weit die Erde unter den Idealwert austrocknen darf, bevor gegossen wird – und bis wohin du auffüllst. 2 bedeutet: gießen bei Ideal-2 bis Ideal+2.",
 	"moistureBandLabel": "Zielbereich",
 	"targetBand": "Zielbereich",
-	"belowBand": "unter Zielbereich"
+	"belowBand": "unter Zielbereich",
+	"estimated": "geschätzt",
+	"basedOnModel": "Aus deinem Gießverlauf geschätzt – keine Messung nötig.",
+	"cycles": "Zyklen",
+	"modelConfidence": "Modell",
+	"calibrating": "kalibriert",
+	"driftCheck": "Nächste Kontrolle",
+	"modelLearningHint": "Die App lernt, wie schnell diese Pflanze austrocknet. Nach ein paar Bewässerungen sagt sie die nächste selbst voraus und fragt nur noch selten nach."
 }

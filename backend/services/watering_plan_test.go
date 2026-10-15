@@ -350,7 +350,7 @@ func TestBuildCyclesSplitsOnRise(t *testing.T) {
 		{at: daysAgo(now, 2), value: 0.9}, // watered
 		{at: daysAgo(now, 1), value: 0.7},
 	}
-	cycles := buildCycles(samples)
+	cycles := buildCycles(samples, nil)
 	if len(cycles) != 2 {
 		t.Fatalf("got %d cycles, want 2", len(cycles))
 	}
@@ -398,9 +398,9 @@ func TestNextMeasurementIsBounded(t *testing.T) {
 	}
 	lastReading := logs[2].Date
 	days := plan.MeasurementDueAt.Sub(lastReading).Hours() / 24
-	if days < minMeasurementIntervalDays-1e-9 || days > maxMeasurementIntervalDays+1e-9 {
+	if days < minMeasurementIntervalDays-1e-9 || days > driftCheckIntervalDays+1e-9 {
 		t.Fatalf("measurement in %.2f days, want within [%.0f, %.0f]",
-			days, minMeasurementIntervalDays, maxMeasurementIntervalDays)
+			days, minMeasurementIntervalDays, driftCheckIntervalDays)
 	}
 }
 

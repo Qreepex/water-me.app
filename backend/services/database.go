@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"strconv"
 	"time"
 
 	"github.com/qreepex/water-me-app/backend/constants"
@@ -9,6 +10,7 @@ import (
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
@@ -389,6 +391,18 @@ func (m *MongoDB) GetPlant(
 //
 // moistures maps plant ID to the measured value; entries are optional so the
 // classic "just water" flow keeps working without a meter.
+// WaterPlants records a watering for each plant.
+//
+// Per your model: watering must NOT fabricate a moisture measurement (a soil
+// reading right after watering tells you nothing about the drying rate and
+// corrupts the fit). Instead a WateringEvent is appended, carrying the model's
+// estimate of the moisture just before and just after watering. If the caller
+// supplied a real reading (the user measured while watering) that value is used
+// for MoistureAtWatering, and the post-watering value is re-derived from the
+// fitted curve rather than guessed.
+//
+// A real measurement taken shortly after watering is picked up separately (see
+// ApplyPostWateringMeasurements) and overwrites the prediction.
 func (m *MongoDB) WaterPlants(
 	ctx context.Context,
 	userID string,
@@ -400,7 +414,6 @@ func (m *MongoDB) WaterPlants(
 		return 0, types.ErrNoDocuments
 	}
 
-	// Convert string IDs to ObjectIDs, keeping the pairing with the moisture map
 	type waterTarget struct {
 		id       string
 		objectID primitive.ObjectID
@@ -413,53 +426,45 @@ func (m *MongoDB) WaterPlants(
 		}
 		targets = append(targets, waterTarget{id: id, objectID: objectID})
 	}
-
 	if len(targets) == 0 {
 		return 0, nil
 	}
 
 	now := time.Now()
-
-	// Fast path: no measurements to record -> single bulk update.
-	if len(moistures) == 0 {
-		objectIDs := make([]primitive.ObjectID, 0, len(targets))
-		for _, target := range targets {
-			objectIDs = append(objectIDs, target.objectID)
-		}
-		result, err := collection.UpdateMany(
-			ctx,
-			bson.M{"_id": bson.M{"$in": objectIDs}, "userId": userID},
-			bson.M{"$set": bson.M{"watering.lastWatered": now, "updatedAt": now}},
-		)
-		if err != nil {
-			return 0, err
-		}
-		return result.ModifiedCount, nil
-	}
-
 	var modified int64
 	for _, target := range targets {
-		update := bson.M{"$set": bson.M{"watering.lastWatered": now, "updatedAt": now}}
-		if reading, ok := moistures[target.id]; ok {
-			logScale := reading.Scale
-			if logScale == "" {
-				logScale = types.ScaleTen
-			}
-			update["$push"] = bson.M{"moistureLogs": bson.M{
-				"$each": bson.A{types.MoistureLog{
-					ID:    primitive.NewObjectID().Hex(),
-					Value: reading.Value,
-					Scale: logScale,
-					Date:  now,
-					Note:  "measured while watering",
-				}},
-				"$slice": -constants.MaxMoistureLogsPerPlant,
-			}}
+		plant, err := m.GetPlant(ctx, userID, target.id)
+		if err != nil {
+			return modified, err
 		}
+		if plant == nil {
+			continue
+		}
+
+		// Derive the watering's moisture values from the model *before* the
+		// watering is recorded, so it describes the state at that moment.
+		before, after := predictWateringMoistures(*plant, now)
+
+		// A reading supplied with the request is real data: prefer it.
+		if reading, ok := moistures[target.id]; ok {
+			before = &reading.Value
+		}
+
+		event := types.WateringEvent{
+			ID:                    primitive.NewObjectID().Hex(),
+			Date:                  now,
+			MoistureAtWatering:    before,
+			MoistureAfterWatering: after,
+			Predicted:             len(moistures) == 0,
+		}
+
 		result, err := collection.UpdateOne(
 			ctx,
 			bson.M{"_id": target.objectID, "userId": userID},
-			update,
+			bson.M{
+				"$set":  bson.M{"watering.lastWatered": now, "updatedAt": now},
+				"$push": bson.M{"watering.history": event},
+			},
 		)
 		if err != nil {
 			return modified, err
@@ -468,6 +473,93 @@ func (m *MongoDB) WaterPlants(
 	}
 
 	return modified, nil
+}
+
+// predictWateringMoistures estimates the soil moisture just before and just
+// after a watering, using the plant's existing model. Both may be nil when
+// there is not enough history to say anything.
+func predictWateringMoistures(plant types.Plant, at time.Time) (*float64, *float64) {
+	plan := ComputeWateringPlan(plant, at)
+	if plan == nil {
+		return nil, nil
+	}
+	before := plan.PredictedMoisture
+	// Right before watering, the measured value is the best estimate.
+	if plan.CurrentMoisture != nil &&
+		plan.WateredSinceLastMeasurement == false &&
+		plan.MeasuredAt != nil {
+		before = plan.CurrentMoisture
+	}
+	if plan.EstimatedFullMoisture == nil {
+		return before, before
+	}
+	// Watering refills towards the plant's own saturation level.
+	return before, plan.EstimatedFullMoisture
+}
+
+// ApplyPostWateringMeasurements refines the most recent watering event when the
+// user takes a real reading shortly after watering. The reading replaces the
+// predicted post-watering value, which is the best observation of saturation.
+func (m *MongoDB) ApplyPostWateringMeasurements(
+	ctx context.Context,
+	userID string,
+	plantID string,
+) error {
+	collection := m.GetCollection(constants.MongoDBCollections.Plants)
+	if collection == nil {
+		return types.ErrNoDocuments
+	}
+	plant, err := m.GetPlant(ctx, userID, plantID)
+	if err != nil || plant == nil || plant.Watering == nil {
+		return err
+	}
+	return m.applyPostWateringMeasurement(ctx, collection, userID, *plant)
+}
+
+// applyPostWateringMeasurement is the shared implementation.
+func (m *MongoDB) applyPostWateringMeasurement(
+	ctx context.Context,
+	collection *mongo.Collection,
+	userID string,
+	plant types.Plant,
+) error {
+	watering := plant.Watering
+	if watering == nil || len(watering.History) == 0 {
+		return nil
+	}
+	last := watering.History[len(watering.History)-1]
+	window := durationDays(PostWateringMeasurementWindowDays)
+	best := -1
+	var bestValue float64
+	for i, log := range plant.MoistureLogs {
+		diff := log.Date.Sub(last.Date)
+		if diff < 0 || diff > window {
+			continue
+		}
+		// Use the earliest reading in the window: closest to saturation.
+		if best == -1 || log.Date.Before(plant.MoistureLogs[best].Date) {
+			best = i
+			bestValue = log.Value
+		}
+	}
+	if best == -1 {
+		return nil
+	}
+	index := len(watering.History) - 1
+	_, err := collection.UpdateOne(
+		ctx,
+		bson.M{"_id": plant.ID, "userId": userID},
+		bson.M{"$set": bson.M{
+			buildHistoryIndexField("moistureAfterWatering", index): bestValue,
+			buildHistoryIndexField("predicted", index):             false,
+			"updatedAt": time.Now(),
+		}},
+	)
+	return err
+}
+
+func buildHistoryIndexField(name string, index int) string {
+	return "watering.history." + strconv.Itoa(index) + "." + name
 }
 
 // --- Uploads ---

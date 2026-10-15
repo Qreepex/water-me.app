@@ -21,7 +21,6 @@
 	import { getPlantsStore } from '$lib/stores/plants.svelte';
 	import { getWateringStore } from '$lib/stores/watering.svelte';
 	import type { Plant } from '$lib/types/api';
-	import type { MoistureReading } from '$lib/types/api';
 	import { formatMoisture, getPlan } from '$lib/utils/plant';
 	import { buildTaskList } from '$lib/utils/tasks';
 
@@ -32,22 +31,15 @@
 	const waterTargets = $derived(tasks.water.map((t) => t.plant.id));
 	let measuringPlant = $state<Plant | null>(null);
 
+	/**
+	 * Water everything that is due.
+	 *
+	 * Deliberately no moisture values are sent: a watering is recorded as its
+	 * own event, and re-submitting the last reading would add a duplicate data
+	 * point at the watering moment and distort the model.
+	 */
 	async function waterAllDue(): Promise<void> {
-		// Record the current measurements together with the watering so that
-		// watering-based plants keep a complete moisture history.
-		const moistures: Record<string, MoistureReading> = {};
-		for (const task of tasks.water) {
-			const plan = getPlan(task.plant);
-			if (plan?.currentMoisture !== undefined && plan?.currentMoisture !== null) {
-				const scale = task.plant.watering?.moistureScale;
-				moistures[task.plant.id] = scale
-					? { value: plan.currentMoisture, scale }
-					: { value: plan.currentMoisture };
-			}
-		}
-		await watering.waterPlants(waterTargets, {
-			...(Object.keys(moistures).length ? { moistures } : {})
-		});
+		await watering.waterPlants(waterTargets);
 	}
 </script>
 

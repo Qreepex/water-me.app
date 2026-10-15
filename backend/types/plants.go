@@ -115,6 +115,24 @@ type Location struct {
 	IsOutdoors bool   `json:"isOutdoors" bson:"isOutdoors"`
 }
 
+// WateringEvent records a single watering. Keeping a history (instead of only
+// the last timestamp) is what lets the model fit the drying curve across many
+// cycles and keeps predicting while the user stops measuring.
+type WateringEvent struct {
+	ID   string    `json:"id"   bson:"id"`
+	Date time.Time `json:"date" bson:"date"`
+	// MoistureAtWatering is the model's estimate of the soil moisture
+	// immediately before this watering (raw scale units, optional).
+	MoistureAtWatering *float64 `json:"moistureAtWatering,omitempty" bson:"moistureAtWatering,omitempty"`
+	// MoistureAfterWatering is the estimated moisture right after watering. It
+	// is derived from the fitted curve and refined by a real reading taken
+	// within a short window after watering.
+	MoistureAfterWatering *float64 `json:"moistureAfterWatering,omitempty" bson:"moistureAfterWatering,omitempty"`
+	// MoistureBand is kept per event so historical cycles stay interpretable
+	// even if the user later changes the band.
+	Predicted bool `json:"predicted,omitempty" bson:"predicted,omitempty"`
+}
+
 type WateringConfig struct {
 	IntervalDays int            `json:"intervalDays" bson:"intervalDays"`
 	Method       WateringMethod `json:"method"       bson:"method"`
@@ -132,6 +150,8 @@ type WateringConfig struct {
 	MoistureBand *float64 `json:"moistureBand,omitempty" bson:"moistureBand,omitempty"`
 	// MoistureScale is the scale IdealMoisture and all measurements are in.
 	MoistureScale *MoistureScale `json:"moistureScale,omitempty" bson:"moistureScale,omitempty"`
+	// History is the persisted list of waterings, oldest first.
+	History []WateringEvent `json:"history,omitempty" bson:"history,omitempty"`
 }
 
 // MoistureReading is a moisture value together with the scale it was taken in.
@@ -196,6 +216,18 @@ type WateringPlan struct {
 	WateredSinceLastMeasurement bool `json:"wateredSinceLastMeasurement,omitempty"`
 	// SampleCount is the number of measurement points used for the model.
 	SampleCount int `json:"sampleCount"`
+
+	// CyclesUsed is how many drying cycles the model was fitted on.
+	CyclesUsed int `json:"cyclesUsed"`
+	// Confidence is a 0..1 estimate of how trustworthy the prediction is.
+	Confidence float64 `json:"confidence"`
+	// ModelReady is true once enough data exists to predict watering.
+	ModelReady bool `json:"modelReady"`
+	// PredictedMoisture is the model's estimate of the current soil moisture.
+	// It is used when no recent measurement exists (e.g. between rare checks).
+	PredictedMoisture *float64 `json:"predictedMoisture,omitempty"`
+	// DriftCheckDueAt is the date of the next rare confirmation measurement.
+	DriftCheckDueAt *time.Time `json:"driftCheckDueAt,omitempty"`
 }
 
 type HumidityConfig struct {

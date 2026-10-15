@@ -248,5 +248,12 @@
 	"moistureBandHint": "Cuánto puede secarse la tierra por debajo del valor ideal antes de regar, y hasta dónde riegas por encima. 2 significa: regar en ideal-2 hasta ideal+2.",
 	"moistureBandLabel": "Banda objetivo",
 	"targetBand": "Banda objetivo",
-	"belowBand": "bajo el objetivo"
+	"belowBand": "bajo el objetivo",
+	"estimated": "estimado",
+	"basedOnModel": "Estimado a partir de tu historial de riego: no hace falta medir.",
+	"cycles": "ciclos",
+	"modelConfidence": "Modelo",
+	"calibrating": "calibrando",
+	"driftCheck": "Próxima comprobación",
+	"modelLearningHint": "La app aprende con qué rapidez se seca esta planta. Tras unos riegos predice el siguiente por sí sola y solo pide una comprobación ocasional."
 }

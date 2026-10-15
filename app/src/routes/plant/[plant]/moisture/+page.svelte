@@ -34,6 +34,19 @@
 	const scale = $derived(plant?.watering?.moistureScale ?? MoistureScale.Scale1To10);
 	const ideal = $derived(plant?.watering?.idealMoisture ?? null);
 	const band = $derived(plant?.watering?.moistureBand ?? null);
+	/** Model estimate of the current moisture when the user hasn't measured. */
+	const predicted = $derived(plan?.predictedMoisture ?? null);
+	/** The value to display: a real reading wins, otherwise the prediction. */
+	const displayMoisture = $derived(
+		plan?.wateredSinceLastMeasurement || plan?.currentMoisture == null
+			? predicted
+			: plan.currentMoisture
+	);
+	const usingPrediction = $derived(
+		displayMoisture !== null &&
+			(plan?.currentMoisture == null || plan?.wateredSinceLastMeasurement === true)
+	);
+
 	/** Lower edge of the target band: the server waters here. */
 	const below = $derived(plan?.waterBelow ?? (ideal === null ? null : ideal - (band ?? 2)));
 	const until = $derived(plan?.waterUntil ?? (ideal === null ? null : ideal + (band ?? 2)));
@@ -114,7 +127,12 @@
 						<div>
 							<p class="text-sm font-semibold text-ink-soft">{$tStore('plants.currentMoisture')}</p>
 							<p class="text-4xl font-bold text-ink">
-								{formatMoisture(plan?.currentMoisture ?? null, scale)}
+								{formatMoisture(displayMoisture, scale)}
+								{#if usingPrediction}
+									<span class="ml-1 align-middle text-xs font-medium text-info">
+										{$tStore('plants.estimated')}
+									</span>
+								{/if}
 							</p>
 							{#if plan?.measuredAt}
 								<p class="mt-1 text-xs text-ink-soft">
@@ -122,9 +140,9 @@
 									<Timestamp date={new SvelteDate(plan.measuredAt)} />
 								</p>
 							{/if}
-							{#if plan?.wateredSinceLastMeasurement}
-								<p class="mt-1 text-xs text-warn">
-									{$tStore('plants.measurementStaleHint')}
+							{#if usingPrediction}
+								<p class="mt-1 text-xs text-info">
+									{$tStore('plants.basedOnModel')}
 								</p>
 							{/if}
 						</div>
@@ -138,14 +156,12 @@
 					</div>
 
 					<!-- Scale bar with the ideal marker -->
-					{#if plan?.currentMoisture !== undefined && plan?.currentMoisture !== null}
+					{#if displayMoisture !== null}
 						<div class="mt-4">
 							<div class="relative h-3 overflow-hidden rounded-full bg-ink/10">
 								<div
-									class="h-full rounded-full transition-all duration-500 {barTone(
-										plan.currentMoisture
-									)}"
-									style:width="{moisturePct(plan.currentMoisture)}%"
+									class="h-full rounded-full transition-all duration-500 {barTone(displayMoisture)}"
+									style:width="{moisturePct(displayMoisture)}%"
 								></div>
 							</div>
 							{#if idealPct !== null}
@@ -191,7 +207,21 @@
 							</div>
 							<div class="rounded-xl bg-canvas p-3">
 								<dt class="text-xs text-ink-soft">{$tStore('plants.measurementsUsed')}</dt>
-								<dd class="font-semibold text-ink">{plan.sampleCount ?? 0}</dd>
+								<dd class="font-semibold text-ink">
+									{plan.sampleCount ?? 0} · {plan.cyclesUsed ?? 0}
+									{$tStore('plants.cycles')}
+								</dd>
+							</div>
+							<div class="rounded-xl bg-canvas p-3">
+								<dt class="text-xs text-ink-soft">{$tStore('plants.modelConfidence')}</dt>
+								<dd class="font-semibold text-ink">
+									{Math.round((plan.confidence ?? 0) * 100)}%
+									{#if !plan.modelReady}
+										<span class="text-xs font-normal text-warn">
+											· {$tStore('plants.calibrating')}
+										</span>
+									{/if}
+								</dd>
 							</div>
 							<div class="rounded-xl bg-canvas p-3">
 								<dt class="text-xs text-ink-soft">{$tStore('plants.nextWatering')}</dt>
@@ -204,7 +234,11 @@
 								</dd>
 							</div>
 							<div class="rounded-xl bg-canvas p-3">
-								<dt class="text-xs text-ink-soft">{$tStore('plants.nextMeasurement')}</dt>
+								<dt class="text-xs text-ink-soft">
+									{plan.modelReady
+										? $tStore('plants.driftCheck')
+										: $tStore('plants.nextMeasurement')}
+								</dt>
 								<dd class="font-semibold text-ink">
 									{#if plan.measurementDueAt}
 										<Timestamp date={new SvelteDate(plan.measurementDueAt)} mode="future" />
@@ -214,6 +248,7 @@
 								</dd>
 							</div>
 						</dl>
+						<p class="mt-3 text-xs text-ink-soft">{$tStore('plants.modelLearningHint')}</p>
 					{/if}
 
 					<Button

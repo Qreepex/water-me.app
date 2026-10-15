@@ -392,6 +392,16 @@ func addMoistureLog(
 		util.NotFound(w)
 		return
 	}
+
+	// A reading taken right after watering is the best observation of the
+	// plant's saturation, so let it replace the model's estimate for that
+	// watering. Re-read so the response reflects the refinement.
+	if err := db.ApplyPostWateringMeasurements(r.Context(), userID, id); err == nil {
+		if refreshed, err := db.GetPlant(r.Context(), userID, id); err == nil && refreshed != nil {
+			updated = refreshed
+		}
+	}
+
 	normalizePlantResponse(updated)
 	updated.PhotoURLs = resolvePhotoURLs(r.Context(), s3, updated.PhotoIDs, userID)
 	util.RespondJSON(w, http.StatusCreated, updated)

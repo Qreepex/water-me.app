@@ -249,5 +249,12 @@
 	"moistureBandHint": "How far the soil may dry below the ideal value before watering, and how far above it you water up to. 2 means water at ideal-2 up to ideal+2.",
 	"moistureBandLabel": "Target band",
 	"targetBand": "Target band",
-	"belowBand": "below target"
+	"belowBand": "below target",
+	"estimated": "estimated",
+	"basedOnModel": "Estimated from your watering history – no measurement needed.",
+	"cycles": "cycles",
+	"modelConfidence": "Model",
+	"calibrating": "calibrating",
+	"driftCheck": "Next check",
+	"modelLearningHint": "The app learns how fast this plant dries out. After a few waterings it predicts the next one on its own and only asks for a rare check-up."
 }

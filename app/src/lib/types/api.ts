@@ -216,6 +216,25 @@ export interface components {
 			 */
 			moistureBand?: number | null;
 			moistureScale?: components['schemas']['MoistureScale'] | null;
+			/** @description Persisted waterings, oldest first. Drives the model. */
+			history?: components['schemas']['WateringEvent'][];
+		};
+		WateringEvent: {
+			id: string;
+			/** Format: date-time */
+			date: string;
+			/**
+			 * Format: double
+			 * @description Estimated soil moisture just before watering.
+			 */
+			moistureAtWatering?: number | null;
+			/**
+			 * Format: double
+			 * @description Estimated moisture right after watering. Replaced by a real reading taken within half an hour of watering.
+			 */
+			moistureAfterWatering?: number | null;
+			/** @description True while the values are model estimates, not observations. */
+			predicted?: boolean;
 		};
 		/**
 		 * @description How the next watering date is determined.
@@ -287,6 +306,25 @@ export interface components {
 			/** @description The plant was watered after the newest reading, so currentMoisture is stale: drying restarted from saturation at that moment. */
 			wateredSinceLastMeasurement?: boolean;
 			sampleCount?: number;
+			/** @description How many drying cycles the model was fitted on. */
+			cyclesUsed?: number;
+			/**
+			 * Format: double
+			 * @description 0..1 estimate of how trustworthy the prediction is.
+			 */
+			confidence?: number;
+			/** @description True once enough cycles exist to predict watering. */
+			modelReady?: boolean;
+			/**
+			 * Format: double
+			 * @description Model estimate of the current moisture (no measurement needed).
+			 */
+			predictedMoisture?: number | null;
+			/**
+			 * Format: date-time
+			 * @description When the next rare confirmation measurement is wanted.
+			 */
+			driftCheckDueAt?: string | null;
 		};
 		HumidityConfig: {
 			/** @example true */
@@ -606,6 +644,7 @@ export interface components {
 }
 export type Location = components['schemas']['Location'];
 export type WateringConfig = components['schemas']['WateringConfig'];
+export type WateringEvent = components['schemas']['WateringEvent'];
 export type MoistureReading = components['schemas']['MoistureReading'];
 export type MoistureLog = components['schemas']['MoistureLog'];
 export type WateringPlan = components['schemas']['WateringPlan'];
