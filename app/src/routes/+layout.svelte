@@ -5,35 +5,50 @@
 	import Auth from '$lib/auth/Auth.svelte';
 	import BottomNav from '$lib/components/layout/BottomNav.svelte';
 	import { initializeI18n } from '$lib/i18n';
+	import { getPlantsStore } from '$lib/stores/plants.svelte';
 	import { initializeLanguage } from '$lib/stores/language';
+	import { onAppResume } from '$lib/utils/lifecycle';
 	import { Capacitor } from '@capacitor/core';
 	import { SplashScreen } from '@capacitor/splash-screen';
 
 	let { children } = $props();
 
-	onMount(async () => {
-		// Hide splash screen once the app is ready
-		if (Capacitor.isNativePlatform()) {
-			await SplashScreen.hide();
-		}
+	const plantsStore = getPlantsStore();
 
-		// Initialize language from user profile or preferences
-		await initializeLanguage();
+	onMount(() => {
+		// Plants are loaded once per session, so changes made on another device
+		// (e.g. a moisture measurement) would otherwise stay invisible until a
+		// reload. Refresh whenever the user comes back to the app.
+		const stopResumeListener = onAppResume(() => {
+			if (plantsStore.hasLoaded) void plantsStore.syncFromServer();
+		});
 
-		// Initialize i18n translations for the selected language
-		await initializeI18n();
-
-		// Register service worker for image caching (web only)
-		if (typeof navigator !== 'undefined' && 'serviceWorker' in navigator) {
-			try {
-				await navigator.serviceWorker.register('/sw.js');
-			} catch {
-				// ignore
+		void (async () => {
+			// Hide splash screen once the app is ready
+			if (Capacitor.isNativePlatform()) {
+				await SplashScreen.hide();
 			}
-		}
 
-		// Do not auto-request notification permissions on startup.
-		// Use $lib/notifications.requestNotificationPermissions() when user opts in.
+			// Initialize language from user profile or preferences
+			await initializeLanguage();
+
+			// Initialize i18n translations for the selected language
+			await initializeI18n();
+
+			// Register service worker for image caching (web only)
+			if (typeof navigator !== 'undefined' && 'serviceWorker' in navigator) {
+				try {
+					await navigator.serviceWorker.register('/sw.js');
+				} catch {
+					// ignore
+				}
+			}
+
+			// Do not auto-request notification permissions on startup.
+			// Use $lib/notifications.requestNotificationPermissions() when user opts in.
+		})();
+
+		return stopResumeListener;
 	});
 </script>
 

@@ -28,9 +28,8 @@ export function getWateringMode(plant: Plant): 'Manual' | 'Moisture' {
 }
 
 export function hasWateringConfig(plant: Plant): boolean {
-	return getWateringMode(plant) === 'Moisture'
-		? plant.watering?.idealMoisture !== undefined && plant.watering?.idealMoisture !== null
-		: !!plant.watering?.intervalDays;
+	if (getWateringMode(plant) === 'Moisture') return true;
+	return !!plant.watering?.intervalDays;
 }
 
 /** Server-computed schedule, when present. */
