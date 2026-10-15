@@ -1,0 +1,9 @@
+allowBuilds:
+  '@firebase/util': true
+  '@firebase/util@1.15.3': true
+  approve-builds: true
+  esbuild: false
+  firebase/util@1.15.3: true
+  npm: true
+  protobufjs: true
+  workerd: true
