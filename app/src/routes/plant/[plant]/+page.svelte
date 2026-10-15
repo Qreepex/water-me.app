@@ -373,6 +373,16 @@
 							{/if}
 						</div>
 
+						{#if plan?.waterBelow !== undefined && plan?.waterBelow !== null && plan?.waterUntil !== undefined && plan?.waterUntil !== null}
+							<p class="mt-3 text-xs text-ink-soft">
+								{$tStore('plants.targetBand')}:
+								<span class="font-semibold text-ink">
+									{formatMoisture(plan.waterBelow, p.watering?.moistureScale)} –
+									{formatMoisture(plan.waterUntil, p.watering?.moistureScale)}
+								</span>
+							</p>
+						{/if}
+
 						<div class="mt-4 flex flex-col gap-2">
 							<Button
 								variant="primary"

@@ -122,15 +122,83 @@ func TestMoisturePlanScenarioFromRequest(t *testing.T) {
 	if got := *plan.DecayPerDay; got < 0.8 || got > 1.2 {
 		t.Fatalf("decayPerDay = %v, want ~1", got)
 	}
-	if plan.Status != types.PlanStatusWaterNow {
-		t.Fatalf("status = %q, want water_now", plan.Status)
+	// ideal 5 with the default band of 2 means: water until 7, water again at 3.
+	// At 4 the soil is still inside the band, so it is not due yet.
+	if plan.Status != types.PlanStatusDueSoon {
+		t.Fatalf("status = %q, want due_soon (still inside the band)", plan.Status)
 	}
-	if plan.WateringDueAt == nil || plan.WateringDueAt.After(now) {
-		t.Fatalf("wateringDueAt = %v, want <= now", plan.WateringDueAt)
+	if plan.WaterBelow == nil || *plan.WaterBelow != 3 {
+		t.Fatalf("waterBelow = %v, want 3", plan.WaterBelow)
+	}
+	if plan.WaterUntil == nil || *plan.WaterUntil != 7 {
+		t.Fatalf("waterUntil = %v, want 7", plan.WaterUntil)
+	}
+	if plan.WateringDueAt == nil || !plan.WateringDueAt.After(now) {
+		t.Fatalf("wateringDueAt = %v, want in the future (one unit/day to 3)", plan.WateringDueAt)
 	}
 }
 
-// Above the ideal value the plan predicts the moment the soil reaches it.
+// Once the soil drops to the lower edge of the band, watering is due.
+func TestMoisturePlanWatersAtLowerBandEdge(t *testing.T) {
+	now := time.Date(2026, time.March, 3, 12, 0, 0, 0, time.UTC)
+	plant := types.Plant{
+		Watering: &types.WateringConfig{
+			Mode:          planMode(types.PlanModeMoisture),
+			IdealMoisture: tenScale(5),
+			MoistureScale: scalePtr(types.ScaleTen),
+		},
+		MoistureLogs: []types.MoistureLog{
+			{ID: "1", Value: 7, Scale: types.ScaleTen, Date: daysAgo(now, 4)},
+			{ID: "2", Value: 4, Scale: types.ScaleTen, Date: daysAgo(now, 1)},
+			{ID: "3", Value: 3, Scale: types.ScaleTen, Date: now},
+		},
+	}
+
+	plan := ComputeWateringPlan(plant, now)
+	if plan.Status != types.PlanStatusWaterNow {
+		t.Fatalf("status = %q, want water_now at the lower band edge", plan.Status)
+	}
+}
+
+// A custom band widens or narrows the hysteresis window.
+func TestMoisturePlanCustomBand(t *testing.T) {
+	now := time.Date(2026, time.March, 3, 12, 0, 0, 0, time.UTC)
+	newPlant := func(band float64) types.Plant {
+		return types.Plant{
+			Watering: &types.WateringConfig{
+				Mode:          planMode(types.PlanModeMoisture),
+				IdealMoisture: tenScale(5),
+				MoistureBand:  &band,
+				MoistureScale: scalePtr(types.ScaleTen),
+			},
+			MoistureLogs: []types.MoistureLog{
+				{ID: "1", Value: 7, Scale: types.ScaleTen, Date: daysAgo(now, 2)},
+				{ID: "2", Value: 5, Scale: types.ScaleTen, Date: daysAgo(now, 1)},
+				{ID: "3", Value: 4, Scale: types.ScaleTen, Date: now},
+			},
+		}
+	}
+
+	// band 1 => trigger at 4, which is reached right now.
+	narrow := ComputeWateringPlan(newPlant(1), now)
+	if narrow.WaterBelow == nil || *narrow.WaterBelow != 4 {
+		t.Fatalf("band 1: waterBelow = %v, want 4", narrow.WaterBelow)
+	}
+	if narrow.Status != types.PlanStatusWaterNow {
+		t.Fatalf("band 1: status = %q, want water_now", narrow.Status)
+	}
+
+	// band 2 => trigger at 3, still 1 unit away.
+	wide := ComputeWateringPlan(newPlant(2), now)
+	if wide.WaterBelow == nil || *wide.WaterBelow != 3 {
+		t.Fatalf("band 2: waterBelow = %v, want 3", wide.WaterBelow)
+	}
+	if wide.Status == types.PlanStatusWaterNow {
+		t.Fatalf("band 2: status = %q, want not water_now", wide.Status)
+	}
+}
+
+// Above the band the plan predicts the moment the soil falls to the lower edge.
 func TestMoisturePlanPredictsFutureWatering(t *testing.T) {
 	now := time.Date(2026, time.March, 3, 12, 0, 0, 0, time.UTC)
 	logs := []types.MoistureLog{
@@ -154,10 +222,14 @@ func TestMoisturePlanPredictsFutureWatering(t *testing.T) {
 	if !plan.WateringDueAt.After(now) {
 		t.Fatalf("wateringDueAt = %v, want in the future", plan.WateringDueAt)
 	}
-	// 7.5 -> 3 at one unit/day => 4.5 days after the last reading.
+	// Ideal 3 with the default band of 2 triggers at 1, so 7.5 -> 1 at one
+	// unit/day is ~6.5 days after the last reading.
+	if plan.WaterBelow == nil || *plan.WaterBelow != 1 {
+		t.Fatalf("waterBelow = %v, want 1", plan.WaterBelow)
+	}
 	days := plan.WateringDueAt.Sub(logs[2].Date).Hours() / 24
-	if days < 4 || days > 5 {
-		t.Fatalf("predicted watering %.1f days after the last reading, want ~4.5", days)
+	if days < 6 || days > 7 {
+		t.Fatalf("predicted watering %.1f days after the last reading, want ~6.5", days)
 	}
 	if !plan.WateringDueAt.After(now) {
 		t.Fatalf("wateringDueAt = %v, want in the future", plan.WateringDueAt)

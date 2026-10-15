@@ -46,6 +46,7 @@ export function initializeFormData(plant: Plant): FormData {
 		wateringMethod: plant.watering?.method ?? WateringMethod.Top,
 		waterType: plant.watering?.waterType ?? WaterType.Tap,
 		idealMoisture: plant.watering?.idealMoisture ?? 5,
+		moistureBand: plant.watering?.moistureBand ?? 2,
 		moistureScale: plant.watering?.moistureScale ?? MoistureScale.Scale1To10,
 		fertilizingType: plant.fertilizing?.type ?? FertilizerType.Liquid,
 		fertilizingIntervalDays: plant.fertilizing?.intervalDays ?? 30,
@@ -91,6 +92,7 @@ export function buildFullPayload(formData: FormData): Record<string, unknown> {
 			method: formData.wateringMethod,
 			waterType: formData.waterType,
 			idealMoisture: formData.wateringMode === 'Moisture' ? formData.idealMoisture : undefined,
+			moistureBand: formData.wateringMode === 'Moisture' ? formData.moistureBand : undefined,
 			moistureScale: formData.wateringMode === 'Moisture' ? formData.moistureScale : undefined
 		},
 		fertilizing: {
@@ -170,6 +172,7 @@ export function buildCreatePayload(
 		hasChanged(formData, initial, 'wateringMethod') ||
 		hasChanged(formData, initial, 'waterType') ||
 		hasChanged(formData, initial, 'idealMoisture') ||
+		hasChanged(formData, initial, 'moistureBand') ||
 		hasChanged(formData, initial, 'moistureScale')
 	) {
 		payload.watering = {
@@ -179,6 +182,7 @@ export function buildCreatePayload(
 			method: formData.wateringMethod,
 			waterType: formData.waterType,
 			idealMoisture: formData.wateringMode === 'Moisture' ? formData.idealMoisture : undefined,
+			moistureBand: formData.wateringMode === 'Moisture' ? formData.moistureBand : undefined,
 			moistureScale: formData.wateringMode === 'Moisture' ? formData.moistureScale : undefined,
 			lastWatered: now
 		};

@@ -42,6 +42,11 @@ const (
 	maxCycleGapDays = 21.0
 )
 
+// DefaultMoistureBand is half the width of the target moisture band, in scale
+// units. `idealMoisture` is the centre of that band: water once the soil falls
+// to ideal-Band, and that is roughly the level to water back up to (ideal+Band).
+const DefaultMoistureBand = 2.0
+
 // moistureScaleBounds returns the min/max value of a moisture scale.
 func moistureScaleBounds(scale types.MoistureScale) (float64, float64) {
 	switch scale {
@@ -165,6 +170,17 @@ func clamp01(v float64) float64 {
 	return math.Min(1, math.Max(0, v))
 }
 
+// normalizeBand converts a band width in scale units to a 0..1 fraction.
+func normalizeBand(width float64, scale types.MoistureScale) float64 {
+	min, max := moistureScaleBounds(scale)
+	if max <= min {
+		return 0
+	}
+	return width / (max - min)
+}
+
+func floatPtr(v float64) *float64 { return &v }
+
 func clampFloat(v, min, max float64) float64 {
 	return math.Min(max, math.Max(min, v))
 }
@@ -245,6 +261,24 @@ func computeMoisturePlan(plant types.Plant, now time.Time) *types.WateringPlan {
 
 	ideal := normalizeMoisture(*watering.IdealMoisture, scale)
 
+	// The configured value is the centre of a target band, not a floor: the soil
+	// is watered once it falls `band` below the target and is refilled to about
+	// `band` above it.
+	bandRaw := DefaultMoistureBand
+	if watering.MoistureBand != nil && *watering.MoistureBand > 0 {
+		bandRaw = *watering.MoistureBand
+	}
+	band := normalizeBand(bandRaw, scale)
+
+	// Never let the band push the trigger outside the scale.
+	if band > 1 {
+		band = 1
+	}
+	waterBelow := clamp01(ideal - band)
+	waterUntil := clamp01(ideal + band)
+	plan.WaterBelow = floatPtr(denormalizeMoisture(waterBelow, scale))
+	plan.WaterUntil = floatPtr(denormalizeMoisture(waterUntil, scale))
+
 	samples := make([]moistureSample, 0, len(plant.MoistureLogs))
 	for _, log := range plant.MoistureLogs {
 		logScale := log.Scale
@@ -281,7 +315,6 @@ func computeMoisturePlan(plant types.Plant, now time.Time) *types.WateringPlan {
 		watering.LastWatered.After(latest.at)
 
 	fit := fitMoistureLine(cycle, scale)
-	fit.ideal = ideal
 
 	// A single reading per cycle carries no trend: the next value is what makes
 	// the drying rate measurable.
@@ -321,9 +354,9 @@ func computeMoisturePlan(plant types.Plant, now time.Time) *types.WateringPlan {
 	if hasTrend {
 		if wateredSinceLastReading {
 			from = *watering.LastWatered
-			daysToIdeal = daysUntilValue(fit.intercept, ideal, fit.decayPerDay)
+			daysToIdeal = daysUntilValue(fit.intercept, waterBelow, fit.decayPerDay)
 		} else {
-			daysToIdeal = daysUntilValue(fit.fractionAt(latest.at), ideal, fit.decayPerDay)
+			daysToIdeal = daysUntilValue(fit.fractionAt(latest.at), waterBelow, fit.decayPerDay)
 		}
 	}
 
@@ -338,14 +371,14 @@ func computeMoisturePlan(plant types.Plant, now time.Time) *types.WateringPlan {
 	}
 
 	if wateredSinceLastReading {
-		days := daysUntilValue(fit.intercept, ideal, fit.decayPerDay)
+		days := daysUntilValue(fit.intercept, waterBelow, fit.decayPerDay)
 		due := watering.LastWatered.Add(durationDays(days))
 		plan.WateringDueAt = &due
-	} else if fit.fractionAt(latest.at) <= ideal {
+	} else if fit.fractionAt(latest.at) <= waterBelow {
 		due := now
 		plan.WateringDueAt = &due
 	} else {
-		days := (fit.fractionAt(latest.at) - ideal) / fit.decayPerDay
+		days := (fit.fractionAt(latest.at) - waterBelow) / fit.decayPerDay
 		due := latest.at.Add(durationDays(days))
 		plan.WateringDueAt = &due
 	}
@@ -438,8 +471,6 @@ type moistureFit struct {
 	slopePerDay float64
 	// origin is the cycle start the line is anchored at.
 	origin time.Time
-	// ideal is the target moisture (0..1) of the plant.
-	ideal float64
 }
 
 // fractionAt evaluates the fitted line at the given moment.

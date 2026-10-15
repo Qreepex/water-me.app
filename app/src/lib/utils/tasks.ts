@@ -122,3 +122,15 @@ export function suggestedMoistureValue(plant: Plant): number {
 	if (plan?.currentMoisture === undefined || plan?.currentMoisture === null) return ideal;
 	return plan.currentMoisture;
 }
+
+/**
+ * Lower edge of the target band: the level at which watering is recommended.
+ * Falls back to ideal - band when the server did not compute a plan.
+ */
+export function waterBelowValue(plant: Plant): number | null {
+	const plan = getPlan(plant);
+	if (plan?.waterBelow !== undefined && plan?.waterBelow !== null) return plan.waterBelow;
+	const ideal = plant.watering?.idealMoisture;
+	if (ideal === undefined || ideal === null) return null;
+	return ideal - (plant.watering?.moistureBand ?? 2);
+}

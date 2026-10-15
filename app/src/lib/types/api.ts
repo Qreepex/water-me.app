@@ -205,10 +205,16 @@ export interface components {
 			mode?: components['schemas']['WateringPlanMode'] | null;
 			/**
 			 * Format: double
-			 * @description Moisture value the plant is happiest at. Watering is recommended when the measurement drops to this value or below.
+			 * @description Moisture value the plant is happiest at. This is the centre of a target band, not a floor: water once the soil falls to idealMoisture - moistureBand and water until it reaches idealMoisture + moistureBand.
 			 * @example 5
 			 */
 			idealMoisture?: number | null;
+			/**
+			 * Format: double
+			 * @description Half the width of the target band in scale units. Defaults to 2.
+			 * @example 2
+			 */
+			moistureBand?: number | null;
 			moistureScale?: components['schemas']['MoistureScale'] | null;
 		};
 		/**
@@ -252,6 +258,16 @@ export interface components {
 			status?: WateringPlanStatus;
 			/** Format: double */
 			idealMoisture?: number | null;
+			/**
+			 * Format: double
+			 * @description Moisture level at which watering is recommended (ideal - band).
+			 */
+			waterBelow?: number | null;
+			/**
+			 * Format: double
+			 * @description Moisture level to water up to (ideal + band).
+			 */
+			waterUntil?: number | null;
 			moistureScale?: components['schemas']['MoistureScale'] | null;
 			/** Format: double */
 			currentMoisture?: number | null;

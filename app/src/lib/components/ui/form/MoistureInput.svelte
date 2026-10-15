@@ -5,8 +5,10 @@
 	interface Props {
 		value: number;
 		scale?: MoistureScale;
-		/** Value considered "too dry" (draws a marker when provided) */
+		/** Centre of the target band. Water at `ideal - band`, up to `ideal + band`. */
 		ideal?: number | null;
+		/** Half the width of the target band. Defaults to 2. */
+		band?: number | null;
 		disabled?: boolean;
 		id?: string;
 	}
@@ -15,28 +17,44 @@
 		value = $bindable(),
 		scale = MoistureScale.Scale1To10,
 		ideal = null,
+		band = null,
 		disabled = false,
 		id
 	}: Props = $props();
+
+	/** Default band half-width, mirroring services.DefaultMoistureBand. */
+	const DEFAULT_BAND = 2;
 
 	const bounds = $derived(
 		scale === MoistureScale.Percent ? { min: 0, max: 100, step: 1 } : { min: 1, max: 10, step: 0.5 }
 	);
 
-	const pct = $derived(((value - bounds.min) / (bounds.max - bounds.min)) * 100);
-	const idealPct = $derived(
-		ideal === null || ideal === undefined
-			? null
-			: ((ideal - bounds.min) / (bounds.max - bounds.min)) * 100
-	);
+	const toPct = (v: number) => ((v - bounds.min) / (bounds.max - bounds.min)) * 100;
+	const pct = $derived(toPct(value));
 
-	/** Visual dryness feedback: matches the server's "water now" threshold. */
+	const effectiveBand = $derived(band && band > 0 ? band : DEFAULT_BAND);
+	/** Lower edge: watering is recommended here. */
+	const below = $derived(ideal === null || ideal === undefined ? null : ideal - effectiveBand);
+	/** Upper edge: water up to here. */
+	const until = $derived(ideal === null || ideal === undefined ? null : ideal + effectiveBand);
+
+	const bandLeftPct = $derived(below === null ? null : Math.max(0, Math.min(100, toPct(below))));
+	const bandWidthPct = $derived(
+		below === null || until === null
+			? null
+			: Math.max(0, Math.min(100, toPct(until)) - toPct(below))
+	);
+	const idealPct = $derived(ideal === null || ideal === undefined ? null : toPct(ideal));
+
+	/** Visual feedback: matches the server, which waters at the lower band edge. */
 	const tone = $derived(
-		ideal !== null && ideal !== undefined && value <= ideal
-			? 'bg-danger'
-			: ideal !== null && ideal !== undefined && value <= ideal + bounds.step * 2
-				? 'bg-warn'
-				: 'bg-brand'
+		below === null
+			? 'bg-brand'
+			: value < below
+				? 'bg-danger'
+				: value <= ideal!
+					? 'bg-warn'
+					: 'bg-brand'
 	);
 
 	function clamp(next: number): number {
@@ -83,7 +101,7 @@
 		</button>
 	</div>
 
-	<!-- Scale visualization with the ideal marker -->
+	<!-- Scale visualization: current value bar plus the target band -->
 	<div class="px-1">
 		<div class="relative h-3 overflow-hidden rounded-full bg-ink/10">
 			<div
@@ -91,21 +109,25 @@
 				style:width="{pct}%"
 			></div>
 		</div>
-		{#if idealPct !== null}
-			<div
-				class="relative h-0"
-				title={$tStore('plants.moistureIdealMarker')}
-				style:left="{idealPct}%"
-				aria-hidden="true"
-			>
-				<div class="absolute -top-4 h-4 w-0.5 -translate-x-1/2 bg-ink/70"></div>
+		{#if bandLeftPct !== null && bandWidthPct !== null}
+			<div class="relative h-0" aria-hidden="true">
+				<!-- target band (water at the left edge, refill to the right edge) -->
+				<div
+					class="absolute -top-3 h-3 rounded-sm bg-brand/35 ring-1 ring-brand-dark/40"
+					style:left="{bandLeftPct}%; width: {bandWidthPct}%"
+				></div>
+				<!-- ideal value (band centre) -->
+				<div
+					class="absolute -top-5 h-7 w-0.5 -translate-x-1/2 bg-ink/70"
+					style:left="{idealPct}%"
+				></div>
 			</div>
 		{/if}
-		<div class="mt-1.5 flex justify-between text-[10px] text-ink-soft">
+		<div class="mt-2 flex justify-between text-[10px] text-ink-soft">
 			<span>{$tStore('plants.moistureDry')}</span>
-			{#if ideal !== null && ideal !== undefined}
+			{#if below !== null && until !== null}
 				<span class="font-semibold text-brand-dark dark:text-brand">
-					{$tStore('plants.moistureIdealMarker')}: {ideal}
+					{$tStore('plants.moistureBandLabel')}: {below}–{until}
 				</span>
 			{/if}
 			<span>{$tStore('plants.moistureWet')}</span>

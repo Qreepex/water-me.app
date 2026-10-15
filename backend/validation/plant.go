@@ -570,6 +570,26 @@ func validateWateringConfig(wc types.WateringConfig) []types.ValidationError {
 		)
 	}
 
+	if wc.MoistureBand != nil {
+		if *wc.MoistureBand <= 0 {
+			errors = append(errors, types.ValidationError{
+				Field:   "watering.moistureBand",
+				Message: "Moisture band must be greater than 0",
+			})
+		}
+		// A band wider than half the scale cannot be represented.
+		min, max := moistureScaleBounds(moistureScaleOrDefault(wc.MoistureScale))
+		if *wc.MoistureBand > (max-min)/2 {
+			errors = append(errors, types.ValidationError{
+				Field: "watering.moistureBand",
+				Message: fmt.Sprintf(
+					"Moisture band must be at most %g for the selected scale",
+					(max-min)/2,
+				),
+			})
+		}
+	}
+
 	if wc.IdealMoisture != nil {
 		scale := types.ScaleTen
 		if wc.MoistureScale != nil {
@@ -695,6 +715,13 @@ func validateMoistureLogs(logs []types.MoistureLog) []types.ValidationError {
 	}
 
 	return errors
+}
+
+func moistureScaleOrDefault(scale *types.MoistureScale) types.MoistureScale {
+	if scale != nil {
+		return *scale
+	}
+	return types.ScaleTen
 }
 
 // moistureScaleBounds mirrors the scheduler's scale bounds for validation.

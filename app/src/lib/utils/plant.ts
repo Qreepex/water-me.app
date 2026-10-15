@@ -187,18 +187,19 @@ export function getDaysUntilWater(plant: Plant): number {
  * Thirst level as 0..1 progress (0 = just watered, 1 = overdue), for progress bars.
  */
 export function getWateringProgress(plant: Plant): number {
-	// Moisture plans: progress from the estimated full value down to the ideal one.
+	// Moisture plans: progress from "watered" to the lower edge of the target
+	// band, which is where the server recommends watering.
 	const plan = getPlan(plant);
 	if (getWateringMode(plant) === 'Moisture' && plan) {
 		const current = plan.currentMoisture;
-		const ideal = plan.idealMoisture ?? plant.watering?.idealMoisture;
+		const below = plan.waterBelow ?? null;
 		const full = plan.estimatedFullMoisture;
 		if (current === undefined || current === null) return 0;
-		if (ideal === undefined || ideal === null || full === undefined || full === null) {
+		if (below === null || full === undefined || full === null) {
 			return plan.status === 'water_now' ? 1 : 0;
 		}
-		if (full <= ideal) return current <= ideal ? 1 : 0;
-		return Math.min(1, Math.max(0, (full - current) / (full - ideal)));
+		if (full <= below) return current <= below ? 1 : 0;
+		return Math.min(1, Math.max(0, (full - current) / (full - below)));
 	}
 
 	const interval = plant.watering?.intervalDays ?? 0;

@@ -7,7 +7,7 @@
 	"allDone": "Alles erledigt für heute!",
 	"allDoneHint": "Deine Pflanzen sind zufrieden. Schau morgen wieder vorbei.",
 	"waterAllPlants": "Alle gießen (%s)",
-	"reasonMoistureLow": "Erde hat den Idealwert erreicht",
+	"reasonMoistureLow": "Erde ist unter den Zielbereich gefallen",
 	"reasonIntervalDue": "Gießintervall ist fällig",
 	"reasonFirstMeasurement": "Ersten Messwert eintragen",
 	"reasonMeasurementDue": "Neuer Messwert fällig"

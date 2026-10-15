@@ -34,6 +34,7 @@ export interface FormData {
 	wateringMethod: WateringMethod;
 	waterType: WaterType;
 	idealMoisture: number;
+	moistureBand: number;
 	moistureScale: MoistureScale;
 
 	// Fertilizing
@@ -79,6 +80,7 @@ export function createEmptyFormData(sunlightDefault?: SunlightRequirement): Form
 		wateringMethod: WM.Top,
 		waterType: WT.Tap,
 		idealMoisture: 5,
+		moistureBand: 2,
 		moistureScale: MS.Scale1To10,
 		fertilizingType: FT.Liquid,
 		fertilizingIntervalDays: 30,

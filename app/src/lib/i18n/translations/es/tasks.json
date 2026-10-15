@@ -7,7 +7,7 @@
 	"allDone": "¡Todo hecho por hoy!",
 	"allDoneHint": "Tus plantas están felices. Vuelve mañana.",
 	"waterAllPlants": "Regar todas (%s)",
-	"reasonMoistureLow": "La tierra alcanzó el valor ideal",
+	"reasonMoistureLow": "La tierra bajó por debajo de la banda objetivo",
 	"reasonIntervalDue": "Toca el intervalo de riego",
 	"reasonFirstMeasurement": "Añade la primera medición",
 	"reasonMeasurementDue": "Nueva medición pendiente"

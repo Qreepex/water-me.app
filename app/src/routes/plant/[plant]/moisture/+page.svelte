@@ -33,6 +33,10 @@
 
 	const scale = $derived(plant?.watering?.moistureScale ?? MoistureScale.Scale1To10);
 	const ideal = $derived(plant?.watering?.idealMoisture ?? null);
+	const band = $derived(plant?.watering?.moistureBand ?? null);
+	/** Lower edge of the target band: the server waters here. */
+	const below = $derived(plan?.waterBelow ?? (ideal === null ? null : ideal - (band ?? 2)));
+	const until = $derived(plan?.waterUntil ?? (ideal === null ? null : ideal + (band ?? 2)));
 	const bounds = $derived(plant ? getMoistureBounds(plant) : { min: 1, max: 10, step: 0.5 });
 
 	/** Newest first. */
@@ -47,10 +51,13 @@
 	}
 
 	const idealPct = $derived(ideal === null ? null : moisturePct(ideal));
+	const belowPct = $derived(below === null ? null : moisturePct(below));
+	const untilPct = $derived(until === null ? null : moisturePct(until));
 
 	function barTone(value: number): string {
-		if (ideal !== null && value <= ideal) return 'bg-danger';
-		if (ideal !== null && value <= ideal + bounds.step * 2) return 'bg-warn';
+		if (below === null) return 'bg-brand';
+		if (value < below) return 'bg-danger';
+		if (ideal !== null && value <= ideal) return 'bg-warn';
 		return 'bg-brand';
 	}
 
@@ -142,8 +149,17 @@
 								></div>
 							</div>
 							{#if idealPct !== null}
-								<div class="relative h-0" style:left="{idealPct}%" aria-hidden="true">
-									<div class="absolute -top-4 h-4 w-0.5 -translate-x-1/2 bg-ink/70"></div>
+								<div class="relative h-0" aria-hidden="true">
+									{#if belowPct !== null && untilPct !== null}
+										<div
+											class="absolute -top-3 h-3 rounded-sm bg-brand/35 ring-1 ring-brand-dark/40"
+											style:left="{belowPct}%; width: {untilPct - belowPct}%"
+										></div>
+									{/if}
+									<div
+										class="absolute -top-5 h-7 w-0.5 -translate-x-1/2 bg-ink/70"
+										style:left="{idealPct}%"
+									></div>
 								</div>
 							{/if}
 						</div>
@@ -161,6 +177,16 @@
 									{plan.decayPerDay !== undefined && plan.decayPerDay !== null
 										? `${Math.round(plan.decayPerDay * 10) / 10}/day`
 										: '—'}
+								</dd>
+							</div>
+							<div class="rounded-xl bg-canvas p-3">
+								<dt class="text-xs text-ink-soft">{$tStore('plants.targetBand')}</dt>
+								<dd class="font-semibold text-ink">
+									{#if below !== null && until !== null}
+										{formatMoisture(below, scale)} – {formatMoisture(until, scale)}
+									{:else}
+										—
+									{/if}
 								</dd>
 							</div>
 							<div class="rounded-xl bg-canvas p-3">
@@ -219,11 +245,11 @@
 											<span class="text-lg font-bold text-ink">
 												{formatMoisture(log.value, log.scale ?? scale)}
 											</span>
-											{#if ideal !== null && log.value <= ideal}
+											{#if below !== null && log.value < below}
 												<span
 													class="rounded-full bg-danger/15 px-2 py-0.5 text-[11px] font-semibold text-danger"
 												>
-													{$tStore('plants.belowIdeal')}
+													{$tStore('plants.belowBand')}
 												</span>
 											{/if}
 										</div>

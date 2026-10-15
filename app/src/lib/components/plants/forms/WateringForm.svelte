@@ -77,9 +77,26 @@
 				bind:value={formData.idealMoisture}
 				scale={formData.moistureScale}
 				ideal={formData.idealMoisture}
+				band={formData.moistureBand}
 			/>
 			<p class="mt-1 text-xs text-ink-soft/70">{$tStore('plants.idealMoistureHint')}</p>
 		</div>
+
+		<Field
+			label="plants.moistureBand"
+			forId="moisture-band"
+			labelSuffix="{formData.idealMoisture - formData.moistureBand}–{formData.idealMoisture +
+				formData.moistureBand}"
+			hint="plants.moistureBandHint"
+		>
+			<Input
+				id="moisture-band"
+				type="number"
+				min={0.5}
+				step={0.5}
+				bind:value={formData.moistureBand}
+			/>
+		</Field>
 	{:else}
 		<Field label="plants.formIntervalDays" forId="water-interval">
 			<Input id="water-interval" type="number" min={1} bind:value={formData.wateringIntervalDays} />

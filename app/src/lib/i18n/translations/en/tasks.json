@@ -7,7 +7,7 @@
 	"allDone": "All done for today!",
 	"allDoneHint": "Your plants are happy. Check back tomorrow.",
 	"waterAllPlants": "Water all (%s)",
-	"reasonMoistureLow": "Soil reached the ideal value",
+	"reasonMoistureLow": "Soil fell below the target band",
 	"reasonIntervalDue": "Watering interval is due",
 	"reasonFirstMeasurement": "Add the first measurement",
 	"reasonMeasurementDue": "New measurement due"

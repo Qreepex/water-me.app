@@ -30,8 +30,11 @@
 
 	const plan = $derived(getPlan(plant));
 	const ideal = $derived(plant.watering?.idealMoisture ?? null);
+	const band = $derived(plant.watering?.moistureBand ?? null);
 	const scale = $derived(plant.watering?.moistureScale ?? MoistureScale.Scale1To10);
-	const tooDry = $derived(ideal !== null && value <= ideal);
+	// The server waters at the lower edge of the band (ideal - band).
+	const below = $derived(plan?.waterBelow ?? (ideal === null ? null : ideal - (band ?? 2)));
+	const tooDry = $derived(below !== null && value < below);
 
 	async function save(): Promise<void> {
 		saving = true;
@@ -81,7 +84,7 @@
 		</div>
 
 		<div class="mt-4">
-			<MoistureInput bind:value {scale} {ideal} />
+			<MoistureInput bind:value {scale} {ideal} {band} />
 		</div>
 
 		<!-- Live interpretation of the entered value -->
@@ -92,12 +95,12 @@
 		>
 			<Icon name={tooDry ? 'alert-triangle' : 'info'} size={16} />
 			<span>
-				{#if ideal === null}
+				{#if below === null}
 					{$tStore('plants.moistureNoIdealHint')}
 				{:else if tooDry}
-					{$tStore('plants.moistureTooDryHint', [formatMoisture(ideal, scale)])}
+					{$tStore('plants.moistureTooDryHint', [formatMoisture(below, scale)])}
 				{:else}
-					{$tStore('plants.moistureFineHint', [formatMoisture(ideal, scale)])}
+					{$tStore('plants.moistureFineHint', [formatMoisture(below, scale)])}
 				{/if}
 			</span>
 		</div>

@@ -123,9 +123,13 @@ type WateringConfig struct {
 
 	// Mode selects the scheduling strategy. Empty means "Manual" (legacy plants).
 	Mode *WateringPlanMode `json:"mode,omitempty" bson:"mode,omitempty"`
-	// IdealMoisture is the moisture value the plant is happiest at. When the
-	// measured value drops to (or below) this, the plant should be watered.
+	// IdealMoisture is the moisture value the plant is happiest at. It is the
+	// centre of a target band, not a floor: water until the soil is around
+	// IdealMoisture+Band, and water again once it falls to IdealMoisture-Band.
 	IdealMoisture *float64 `json:"idealMoisture,omitempty" bson:"idealMoisture,omitempty"`
+	// MoistureBand is half the width of the target band, in scale units.
+	// Zero means "use the default" (see DefaultMoistureBand).
+	MoistureBand *float64 `json:"moistureBand,omitempty" bson:"moistureBand,omitempty"`
 	// MoistureScale is the scale IdealMoisture and all measurements are in.
 	MoistureScale *MoistureScale `json:"moistureScale,omitempty" bson:"moistureScale,omitempty"`
 }
@@ -171,6 +175,10 @@ type WateringPlan struct {
 	// IdealMoisture and MoistureScale echo the configured target.
 	IdealMoisture *float64      `json:"idealMoisture,omitempty"`
 	MoistureScale MoistureScale `json:"moistureScale,omitempty"`
+	// WaterBelow is the moisture level at which watering is recommended and
+	// WaterUntil is the level to water up to (ideal -/+ band).
+	WaterBelow *float64 `json:"waterBelow,omitempty"`
+	WaterUntil *float64 `json:"waterUntil,omitempty"`
 
 	// CurrentMoisture is the most recent measurement (raw scale units).
 	CurrentMoisture *float64   `json:"currentMoisture,omitempty"`
