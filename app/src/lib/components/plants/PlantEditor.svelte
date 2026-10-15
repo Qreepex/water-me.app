@@ -24,7 +24,6 @@
 	import type { Plant } from '$lib/types/api';
 	import type { FormData } from '$lib/types/forms';
 	import { createEmptyFormData } from '$lib/types/forms';
-	import { invalidateApiCache } from '$lib/utils/cache';
 	import {
 		EDITOR_SECTIONS,
 		buildCreatePayload,
@@ -173,10 +172,6 @@
 				if (!res.data?.id) throw new Error($tStore('plants.invalidResponse'));
 
 				plantsStore.setPlants([...plantsStore.plants, res.data]);
-				await invalidateApiCache(['/api/plants', `/api/plants/${res.data.id}`], {
-					waitForAck: true,
-					timeoutMs: 100
-				});
 
 				allowLeave = true;
 				await goto(resolve(`/manage/${res.data.id}/photos`));
@@ -190,10 +185,6 @@
 				if (!res.ok) throw new Error(res.error?.message || $tStore('plants.failedToUpdatePlant'));
 
 				snapshot = JSON.parse(JSON.stringify(formData));
-				await invalidateApiCache(['/api/plants', `/api/plants/${plant.id}`], {
-					waitForAck: true,
-					timeoutMs: 100
-				});
 
 				if (res.data) {
 					plantsStore.setPlants(
@@ -228,7 +219,7 @@
 <PageContent>
 	<!-- Section navigation (scroll-spy pills) -->
 	<nav
-		class="flex shrink-0 gap-2 overflow-x-auto px-2 pb-3 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+		class="flex shrink-0 [scrollbar-width:none] gap-2 overflow-x-auto px-2 pb-3 [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
 		aria-label={$tStore('plants.manageSections')}
 	>
 		{#each EDITOR_SECTIONS as section (section.key)}

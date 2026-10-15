@@ -55,23 +55,27 @@
 	"wateringMethodOptions": {
 		"Top": "Top",
 		"Bottom": "Bottom",
-		"SelfWatering": "Self watering",
-		"Self Watering": "Self watering"
+		"Soaking": "Soaking",
+		"Self": "Self-watering",
+		"MistingOnly": "Misting only"
 	},
 	"waterTypeOptions": {
-		"Tap": "Tap",
-		"Rain": "Rain",
+		"Tap": "Tap water",
+		"Filtered": "Filtered",
+		"Rain": "Rainwater",
 		"Distilled": "Distilled",
-		"Filtered": "Filtered"
+		"StaleTap": "Stale tap water",
+		"LowLimestone": "Low limestone"
 	},
 	"fertilizingTitle": "Fertilizing",
 	"fertilizerType": "Fertilizer type",
 	"fertilizerTypeOptions": {
 		"Liquid": "Liquid",
-		"Granular": "Granular",
-		"SlowRelease": "Slow release",
-		"Slow Release": "Slow release",
-		"Organic": "Organic"
+		"Sticks": "Sticks",
+		"Granulate": "Granulate",
+		"LongTerm": "Long-term",
+		"Organic": "Organic",
+		"Hydroponic": "Hydroponic"
 	},
 	"npkRatio": "NPK ratio",
 	"concentration": "Concentration",

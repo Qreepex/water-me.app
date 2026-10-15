@@ -12,7 +12,7 @@
 		getStatusVisual,
 		getWateringProgress
 	} from '$lib/utils/plant';
-	import { formatPastTimestamp } from '$lib/utils/timestamp.svelte';
+	import Timestamp from '../ui/Timestamp.svelte';
 	import PlantImage from './PlantImage.svelte';
 
 	interface Props {
@@ -107,7 +107,7 @@
 			</div>
 			<span class="shrink-0 text-[11px] text-ink-soft">
 				{#if plant.watering?.lastWatered}
-					{formatPastTimestamp(new Date(plant.watering.lastWatered))}
+					<Timestamp date={new Date(plant.watering.lastWatered)} />
 				{:else}
 					—
 				{/if}

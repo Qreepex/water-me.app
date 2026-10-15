@@ -91,8 +91,9 @@ async function loadLocale(locale: Locale) {
 		}
 		translations[locale] = loaded;
 		loadedLocales.add(locale);
-		// Trigger store update after loading
-		tStoreInternal.set((key: string) => translate(key, activeLocale));
+		// Trigger store update after loading. Note: args must be forwarded, or
+		// interpolated values would be dropped on re-render.
+		tStoreInternal.set((key: string, args?: string[]) => translate(key, activeLocale, args));
 	})()
 		.catch((error) => {
 			console.error(`Failed to load locale: ${locale}`, error);

@@ -53,23 +53,27 @@
 	"wateringMethodOptions": {
 		"Top": "Desde arriba",
 		"Bottom": "Desde abajo",
-		"SelfWatering": "Autorriego",
-		"Self Watering": "Autorriego"
+		"Soaking": "Inmersión",
+		"Self": "Autorriego",
+		"MistingOnly": "Solo pulverizar"
 	},
 	"waterTypeOptions": {
 		"Tap": "Del grifo",
+		"Filtered": "Filtrada",
 		"Rain": "De lluvia",
 		"Distilled": "Destilada",
-		"Filtered": "Filtrada"
+		"StaleTap": "Agua del grifo reposada",
+		"LowLimestone": "Baja en cal"
 	},
 	"fertilizingTitle": "Fertilización",
 	"fertilizerType": "Tipo de fertilizante",
 	"fertilizerTypeOptions": {
 		"Liquid": "Líquido",
-		"Granular": "Granulado",
-		"SlowRelease": "Liberación lenta",
-		"Slow Release": "Liberación lenta",
-		"Organic": "Orgánico"
+		"Sticks": "Barras",
+		"Granulate": "Granulado",
+		"LongTerm": "Larga duración",
+		"Organic": "Orgánico",
+		"Hydroponic": "Hidropónico"
 	},
 	"npkRatio": "Relación NPK",
 	"concentration": "Concentración",

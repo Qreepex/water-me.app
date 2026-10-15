@@ -1,19 +1,43 @@
-import { t } from '$lib/i18n';
 import { SvelteDate } from 'svelte/reactivity';
 
-export function formatPastTimestamp(timestamp: Date): string {
+/**
+ * A translatable timestamp: the caller resolves it with `$tStore(key, args)` so
+ * the text stays reactive (a plain `t()` call computed once would freeze the raw
+ * key if the locale had not finished loading yet).
+ */
+export interface TimestampText {
+	key: string;
+	args: string[];
+}
+
+function clockTime(timestamp: Date): string {
+	return timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+}
+
+function weekdayKey(timestamp: Date): string {
+	return timestamp.toLocaleDateString('en', { weekday: 'long' }).toLowerCase();
+}
+
+export function pastTimestamp(timestamp: Date): TimestampText {
 	const now = new SvelteDate();
-
-	const clockTime = timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
 	if (isSameDay(timestamp, now)) {
-		return t('time.today:time').replace('{time}', clockTime);
-	} else if (isYesterday(timestamp, now)) {
-		return t('time.yesterday:time').replace('{time}', clockTime);
-	} else {
-		const weekday = timestamp.toLocaleDateString('en', { weekday: 'long' }).toLowerCase();
-		return t(`time.${weekday}:time`).replace('{time}', clockTime);
+		return { key: 'time.today:time', args: [clockTime(timestamp)] };
 	}
+	if (isYesterday(timestamp, now)) {
+		return { key: 'time.yesterday:time', args: [clockTime(timestamp)] };
+	}
+	return { key: `time.${weekdayKey(timestamp)}:time`, args: [clockTime(timestamp)] };
+}
+
+export function futureTimestamp(timestamp: Date): TimestampText {
+	const now = new SvelteDate();
+	if (isSameDay(timestamp, now)) {
+		return { key: 'time.today:time', args: [clockTime(timestamp)] };
+	}
+	if (isTomorrow(timestamp, now)) {
+		return { key: 'time.tomorrow:time', args: [clockTime(timestamp)] };
+	}
+	return { key: `time.${weekdayKey(timestamp)}:time`, args: [clockTime(timestamp)] };
 }
 
 function isSameDay(date1: Date, date2: Date): boolean {
@@ -25,28 +49,13 @@ function isSameDay(date1: Date, date2: Date): boolean {
 }
 
 function isYesterday(date: Date, reference: Date): boolean {
-	const yesterday = reference;
+	const yesterday = new SvelteDate(reference);
 	yesterday.setDate(reference.getDate() - 1);
 	return isSameDay(date, yesterday);
 }
 
 function isTomorrow(date: Date, reference: Date): boolean {
-	const tomorrow = reference;
+	const tomorrow = new SvelteDate(reference);
 	tomorrow.setDate(reference.getDate() + 1);
 	return isSameDay(date, tomorrow);
-}
-
-export function formatFutureTimestamp(timestamp: Date): string {
-	const now = new SvelteDate();
-
-	const clockTime = timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
-	if (isSameDay(timestamp, now)) {
-		return t('time.today:time').replace('{time}', clockTime);
-	} else if (isTomorrow(timestamp, now)) {
-		return t('time.tomorrow:time').replace('{time}', clockTime);
-	} else {
-		const weekday = timestamp.toLocaleDateString('en', { weekday: 'long' }).toLowerCase();
-		return t(`time.${weekday}:time`).replace('{time}', clockTime);
-	}
 }

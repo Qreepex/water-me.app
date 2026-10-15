@@ -53,23 +53,27 @@
 	"wateringMethodOptions": {
 		"Top": "Von oben",
 		"Bottom": "Von unten",
-		"SelfWatering": "Selbstbewässerung",
-		"Self Watering": "Selbstbewässerung"
+		"Soaking": "Tauchen",
+		"Self": "Selbstbewässerung",
+		"MistingOnly": "Nur besprühen"
 	},
 	"waterTypeOptions": {
 		"Tap": "Leitungswasser",
+		"Filtered": "Gefiltertes Wasser",
 		"Rain": "Regenwasser",
 		"Distilled": "Destilliertes Wasser",
-		"Filtered": "Gefiltertes Wasser"
+		"StaleTap": "Abgestandenes Leitungswasser",
+		"LowLimestone": "Kalkarm"
 	},
 	"fertilizingTitle": "Düngung",
 	"fertilizerType": "Düngertyp",
 	"fertilizerTypeOptions": {
-		"Liquid": "Flüssig",
-		"Granular": "Granulat",
-		"SlowRelease": "Langzeit",
-		"Slow Release": "Langzeit",
-		"Organic": "Organisch"
+		"Liquid": "Flüssigdünger",
+		"Sticks": "Düngestäbchen",
+		"Granulate": "Granulat",
+		"LongTerm": "Langzeitdünger",
+		"Organic": "Bio",
+		"Hydroponic": "Hydrokultur"
 	},
 	"npkRatio": "NPK-Verhältnis",
 	"concentration": "Konzentration",

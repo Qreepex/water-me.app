@@ -13,7 +13,6 @@
 	import Spinner from '$lib/components/ui/Spinner.svelte';
 	import { tStore } from '$lib/i18n';
 	import type { Plant } from '$lib/types/api';
-	import { invalidateApiCache } from '$lib/utils/cache';
 	import { getImageObjectURL, revokeObjectURL } from '$lib/utils/imageCache';
 	import { ALLOWED_PHOTO_TYPES, compressPhoto, putToPresignedUrl } from '$lib/utils/uploads';
 	import { onDestroy } from 'svelte';
@@ -213,11 +212,6 @@
 					throw new Error(res.error?.message || $tStore('plants.failedToSavePhotos'));
 				}
 			}
-
-			await invalidateApiCache(['/api/plants', `/api/plants/${plant.id}`], {
-				waitForAck: true,
-				timeoutMs: 100
-			});
 
 			await goto(resolve(`/manage/${plant.id}/edit`));
 		} catch (err) {

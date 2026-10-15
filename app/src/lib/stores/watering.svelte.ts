@@ -1,5 +1,4 @@
 import { fetchData } from '$lib/auth/fetch.svelte';
-import { invalidateApiCache } from '$lib/utils/cache';
 import { t } from '$lib/i18n';
 import type { MoistureScale, MoistureReading } from '$lib/types/api';
 import { Haptics, NotificationType } from '@capacitor/haptics';
@@ -31,14 +30,6 @@ export function createWateringStore() {
 			: inFlightIds.filter((id) => !ids.includes(id));
 	}
 
-	async function invalidatePlant(id: string): Promise<void> {
-		await invalidateApiCache(['/api/plants', `/api/plants/${id}`], {
-			waitForAck: true,
-			timeoutMs: 500
-		});
-		await plantsStore.reloadSilently();
-	}
-
 	async function water(ids: string[], options: WaterOptions = {}): Promise<boolean> {
 		const targets = ids.filter((id) => !inFlightIds.includes(id));
 		if (targets.length === 0) return false;
@@ -62,7 +53,6 @@ export function createWateringStore() {
 				return false;
 			}
 
-			await invalidateApiCache(['/api/plants'], { waitForAck: true, timeoutMs: 500 });
 			await plantsStore.reloadSilently();
 			haptic(NotificationType.Success);
 			return true;
@@ -109,10 +99,6 @@ export function createWateringStore() {
 			if (response.data) {
 				plantsStore.setPlants(plantsStore.plants.map((p) => (p.id === id ? response.data! : p)));
 			}
-			await invalidateApiCache(['/api/plants', `/api/plants/${id}`], {
-				waitForAck: true,
-				timeoutMs: 300
-			});
 			haptic(NotificationType.Success);
 			return true;
 		} catch (err) {
@@ -143,10 +129,6 @@ export function createWateringStore() {
 			if (response.data) {
 				plantsStore.setPlants(plantsStore.plants.map((p) => (p.id === id ? response.data! : p)));
 			}
-			await invalidateApiCache(['/api/plants', `/api/plants/${id}`], {
-				waitForAck: true,
-				timeoutMs: 300
-			});
 			return true;
 		} catch (err) {
 			plantsStore.setError(err instanceof Error ? err.message : t('plants.failedToDeleteMoisture'));
@@ -154,11 +136,6 @@ export function createWateringStore() {
 		} finally {
 			setInFlight([id], false);
 		}
-	}
-
-	/** Invalidate the cached plant and reload it (used after editor saves). */
-	async function refreshPlant(id: string): Promise<void> {
-		await invalidatePlant(id);
 	}
 
 	return {
@@ -176,8 +153,7 @@ export function createWateringStore() {
 		/** Water multiple plants at once (e.g. "water all due"). */
 		waterPlants: (ids: string[], options?: WaterOptions) => water(ids, options),
 		logMoisture,
-		deleteMoisture,
-		refreshPlant
+		deleteMoisture
 	};
 }
 

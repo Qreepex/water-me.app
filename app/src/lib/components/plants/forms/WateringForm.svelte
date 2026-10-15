@@ -30,14 +30,14 @@
 	const methodOptions = $derived.by(() =>
 		Object.values(WateringMethod).map((method) => ({
 			value: method,
-			label: $tStore('plants.wateringMethodOptions.' + method) || method
+			label: $tStore('plants.wateringMethodOptions.' + method)
 		}))
 	);
 
 	const typeOptions = $derived.by(() =>
 		Object.values(WaterType).map((type) => ({
 			value: type,
-			label: $tStore('plants.waterTypeOptions.' + type) || type
+			label: $tStore('plants.waterTypeOptions.' + type)
 		}))
 	);
 

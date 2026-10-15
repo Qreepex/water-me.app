@@ -8,6 +8,7 @@
 	import PlantImage from '$lib/components/plants/PlantImage.svelte';
 	import Alert from '$lib/components/ui/Alert.svelte';
 	import Button from '$lib/components/ui/Button.svelte';
+	import HoldButton from '$lib/components/ui/HoldButton.svelte';
 	import Card from '$lib/components/ui/Card.svelte';
 	import Chip from '$lib/components/ui/Chip.svelte';
 	import Icon from '$lib/components/ui/Icon.svelte';
@@ -27,7 +28,7 @@
 		getWateringProgress,
 		hasWateringConfig as plantHasWateringConfig
 	} from '$lib/utils/plant';
-	import { formatFutureTimestamp, formatPastTimestamp } from '$lib/utils/timestamp.svelte';
+	import Timestamp from '$lib/components/ui/Timestamp.svelte';
 	import { SvelteDate } from 'svelte/reactivity';
 	import MoistureLogSheet from '$lib/components/plants/MoistureLogSheet.svelte';
 
@@ -96,8 +97,9 @@
 		const rows: CareRow[] = [];
 		const every = (days?: number) =>
 			days ? `${$tStore('plants.every')} ${days} ${$tStore('plants.days')}` : '';
-		const option = (prefix: string, value?: string) =>
-			value ? $tStore(`${prefix}.${value}`) || value : '';
+		// Missing enum keys surface as the raw key (consistent with the rest of
+		// the i18n layer) instead of silently falling back to the raw value.
+		const option = (prefix: string, value?: string) => (value ? $tStore(`${prefix}.${value}`) : '');
 
 		if (plant.sunlight) {
 			rows.push({
@@ -293,29 +295,32 @@
 						<div class="mt-2 flex items-center justify-between gap-2 text-xs text-ink-soft">
 							<span class="inline-flex items-center gap-1.5">
 								<Icon name="clock" size={13} />
-								{p.watering?.lastWatered
-									? formatPastTimestamp(new Date(p.watering.lastWatered))
-									: '—'}
+								{#if p.watering?.lastWatered}
+									<Timestamp date={new SvelteDate(p.watering.lastWatered)} />
+								{:else}
+									—
+								{/if}
 							</span>
 							{#if nextWaterDate}
 								<span class="inline-flex items-center gap-1.5">
 									<Icon name="arrow-right" size={13} />
-									{formatFutureTimestamp(nextWaterDate)}
+									<Timestamp date={nextWaterDate} mode="future" />
 								</span>
 							{/if}
 						</div>
 
-						<Button
-							variant="water"
-							size="lg"
-							class="mt-4 w-full"
-							icon="droplet"
-							text="plants.waterNow"
-							loading={watering.isWatering(p.id)}
-							loadingText="plants.watering"
-							disabled={watering.isWatering(p.id)}
-							onclick={() => watering.waterPlant(p.id)}
-						/>
+						<div class="mt-4">
+							<HoldButton
+								variant="water"
+								size="lg"
+								icon="droplet"
+								label={watering.isWatering(p.id)
+									? $tStore('plants.watering')
+									: $tStore('plants.holdToWater')}
+								disabled={watering.isWatering(p.id)}
+								onconfirm={() => watering.waterPlant(p.id)}
+							/>
+						</div>
 					</Card>
 				{:else}
 					<!-- No schedule yet: helpful nudge instead of empty stats -->
@@ -352,7 +357,7 @@
 								{#if plan?.measuredAt}
 									<p class="mt-0.5 text-xs text-ink-soft">
 										{$tStore('plants.lastMeasured')}:
-										{formatPastTimestamp(new SvelteDate(plan.measuredAt))}
+										<Timestamp date={new SvelteDate(plan.measuredAt)} />
 									</p>
 								{/if}
 							</div>

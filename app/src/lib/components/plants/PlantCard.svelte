@@ -4,7 +4,7 @@
 	import { tStore } from '$lib/i18n';
 	import type { Plant } from '$lib/types/api';
 	import { formatMoisture, getPlan, getWateringMode, getWateringStatus } from '$lib/utils/plant';
-	import { formatPastTimestamp } from '$lib/utils/timestamp.svelte';
+	import Timestamp from '../ui/Timestamp.svelte';
 	import Chip from '../ui/Chip.svelte';
 	import Icon from '../ui/Icon.svelte';
 	import { toneBg, toneText } from '../ui/tone';
@@ -118,9 +118,8 @@
 				</div>
 				{#if plant.watering?.lastWatered}
 					<p class="text-xs text-ink-soft">
-						{$tStore('plants.lastWatered')}: {formatPastTimestamp(
-							new Date(plant.watering.lastWatered)
-						)}
+						{$tStore('plants.lastWatered')}:
+						<Timestamp date={new Date(plant.watering.lastWatered)} />
 					</p>
 				{/if}
 			</div>
@@ -162,7 +161,7 @@
 				{#if plant.humidity.lastMisted}
 					· {$tStore('plants.lastSprayedStatus')}:
 					<span class="font-semibold">
-						{formatPastTimestamp(new Date(plant.humidity.lastMisted))}
+						<Timestamp date={new Date(plant.humidity.lastMisted)} />
 					</span>
 				{/if}
 			</div>
